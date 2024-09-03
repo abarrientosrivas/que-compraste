@@ -1,9 +1,19 @@
 import torch
-import argparse
 import json
 import os
+import logging
 from PIL import Image
+from pydantic import BaseModel
+from pydantic import ValidationError
+from json.decoder import JSONDecodeError
 from transformers import DonutProcessor, VisionEncoderDecoderModel
+from PyMessaging.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class ImageLocation(BaseModel):
+    path: str
 
 def load_and_preprocess_image(image_path: str, processor):
     """
@@ -14,11 +24,14 @@ def load_and_preprocess_image(image_path: str, processor):
     return pixel_values
 
 class ImageToCompraNode:
-    def __init__(self):
+    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str):
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.processor = DonutProcessor.from_pretrained("AdamCodd/donut-receipts-extract")
         self.model = VisionEncoderDecoderModel.from_pretrained("AdamCodd/donut-receipts-extract")
         self.model.to(self.device)
+        self.consumer = consumer
+        self.publisher = publisher
+        self.input_queue = input_queue
 
     def read_receipt_image(self, image_path: str):
         """
@@ -48,20 +61,33 @@ class ImageToCompraNode:
         # decoded_text = re.sub(r"<.*?>", "", decoded_text, count=1).strip()  # remove first task start token
         decoded_text = self.processor.token2json(decoded_text)
         return decoded_text
+    
+    def callback(self, message: ImageLocation):
+        result = self.read_receipt_image(message.path)
+        json_result = json.dumps(result, indent=4)
+        print(json_result)
+        
+    def error_callback(self, error: Exception):        
+        if isinstance(error, JSONDecodeError):
+            logging.error(f"Could not decode message: {error}")
+        elif isinstance(error, ValidationError):
+            logging.error(f"Received message was not of type ImageLocation: {error}")
+        elif isinstance(error, FileNotFoundError):
+            logging.error(f"Indicated file was not found: {error}")
+        else:
+            logging.error(f"An unexpected error occurred: {error}")
+        
+    def start(self):
+        self.consumer.start(self.input_queue, self.callback, ImageLocation, self.error_callback)
+
+    def stop(self):
+        self.consumer.stop()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process an image of a receipt.')
-    parser.add_argument('image_path', type=str, help='The path of the receipt image file')
-    args = parser.parse_args()
+    broker = PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 
-    node = ImageToCompraNode()
-    result = node.read_receipt_image(args.image_path)
-    print(result)
-    print("")
-    
-    base_name, _ = os.path.splitext(args.image_path)
-    output_file = f"{base_name}.json"
-    with open(output_file, 'w') as json_file:
-        json.dump(result, json_file, indent=4)
-    
-    print(f"Result saved to {output_file}")
+    node = ImageToCompraNode(broker.get_consumer(), broker.get_publisher(), broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')))
+    try:
+        node.start()
+    except KeyboardInterrupt:
+        node.stop()
