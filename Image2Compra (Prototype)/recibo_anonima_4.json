@@ -1,0 +1,39 @@
+{
+    "store_name": "La Anonina Sucursal 45 Italia 500 - Pasto Navym",
+    "store_addr": "S.A. IMPORTADORA Y EXFOR ADMIN DE IA PATAGONIA",
+    "phone": "",
+    "date": "11-08-24",
+    "time": "10:04",
+    "subtotal": "$300.00",
+    "svc": "",
+    "tax": "",
+    "total": "$6725.60",
+    "tips": "",
+    "discount": "",
+    "line_items": [
+        {
+            "item_key": "",
+            "item_name": "70510517538 BRIQUETA CAR (2 C) 0.756 x $945.00",
+            "item_value": "$3250.0",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "203708700000 PAPA",
+            "item_value": "$714.4)",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "0.468 x $ 5900.00",
+            "item_value": "",
+            "item_quantity": ""
+        },
+        {
+            "item_key": "",
+            "item_name": "206348200000 CHORIZO FARR",
+            "item_value": "$6725.60",
+            "item_quantity": "1"
+        }
+    ]
+}

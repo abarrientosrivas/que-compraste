@@ -1,0 +1,45 @@
+{
+    "store_name": "La Anonima Sucursal 45 Italia 50 - Puerto Madryn",
+    "store_addr": "S.A. IMPORTADORA Y EXPORTADORA DE LA PATAGONIA",
+    "phone": "30-506/3006",
+    "date": "14-08-24",
+    "time": "16:15",
+    "subtotal": "$9840.00",
+    "svc": "",
+    "tax": "",
+    "total": "$9435.00",
+    "tips": "",
+    "discount": "",
+    "line_items": [
+        {
+            "item_key": "",
+            "item_name": "779058013924 GE/EN POL.",
+            "item_value": "$990.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "2.000 x $ 1350.00",
+            "item_value": "",
+            "item_quantity": ""
+        },
+        {
+            "item_key": "",
+            "item_name": "77901506573 PIMENT (5CG",
+            "item_value": "$2700.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "779391301344 CREMA D/LEC",
+            "item_value": "$3600.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "779405500040 TORTELLETIS",
+            "item_value": "$2550.00",
+            "item_quantity": "1"
+        }
+    ]
+}
