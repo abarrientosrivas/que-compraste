@@ -62,13 +62,15 @@ class PydanticQueueConsumer:
 
             channel.basic_ack(method_frame.delivery_tag)
         except Exception as e:
+            if self.error_callback:
+                self.error_callback(e)
             channel.basic_nack(method_frame.delivery_tag, requeue=False)
-            print(f"Error processing message: {str(e)}")
 
-    def start(self, queue_name: str, callback: Callable[[BaseModel], Any], expected_type: Type[BaseModel]):
+    def start(self, queue_name: str, callback: Callable[[BaseModel], Any], expected_type: Type[BaseModel], error_callback: Callable[[Exception], Any] | None = None):
         self.should_consume = True
         self.expected_type = expected_type
         self.callback = callback
+        self.error_callback = error_callback
         self.channel.basic_consume(queue_name, self.on_message)
         self.channel.basic_qos(prefetch_count=1)
         while self.should_consume:
