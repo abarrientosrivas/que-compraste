@@ -1,5 +1,8 @@
 import torch
 import re
+import argparse
+import os
+import json
 from PIL import Image
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 
@@ -49,7 +52,18 @@ def generate_text_from_image(model, image_path: str, processor, device):
     decoded_text = processor.token2json(decoded_text)
     return decoded_text
 
-# Example usage
-image_path = "recibo_anonima_4.jpg"  # Replace with your image path
-extracted_text = generate_text_from_image(model, image_path, processor, device)
-print("Extracted Text:", extracted_text)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process an image of a receipt.')
+    parser.add_argument('image_path', type=str, help='The path of the receipt image file')
+    args = parser.parse_args()
+
+    result = generate_text_from_image(model, args.image_path, processor, device)
+    print(result)
+    print("")
+    
+    base_name, _ = os.path.splitext(args.image_path)
+    output_file = f"{base_name}.json"
+    with open(output_file, 'w') as json_file:
+        json.dump(result, json_file, indent=4)
+    
+    print(f"Result saved to {output_file}")
