@@ -1,0 +1,52 @@
+{
+    "store_name": "Vea Puerto Madryn",
+    "store_addr": "Dr. Manuel Belgrano 372 Puerto Madryn Chubut",
+    "entity_id": "30590360763",
+    "phone": "",
+    "date": "02/06/2024",
+    "time": "09:32:00",
+    "subtotal": "15.231,81",
+    "svc": "",
+    "tax": "",
+    "total": "13.656,61",
+    "tips": "",
+    "discount": "-1.575,00",
+    "line_items": [
+        {
+            "item_key": "779205299881",
+            "item_name": "servilleta HOME CARE 80u",
+            "item_value": "1.400,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "779001000264",
+            "item_name": "toallas fem SIEMPRE LIBRE adapt alas 16u",
+            "item_value": "4.500,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "779052201196",
+            "item_name": "Pan Lacteado MENDIA x360 g",
+            "item_value": "$1.750,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "65062",
+            "item_name": "VIGILANTES DE MANTECA BJA 6 un",
+            "item_value": "2.098,99",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "91139",
+            "item_name": "jamón cocido CAMPO AUSTRAL",
+            "item_value": "12.500,00",
+            "item_quantity": "0,202"
+        },
+        {
+            "item_key": "98169",
+            "item_name": "Queso barra la paulina.",
+            "item_value": "16523,00",
+            "item_quantity": "0,179"
+        }
+    ]
+}

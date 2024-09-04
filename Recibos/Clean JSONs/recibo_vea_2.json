@@ -1,0 +1,58 @@
+{
+    "store_name": "Vea Puerto Madryn",
+    "store_addr": "Dr. Manuel Belgrano 372 Puerto Madryn Chubut",
+    "entity_id": "30590360763",
+    "phone": "",
+    "date": "18/02/2004",
+    "time": "11:51:00",
+    "subtotal": "19.622,57",
+    "svc": "",
+    "tax": "",
+    "total": "18.401,37",
+    "tips": "",
+    "discount": "-1.221,20",
+    "line_items": [
+        {
+            "item_key": "89087",
+            "item_name": "Flautita (p)",
+            "item_value": "$156,00",
+            "item_quantity": "9"
+        },
+        {
+            "item_key": "779571100361",
+            "item_name": "Ravioles VILLA D'AGRI con Pollo y Espina",
+            "item_value": "$400,00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "63119",
+            "item_name": "FACTURAS SURTIDAS X UN. VEA",
+            "item_value": "269,00",
+            "item_quantity": "7"
+        },
+        {
+            "item_key": "762230074293",
+            "item_name": "Rhodesia Toonix x 88 grs",
+            "item_value": "2.300,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "21333",
+            "item_name": "Queso Sardo SANTA ROSA",
+            "item_value": "17.033,00",
+            "item_quantity": "0,216"
+        },
+        {
+            "item_key": "77940000060",
+            "item_name": "Mayonesa HELLMANNS Clasica DP X475G",
+            "item_value": "965,00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "45330",
+            "item_name": "Paleta trozo novillito",
+            "item_value": "6.499.00",
+            "item_quantity": "0,558"
+        }
+    ]
+}

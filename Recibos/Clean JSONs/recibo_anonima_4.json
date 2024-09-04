@@ -1,0 +1,34 @@
+{
+    "store_name": "La Anonima Sucursal 45",
+    "store_addr": "Italia 500 - Puerto Madryn Provincia de Chubut",
+    "entity_id": "30-50673003-8",
+    "phone": "",
+    "date": "11-08-24",
+    "time": "10:04",
+    "subtotal": "$6725.60",
+    "svc": "",
+    "tax": "",
+    "total": "$6725.60",
+    "tips": "",
+    "discount": "",
+    "line_items": [
+        {
+            "item_key": "75010517538",
+            "item_name": "BRIQUETA CAR",
+            "item_value": "$3250,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "203708700000",
+            "item_name": "PAPA",
+            "item_value": "$945.00",
+            "item_quantity": "0.756"
+        },
+        {
+            "item_key": "206848200000",
+            "item_name": "CHORIZO PARR",
+            "item_value": "$5900.00",
+            "item_quantity": "0.468"
+        }
+    ]
+}

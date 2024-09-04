@@ -1,0 +1,34 @@
+{
+    "store_name": "La Anonima Sucursal 45",
+    "store_addr": "Italia 500 - Pto. Madryn Provincia de Chubut",
+    "entity_id": "30-50673003-8",
+    "phone": "",
+    "date": "11-08-24",
+    "time": "12:17",
+    "subtotal": "$5100.00",
+    "svc": "",
+    "tax": "",
+    "total": "$5100.00",
+    "tips": "",
+    "discount": "",
+    "line_items": [
+        {
+            "item_key": "779314192737",
+            "item_name": "GALLETAS CRACKER",
+            "item_value": "$1200.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "779163900348",
+            "item_name": "GASEOSA MARA",
+            "item_value": "$1600.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "779315870195",
+            "item_name": "PAPEL HIG. B",
+            "item_value": "$2300.00",
+            "item_quantity": "1"
+        }
+    ]
+}

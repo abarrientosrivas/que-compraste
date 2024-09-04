@@ -1,0 +1,40 @@
+{
+    "store_name": "La Anonima Sucursal 45",
+    "store_addr": "Italia 500 - Puerto Madryn Provincia de Chubut",
+    "entity_id": "30-50673003-8",
+    "phone": "",
+    "date": "14-08-24",
+    "time": "16:15",
+    "subtotal": "$9840.00",
+    "svc": "",
+    "tax": "",
+    "total": "$9435.00",
+    "tips": "",
+    "discount": "-$405.00",
+    "line_items": [
+        {
+            "item_key": "779058013924",
+            "item_name": "GE/EN POL. f",
+            "item_value": "$990.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "77915056573",
+            "item_name": "PIMENT X50G",
+            "item_value": "$1350.00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "779391301344",
+            "item_name": "CREMA D/LEC",
+            "item_value": "$3600.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "779405500040",
+            "item_name": "TORTELLETIS",
+            "item_value": "$2550.00",
+            "item_quantity": "1"
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "store_name": "",
+    "store_addr": "",
+    "phone": "",
+    "date": "",
+    "time": "",
+    "subtotal": "",
+    "svc": "",
+    "tax": "",
+    "total": "",
+    "tips": "",
+    "discount": "",
+    "line_items": ""
+}
