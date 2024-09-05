@@ -1,5 +1,5 @@
 import unittest
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address
+from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -42,7 +42,6 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_entity_id({'entity_id': ''})
             get_entity_id({'entity_id': '   '})
-            
 
     #entity id
     def test_get_store_address_valid(self):
@@ -57,6 +56,20 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_store_address({'store_addr': ''})
             get_store_address({'store_addr': '   '})
+
+    #total
+    def test_get_purchase_total_valid(self):
+        self.assertEqual(get_purchase_total({'total': '18.401,37'}), '18.401,37')
+        self.assertEqual(get_purchase_total({'total': '$6725.60'}), '$6725.60')
+
+    def test_get_purchase_total_missing(self):
+        with self.assertRaises(ValueError):
+            get_purchase_total({})
+
+    def test_get_purchase_total_empty(self):
+        with self.assertRaises(ValueError):
+            get_purchase_total({'total': ''})
+            get_purchase_total({'total': '   '})
 
 if __name__ == '__main__':
     unittest.main()
