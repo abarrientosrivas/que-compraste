@@ -16,6 +16,11 @@ class TestPurchaseFunctions(unittest.TestCase):
             get_purchase_date({'date': ''})
             get_purchase_date({'date': '   '})
 
+    def test_get_purchase_date_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_purchase_date({'date': 1})
+            get_purchase_date({'date': True})
+
     #item list
     def test_get_item_list_valid(self):
         self.assertEqual(
@@ -129,6 +134,11 @@ class TestPurchaseFunctions(unittest.TestCase):
             get_item_list({'line_items': ''})
             get_item_list({'line_items': '   '})
 
+    def test_get_item_list_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_item_list({'line_items': 1})
+            get_item_list({'line_items': True})
+
     #entity id
     def test_get_entity_id_valid(self):
         self.assertEqual(get_entity_id({'entity_id': '30590360763'}), '30590360763')
@@ -142,6 +152,11 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_entity_id({'entity_id': ''})
             get_entity_id({'entity_id': '   '})
+
+    def test_get_entity_id_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_entity_id({'entity_id': 1})
+            get_entity_id({'entity_id': True})
 
     #entity id
     def test_get_store_address_valid(self):
@@ -157,6 +172,11 @@ class TestPurchaseFunctions(unittest.TestCase):
             get_store_address({'store_addr': ''})
             get_store_address({'store_addr': '   '})
 
+    def test_get_store_address_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_store_address({'store_addr': 1})
+            get_store_address({'store_addr': True})
+
     #total
     def test_get_purchase_total_valid(self):
         self.assertEqual(get_purchase_total({'total': '18.401,37'}), '18.401,37')
@@ -171,7 +191,12 @@ class TestPurchaseFunctions(unittest.TestCase):
             get_purchase_total({'total': ''})
             get_purchase_total({'total': '   '})
 
-    #product code
+    def test_get_purchase_total_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_purchase_total({'total': 1})
+            get_purchase_total({'total': True})
+
+    #item code
     def test_get_item_code_valid(self):
         self.assertEqual(get_item_code({
             "item_key": "75010517538",
@@ -201,6 +226,11 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_item_code({'item_key': ''})
             get_item_code({'item_key': '   '})
+
+    def test_get_item_code_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_item_code({'item_key': 1})
+            get_item_code({'item_key': True})
 
 
 if __name__ == '__main__':
