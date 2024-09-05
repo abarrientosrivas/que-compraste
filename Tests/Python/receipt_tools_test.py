@@ -1,5 +1,5 @@
 import unittest
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code
+from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -15,6 +15,7 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_purchase_date({'date': ''})
             get_purchase_date({'date': '   '})
+            get_purchase_date({'date': None})
 
     def test_get_purchase_date_type_mismatch(self):
         with self.assertRaises(TypeError):
@@ -133,6 +134,8 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_item_list({'line_items': ''})
             get_item_list({'line_items': '   '})
+            get_item_list({'line_items': []})
+            get_item_list({'line_items': None})
 
     def test_get_item_list_type_mismatch(self):
         with self.assertRaises(TypeError):
@@ -152,6 +155,7 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_entity_id({'entity_id': ''})
             get_entity_id({'entity_id': '   '})
+            get_entity_id({'entity_id': None})
 
     def test_get_entity_id_type_mismatch(self):
         with self.assertRaises(TypeError):
@@ -171,6 +175,7 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_store_address({'store_addr': ''})
             get_store_address({'store_addr': '   '})
+            get_store_address({'store_addr': None})
 
     def test_get_store_address_type_mismatch(self):
         with self.assertRaises(TypeError):
@@ -190,6 +195,7 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_purchase_total({'total': ''})
             get_purchase_total({'total': '   '})
+            get_purchase_total({'total': None})
 
     def test_get_purchase_total_type_mismatch(self):
         with self.assertRaises(TypeError):
@@ -198,25 +204,9 @@ class TestPurchaseFunctions(unittest.TestCase):
 
     #item code
     def test_get_item_code_valid(self):
-        self.assertEqual(get_item_code({
-            "item_key": "75010517538",
-            "item_name": "BRIQUETA CAR",
-            "item_value": "$3250,00",
-            "item_quantity": "1"
-        }), '75010517538')
-        self.assertEqual(get_item_code({
-            "item_key": "89087",
-            "item_name": "Flautita (p)",
-            "item_value": "$156,00",
-            "item_quantity": "9"
-        }), '89087')
-        self.assertEqual(get_item_code(
-        {
-            "item_key": "779052201196",
-            "item_name": "Pan Lacteado MENDIA x360 g",
-            "item_value": "$1.750,00",
-            "item_quantity": "1"
-        }), '779052201196')
+        self.assertEqual(get_item_code({"item_key": "75010517538"}), '75010517538')
+        self.assertEqual(get_item_code({"item_key": "89087"}), '89087')
+        self.assertEqual(get_item_code({"item_key": "779052201196"}), '779052201196')
 
     def test_get_item_code_missing(self):
         with self.assertRaises(ValueError):
@@ -224,13 +214,36 @@ class TestPurchaseFunctions(unittest.TestCase):
 
     def test_get_item_code_empty(self):
         with self.assertRaises(ValueError):
-            get_item_code({'item_key': ''})
-            get_item_code({'item_key': '   '})
+            get_item_code({'item_code': ''})
+            get_item_code({'item_code': '   '})
+            get_item_code({'item_code': None})
 
     def test_get_item_code_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_item_code({'item_key': 1})
-            get_item_code({'item_key': True})
+            get_item_code({'item_code': 1})
+            get_item_code({'item_code': True})
+
+    #item code
+    def test_get_item_quantity_valid(self):
+        self.assertEqual(get_item_quantity({"item_quantity": "1"}), '1')
+        self.assertEqual(get_item_quantity({"item_quantity": "9"}), '9')
+        self.assertEqual(get_item_quantity({"item_quantity": "0,216"}), '0,216')
+        self.assertEqual(get_item_quantity({"item_quantity": "0.756"}), '0.756')
+
+    def test_get_item_code_missing(self):
+        with self.assertRaises(ValueError):
+            get_item_quantity({})
+
+    def test_get_item_code_empty(self):
+        with self.assertRaises(ValueError):
+            get_item_quantity({'item_quantity': ''})
+            get_item_quantity({'item_quantity': '   '})
+            get_item_quantity({'item_quantity': None})
+
+    def test_get_item_code_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_item_quantity({'item_quantity': 1})
+            get_item_quantity({'item_quantity': True})
 
 
 if __name__ == '__main__':
