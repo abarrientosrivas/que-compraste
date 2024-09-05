@@ -4,7 +4,7 @@ def get_field_value(json_data: dict, field: str):
     return json_data[field]
 
 def check_if_empty(value) -> bool:
-    return not value or (isinstance(value, str) and not value.strip())
+    return value is None or (isinstance(value, str) and not value.strip()) or (isinstance(value, list) and not value)
 
 def get_valid_field_value(json_data: dict, field: str):
     value = get_field_value(json_data, field)
@@ -41,3 +41,6 @@ def get_item_list(json_data: dict) -> list:
 
 def get_item_code(json_data: dict) -> str:
     return get_string_field_value(json_data, "item_key")
+
+def get_item_quantity(json_data: dict) -> str:
+    return get_string_field_value(json_data, "item_quantity")
