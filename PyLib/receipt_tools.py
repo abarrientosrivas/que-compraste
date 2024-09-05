@@ -16,6 +16,15 @@ def get_entity_id(json_data: dict) -> str:
         raise ValueError("The 'entity_id' field is empty.")
     return json_data["entity_id"]
 
+def get_store_address(json_data: dict) -> str:
+    if 'store_addr' not in json_data:
+        raise ValueError("The 'store_addr' field is missing.")
+    if not json_data['store_addr']:
+        raise ValueError("The 'store_addr' field is empty.")
+    if isinstance(json_data['store_addr'], str) and not json_data['store_addr'].strip():
+        raise ValueError("The 'store_addr' field is empty.")
+    return json_data["store_addr"]
+
 def get_item_list(json_data: dict) -> str:
     if 'line_items' not in json_data:
         raise ValueError("The 'line_items' field is missing.")

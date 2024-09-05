@@ -1,5 +1,5 @@
 import unittest
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id
+from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -42,6 +42,21 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_entity_id({'entity_id': ''})
             get_entity_id({'entity_id': '   '})
+            
+
+    #entity id
+    def test_get_store_address_valid(self):
+        self.assertEqual(get_store_address({'store_addr': 'Italia 500 - Pto. Madryn Provincia de Chubut'}), 'Italia 500 - Pto. Madryn Provincia de Chubut')
+        self.assertEqual(get_store_address({'store_addr': 'Dr. Manuel Belgrano 372 Puerto Madryn Chubut'}), 'Dr. Manuel Belgrano 372 Puerto Madryn Chubut')
+
+    def test_get_store_address_missing(self):
+        with self.assertRaises(ValueError):
+            get_store_address({})
+
+    def test_get_store_address_empty(self):
+        with self.assertRaises(ValueError):
+            get_store_address({'store_addr': ''})
+            get_store_address({'store_addr': '   '})
 
 if __name__ == '__main__':
     unittest.main()
