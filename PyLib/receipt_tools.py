@@ -44,3 +44,6 @@ def get_item_code(json_data: dict) -> str:
 
 def get_item_quantity(json_data: dict) -> str:
     return get_string_field_value(json_data, "item_quantity")
+
+def get_item_value(json_data: dict) -> str:
+    return get_string_field_value(json_data, "item_value")
