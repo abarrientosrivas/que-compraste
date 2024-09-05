@@ -7,6 +7,15 @@ def get_purchase_date(json_data: dict) -> str:
         raise ValueError("The 'date' field is empty.")
     return json_data["date"]
 
+def get_entity_id(json_data: dict) -> str:
+    if 'entity_id' not in json_data:
+        raise ValueError("The 'entity_id' field is missing.")
+    if not json_data['entity_id']:
+        raise ValueError("The 'entity_id' field is empty.")
+    if isinstance(json_data['entity_id'], str) and not json_data['entity_id'].strip():
+        raise ValueError("The 'entity_id' field is empty.")
+    return json_data["entity_id"]
+
 def get_item_list(json_data: dict) -> str:
     if 'line_items' not in json_data:
         raise ValueError("The 'line_items' field is missing.")
