@@ -1,5 +1,5 @@
 import unittest
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value
+from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value, get_item_text
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -264,6 +264,28 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(TypeError):
             get_item_value({'item_value': 1})
             get_item_value({'item_value': True})
+
+    #item text
+    def test_get_item_text_valid(self):
+        self.assertEqual(get_item_text({"item_name": "BRIQUETA CAR"}), 'BRIQUETA CAR')
+        self.assertEqual(get_item_text({"item_name": "ARVEJAS BEST x300"}), 'ARVEJAS BEST x300')
+        self.assertEqual(get_item_text({"item_name": "VIGILANTES DE MANTECA BJA 6 un"}), 'VIGILANTES DE MANTECA BJA 6 un')
+        self.assertEqual(get_item_text({"item_name": "Mayonesa HELLMANNS Clasica DP X475G"}), 'Mayonesa HELLMANNS Clasica DP X475G')
+
+    def test_get_item_text_missing(self):
+        with self.assertRaises(ValueError):
+            get_item_text({})
+
+    def test_get_item_text_empty(self):
+        with self.assertRaises(ValueError):
+            get_item_text({'item_name': ''})
+            get_item_text({'item_name': '   '})
+            get_item_text({'item_name': None})
+
+    def test_get_item_text_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            get_item_text({'item_name': 1})
+            get_item_text({'item_name': True})
 
 
 if __name__ == '__main__':
