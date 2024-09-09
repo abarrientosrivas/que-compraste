@@ -1,3 +1,6 @@
+from datetime import datetime
+from dateutil import parser
+
 def get_field_value(json_data: dict, field: str):
     if field not in json_data:
         raise ValueError(f"The '{field}' field is missing.")
@@ -50,3 +53,9 @@ def get_item_value(json_data: dict) -> str:
 
 def get_item_text(json_data: dict) -> str:
     return get_string_field_value(json_data, "item_name")
+
+def normalize_date(date_str: str, day_first: bool, year_first: bool) -> datetime:
+    try:
+        return parser.parse(date_str, dayfirst=day_first, yearfirst=year_first)
+    except ValueError:
+        raise ValueError("Invalid date format")

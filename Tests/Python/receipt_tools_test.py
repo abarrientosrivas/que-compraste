@@ -1,5 +1,6 @@
 import unittest
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value, get_item_text
+from datetime import datetime
+from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value, get_item_text, normalize_date
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -286,6 +287,17 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(TypeError):
             get_item_text({'item_name': 1})
             get_item_text({'item_name': True})
+
+    #date validation
+    def test_normalize_date_valid(self):
+        self.assertEqual(normalize_date(" 6/7/24", True, False), datetime(2024, 7, 6))
+        self.assertEqual(normalize_date("6. 8.24", True, False), datetime(2024, 8, 6))
+        self.assertEqual(normalize_date("4-8-24;", True, False), datetime(2024, 8, 4))
+
+    def test_normalize_date_invalid(self):
+        with self.assertRaises(ValueError):
+            normalize_date("notadate", True, False)
+            normalize_date("24/24/24", True, False)
 
 
 if __name__ == '__main__':
