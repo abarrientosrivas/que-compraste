@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from dateutil import parser
 
@@ -55,7 +56,22 @@ def get_item_text(json_data: dict) -> str:
     return get_string_field_value(json_data, "item_name")
 
 def normalize_date(date_str: str, day_first: bool, year_first: bool) -> datetime:
+    date_str = date_str.strip()
     try:
         return parser.parse(date_str, dayfirst=day_first, yearfirst=year_first)
     except ValueError:
         raise ValueError("Invalid date format")
+    
+def normalize_quantity(amount_string: str) -> float:
+    match = re.search(r'([0-9]*[.,]?[0-9]+)', amount_string)
+    if not match:
+        raise ValueError("Invalid number format")
+    numeric_part = match.group(1)
+    normalized_string = numeric_part.replace(',', '.').strip()
+    try:
+        return float(normalized_string)
+    except ValueError:
+        raise ValueError("Invalid number format")
+    
+if __name__ == '__main__':
+    pass
