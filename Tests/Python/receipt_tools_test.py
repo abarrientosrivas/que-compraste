@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value, get_item_text, normalize_date, normalize_quantity
+from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value, get_item_text, normalize_date, normalize_quantity, normalize_entity_id
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -310,6 +310,20 @@ class TestPurchaseFunctions(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_quantity("notanumber")
             normalize_quantity("213-2")
+
+    #entity id validation
+    def test_normalize_entity_id_valid(self):
+        self.assertEqual(normalize_entity_id("30590360763"), 30590360763)
+        self.assertEqual(normalize_entity_id("30-50673003-8"), 30506730038)
+        self.assertEqual(normalize_entity_id("30-68731043-4"), 30687310434)
+        self.assertEqual(normalize_entity_id("30641844140"), 30641844140)
+
+    def test_normalize_entity_id_invalid(self):
+        with self.assertRaises(ValueError):
+            normalize_entity_id("notacuit")
+            normalize_entity_id("213-2")
+            normalize_entity_id("30-50673003-7")
+            normalize_entity_id("20-34823021-4")
 
 
 if __name__ == '__main__':

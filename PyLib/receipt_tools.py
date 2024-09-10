@@ -109,8 +109,4 @@ def validate_cuit(cuit: str) -> bool:
     return True
     
 if __name__ == '__main__':
-    print(normalize_entity_id("30590360763"))
-    print(normalize_entity_id("30-50673003-8"))
-    print(normalize_entity_id("30-68731043-4"))
-    print(normalize_entity_id("30641844140"))
     pass
