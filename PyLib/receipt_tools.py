@@ -108,5 +108,48 @@ def validate_cuit(cuit: str) -> bool:
     
     return True
     
+def normalize_product_key(product_key_string: str) -> int:
+    product_key_string = product_key_string.strip()
+    if not product_key_string:
+        raise ValueError("Product key was empty")
+    if product_key_string.isdigit() and len(product_key_string) == 12:
+        return f"{product_key_string}{calculate_ean13_check_digit(product_key_string)}"
+    return product_key_string
+
+def calculate_ean13_check_digit(ean_code: str) -> int:
+    if len(ean_code) != 12 or not ean_code.isdigit():
+        raise ValueError("EAN code must be 12 digits long without the check digit")
+
+    odd_sum = sum(int(ean_code[i]) for i in range(0, 12, 2))
+    even_sum = sum(int(ean_code[i]) for i in range(1, 12, 2))
+    
+    total_sum = odd_sum + (even_sum * 3)
+    
+    check_digit = (10 - (total_sum % 10)) % 10
+    
+    return check_digit
+
+def validate_cuit(cuit: str) -> bool:
+    if len(cuit) != 11 or cuit[:2] not in ['30', '33', '34']:
+        return False
+    
+    base_digits = cuit[:-1]
+    actual_check_digit = int(cuit[-1])
+
+    # Calculate the check digit
+    weights = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
+    sum_product = sum(int(digit) * weight for digit, weight in zip(base_digits, weights))
+    calculated_check_digit = 11 - (sum_product % 11)
+    
+    if calculated_check_digit == 11:
+        calculated_check_digit = 0
+    elif calculated_check_digit == 10:
+        return False
+
+    if actual_check_digit != calculated_check_digit:
+        return False
+    
+    return True
+    
 if __name__ == '__main__':
     pass
