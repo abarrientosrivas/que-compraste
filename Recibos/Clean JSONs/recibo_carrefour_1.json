@@ -1,0 +1,82 @@
+{
+    "store_name": "Carrefour 179 PUERTO MADRYN II",
+    "store_addr": "AV. GALES 1315 y 20 DE JUNIO - PUERTO MADRYN",
+    "entity_id": "30-68731043-4",
+    "phone": "",
+    "date": "14/08/24",
+    "time": "16:51:15",
+    "subtotal": "$43725,00",
+    "svc": "",
+    "tax": "",
+    "total": "$33952.65",
+    "tips": "",
+    "discount": "$9772.35",
+    "line_items": [
+        {
+            "item_key": "7798033333891",
+            "item_name": "ATUN EN ACEITE LOMITOS CARREFOUR LATA X",
+            "item_value": "1990,00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "7790360720382",
+            "item_name": "PATE DE FOIE SWIFT LATA X 90 GRS",
+            "item_value": "770,00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "7791720030073",
+            "item_name": "ARVEJAS SECAS REMOJADAS CLASSIC LATA X 3",
+            "item_value": "579,00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "7794000007468",
+            "item_name": "ALMIDON DE MAIZ MAIZENA BOLSA X 500 GRS",
+            "item_value": "2259,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "7798338290271",
+            "item_name": "LECHE DESLACTOSADA UHT LAS TRES N NAS X",
+            "item_value": "1900,00",
+            "item_quantity": "4"
+        },
+        {
+            "item_key": "7794440994212",
+            "item_name": "GUANTE MAPA PLISSE SATINADO L",
+            "item_value": "4890,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "7791290792968",
+            "item_name": "JABON LIQ ROPA PARA DILUIR + BOTELLA SKI",
+            "item_value": "9739,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "7791828000657",
+            "item_name": "PAPEL HIGIENICO H S BLANQUISIMO FELPITA",
+            "item_value": "4400",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "7500435216487",
+            "item_name": "DETERGENTE ULTRA MARINA MAGISTRAL BOT X",
+            "item_value": "2529,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "7791290793804",
+            "item_name": "LIMPIADOR EN GEL C LAVANDINA CIF X 513G",
+            "item_value": "2650,00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "7798159716004",
+            "item_name": "JABON TOCADOR GLICERINA CARREFOUR 3 X 90",
+            "item_value": "1490,00",
+            "item_quantity": "2"
+        }
+    ]
+}

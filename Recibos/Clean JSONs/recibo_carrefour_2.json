@@ -1,0 +1,34 @@
+{
+    "store_name": "Carrefour 165 PUERTO MADRYN",
+    "store_addr": "28 DE JULIO 136 PUERTO MADRYN",
+    "entity_id": "30-68731043-4",
+    "phone": "",
+    "date": "13/06/24",
+    "time": "11:42:31",
+    "subtotal": "$17141,00",
+    "svc": "",
+    "tax": "",
+    "total": "$13168.40",
+    "tips": "",
+    "discount": "$4245.60",
+    "line_items": [
+        {
+            "item_key": "7798338290028",
+            "item_name": "LECHE CLASICA 3% FORTIFICADA UATLAS 3 NI",
+            "item_value": "1700,00",
+            "item_quantity": "4"
+        },
+        {
+            "item_key": "7790790120325",
+            "item_name": "GARBANZOS SECOS REMOJADOS INCA LATA X 35",
+            "item_value": "890,00",
+            "item_quantity": "6"
+        },
+        {
+            "item_key": "7792350067163",
+            "item_name": "ARVEJAS SECAS REMOJAD S SAL INALPA VIDA",
+            "item_value": "879,00",
+            "item_quantity": "6"
+        }
+    ]
+}
