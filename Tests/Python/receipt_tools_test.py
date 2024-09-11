@@ -1,32 +1,32 @@
 import unittest
 from datetime import datetime
-from PyLib.receipt_tools import get_purchase_date, get_item_list, get_entity_id, get_store_address, get_purchase_total, get_item_code, get_item_quantity, get_item_value, get_item_text, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key
+from PyLib.receipt_tools import get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
     def test_get_purchase_date_valid(self):
-        self.assertEqual(get_purchase_date({'date': '01-09-2024'}), '01-09-2024')
-        self.assertEqual(get_purchase_date({'date': '01/09/2024'}), '01/09/2024')
+        self.assertEqual(get_string_field_value("date",{'date': '01-09-2024'}), '01-09-2024')
+        self.assertEqual(get_string_field_value("date",{'date': '01/09/2024'}), '01/09/2024')
 
     def test_get_purchase_date_missing(self):
         with self.assertRaises(ValueError):
-            get_purchase_date({})
+            get_string_field_value("date",{})
 
     def test_get_purchase_date_empty(self):
         with self.assertRaises(ValueError):
-            get_purchase_date({'date': ''})
-            get_purchase_date({'date': '   '})
-            get_purchase_date({'date': None})
+            get_string_field_value("date",{'date': ''})
+            get_string_field_value("date",{'date': '   '})
+            get_string_field_value("date",{'date': None})
 
     def test_get_purchase_date_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_purchase_date({'date': 1})
-            get_purchase_date({'date': True})
+            get_string_field_value("date",{'date': 1})
+            get_string_field_value("date",{'date': True})
 
     #item list
     def test_get_item_list_valid(self):
         self.assertEqual(
-            get_item_list({
+            get_list_field_value("line_items",{
                 "line_items": [
                     {
                         "item_key": "75010517538",
@@ -71,7 +71,7 @@ class TestPurchaseFunctions(unittest.TestCase):
         )
 
         self.assertEqual(
-            get_item_list({
+            get_list_field_value("line_items",{
                 "line_items": [
                     {
                         "item_key": "89087",
@@ -129,164 +129,164 @@ class TestPurchaseFunctions(unittest.TestCase):
 
     def test_get_item_list_missing(self):
         with self.assertRaises(ValueError):
-            get_item_list({})
+            get_list_field_value("line_items",{})
 
     def test_get_item_list_empty(self):
         with self.assertRaises(ValueError):
-            get_item_list({'line_items': ''})
-            get_item_list({'line_items': '   '})
-            get_item_list({'line_items': []})
-            get_item_list({'line_items': None})
+            get_list_field_value("line_items",{'line_items': ''})
+            get_list_field_value("line_items",{'line_items': '   '})
+            get_list_field_value("line_items",{'line_items': []})
+            get_list_field_value("line_items",{'line_items': None})
 
     def test_get_item_list_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_item_list({'line_items': 1})
-            get_item_list({'line_items': True})
+            get_list_field_value("line_items",{'line_items': 1})
+            get_list_field_value("line_items",{'line_items': True})
 
     #entity id
     def test_get_entity_id_valid(self):
-        self.assertEqual(get_entity_id({'entity_id': '30590360763'}), '30590360763')
-        self.assertEqual(get_entity_id({'entity_id': '30-50673003-8'}), '30-50673003-8')
+        self.assertEqual(get_string_field_value("entity_id",{'entity_id': '30590360763'}), '30590360763')
+        self.assertEqual(get_string_field_value("entity_id",{'entity_id': '30-50673003-8'}), '30-50673003-8')
 
     def test_get_entity_id_missing(self):
         with self.assertRaises(ValueError):
-            get_entity_id({})
+            get_string_field_value("entity_id",{})
 
     def test_get_entity_id_empty(self):
         with self.assertRaises(ValueError):
-            get_entity_id({'entity_id': ''})
-            get_entity_id({'entity_id': '   '})
-            get_entity_id({'entity_id': None})
+            get_string_field_value("entity_id",{'entity_id': ''})
+            get_string_field_value("entity_id",{'entity_id': '   '})
+            get_string_field_value("entity_id",{'entity_id': None})
 
     def test_get_entity_id_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_entity_id({'entity_id': 1})
-            get_entity_id({'entity_id': True})
+            get_string_field_value("entity_id",{'entity_id': 1})
+            get_string_field_value("entity_id",{'entity_id': True})
 
     #store address
     def test_get_store_address_valid(self):
-        self.assertEqual(get_store_address({'store_addr': 'Italia 500 - Pto. Madryn Provincia de Chubut'}), 'Italia 500 - Pto. Madryn Provincia de Chubut')
-        self.assertEqual(get_store_address({'store_addr': 'Dr. Manuel Belgrano 372 Puerto Madryn Chubut'}), 'Dr. Manuel Belgrano 372 Puerto Madryn Chubut')
+        self.assertEqual(get_string_field_value("store_addr",{'store_addr': 'Italia 500 - Pto. Madryn Provincia de Chubut'}), 'Italia 500 - Pto. Madryn Provincia de Chubut')
+        self.assertEqual(get_string_field_value("store_addr",{'store_addr': 'Dr. Manuel Belgrano 372 Puerto Madryn Chubut'}), 'Dr. Manuel Belgrano 372 Puerto Madryn Chubut')
 
     def test_get_store_address_missing(self):
         with self.assertRaises(ValueError):
-            get_store_address({})
+            get_string_field_value("store_addr",{})
 
     def test_get_store_address_empty(self):
         with self.assertRaises(ValueError):
-            get_store_address({'store_addr': ''})
-            get_store_address({'store_addr': '   '})
-            get_store_address({'store_addr': None})
+            get_string_field_value("store_addr",{'store_addr': ''})
+            get_string_field_value("store_addr",{'store_addr': '   '})
+            get_string_field_value("store_addr",{'store_addr': None})
 
     def test_get_store_address_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_store_address({'store_addr': 1})
-            get_store_address({'store_addr': True})
+            get_string_field_value("store_addr",{'store_addr': 1})
+            get_string_field_value("store_addr",{'store_addr': True})
 
     #total
     def test_get_purchase_total_valid(self):
-        self.assertEqual(get_purchase_total({'total': '18.401,37'}), '18.401,37')
-        self.assertEqual(get_purchase_total({'total': '$6725.60'}), '$6725.60')
+        self.assertEqual(get_string_field_value("total",{'total': '18.401,37'}), '18.401,37')
+        self.assertEqual(get_string_field_value("total",{'total': '$6725.60'}), '$6725.60')
 
     def test_get_purchase_total_missing(self):
         with self.assertRaises(ValueError):
-            get_purchase_total({})
+            get_string_field_value("total",{})
 
     def test_get_purchase_total_empty(self):
         with self.assertRaises(ValueError):
-            get_purchase_total({'total': ''})
-            get_purchase_total({'total': '   '})
-            get_purchase_total({'total': None})
+            get_string_field_value("total",{'total': ''})
+            get_string_field_value("total",{'total': '   '})
+            get_string_field_value("total",{'total': None})
 
     def test_get_purchase_total_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_purchase_total({'total': 1})
-            get_purchase_total({'total': True})
+            get_string_field_value("total",{'total': 1})
+            get_string_field_value("total",{'total': True})
 
     #item code
     def test_get_item_code_valid(self):
-        self.assertEqual(get_item_code({"item_key": "75010517538"}), '75010517538')
-        self.assertEqual(get_item_code({"item_key": "89087"}), '89087')
-        self.assertEqual(get_item_code({"item_key": "779052201196"}), '779052201196')
+        self.assertEqual(get_string_field_value("item_key",{"item_key": "75010517538"}), '75010517538')
+        self.assertEqual(get_string_field_value("item_key",{"item_key": "89087"}), '89087')
+        self.assertEqual(get_string_field_value("item_key",{"item_key": "779052201196"}), '779052201196')
 
     def test_get_item_code_missing(self):
         with self.assertRaises(ValueError):
-            get_item_code({})
+            get_string_field_value("item_key",{})
 
     def test_get_item_code_empty(self):
         with self.assertRaises(ValueError):
-            get_item_code({'item_key': ''})
-            get_item_code({'item_key': '   '})
-            get_item_code({'item_key': None})
+            get_string_field_value("item_key",{'item_key': ''})
+            get_string_field_value("item_key",{'item_key': '   '})
+            get_string_field_value("item_key",{'item_key': None})
 
     def test_get_item_code_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_item_code({'item_key': 1})
-            get_item_code({'item_key': True})
+            get_string_field_value("item_key",{'item_key': 1})
+            get_string_field_value("item_key",{'item_key': True})
 
     #item quantity
     def test_get_item_quantity_valid(self):
-        self.assertEqual(get_item_quantity({"item_quantity": "1"}), '1')
-        self.assertEqual(get_item_quantity({"item_quantity": "9"}), '9')
-        self.assertEqual(get_item_quantity({"item_quantity": "0,216"}), '0,216')
-        self.assertEqual(get_item_quantity({"item_quantity": "0.756"}), '0.756')
+        self.assertEqual(get_string_field_value("item_quantity",{"item_quantity": "1"}), '1')
+        self.assertEqual(get_string_field_value("item_quantity",{"item_quantity": "9"}), '9')
+        self.assertEqual(get_string_field_value("item_quantity",{"item_quantity": "0,216"}), '0,216')
+        self.assertEqual(get_string_field_value("item_quantity",{"item_quantity": "0.756"}), '0.756')
 
     def test_get_item_quantity_missing(self):
         with self.assertRaises(ValueError):
-            get_item_quantity({})
+            get_string_field_value("item_quantity",{})
 
     def test_get_item_quantity_empty(self):
         with self.assertRaises(ValueError):
-            get_item_quantity({'item_quantity': ''})
-            get_item_quantity({'item_quantity': '   '})
-            get_item_quantity({'item_quantity': None})
+            get_string_field_value("item_quantity",{'item_quantity': ''})
+            get_string_field_value("item_quantity",{'item_quantity': '   '})
+            get_string_field_value("item_quantity",{'item_quantity': None})
 
     def test_get_item_quantity_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_item_quantity({'item_quantity': 1})
-            get_item_quantity({'item_quantity': True})
+            get_string_field_value("item_quantity",{'item_quantity': 1})
+            get_string_field_value("item_quantity",{'item_quantity': True})
 
     #item value
     def test_get_item_value_valid(self):
-        self.assertEqual(get_item_value({"item_value": "$945.00"}), '$945.00')
-        self.assertEqual(get_item_value({"item_value": "2.098,99"}), '2.098,99')
+        self.assertEqual(get_string_field_value("item_value",{"item_value": "$945.00"}), '$945.00')
+        self.assertEqual(get_string_field_value("item_value",{"item_value": "2.098,99"}), '2.098,99')
 
     def test_get_item_value_missing(self):
         with self.assertRaises(ValueError):
-            get_item_value({})
+            get_string_field_value("item_value",{})
 
     def test_get_item_value_empty(self):
         with self.assertRaises(ValueError):
-            get_item_value({'item_value': ''})
-            get_item_value({'item_value': '   '})
-            get_item_value({'item_value': None})
+            get_string_field_value("item_value",{'item_value': ''})
+            get_string_field_value("item_value",{'item_value': '   '})
+            get_string_field_value("item_value",{'item_value': None})
 
     def test_get_item_value_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_item_value({'item_value': 1})
-            get_item_value({'item_value': True})
+            get_string_field_value("item_value",{'item_value': 1})
+            get_string_field_value("item_value",{'item_value': True})
 
     #item text
     def test_get_item_text_valid(self):
-        self.assertEqual(get_item_text({"item_name": "BRIQUETA CAR"}), 'BRIQUETA CAR')
-        self.assertEqual(get_item_text({"item_name": "ARVEJAS BEST x300"}), 'ARVEJAS BEST x300')
-        self.assertEqual(get_item_text({"item_name": "VIGILANTES DE MANTECA BJA 6 un"}), 'VIGILANTES DE MANTECA BJA 6 un')
-        self.assertEqual(get_item_text({"item_name": "Mayonesa HELLMANNS Clasica DP X475G"}), 'Mayonesa HELLMANNS Clasica DP X475G')
+        self.assertEqual(get_string_field_value("item_name",{"item_name": "BRIQUETA CAR"}), 'BRIQUETA CAR')
+        self.assertEqual(get_string_field_value("item_name",{"item_name": "ARVEJAS BEST x300"}), 'ARVEJAS BEST x300')
+        self.assertEqual(get_string_field_value("item_name",{"item_name": "VIGILANTES DE MANTECA BJA 6 un"}), 'VIGILANTES DE MANTECA BJA 6 un')
+        self.assertEqual(get_string_field_value("item_name",{"item_name": "Mayonesa HELLMANNS Clasica DP X475G"}), 'Mayonesa HELLMANNS Clasica DP X475G')
 
     def test_get_item_text_missing(self):
         with self.assertRaises(ValueError):
-            get_item_text({})
+            get_string_field_value("item_name",{})
 
     def test_get_item_text_empty(self):
         with self.assertRaises(ValueError):
-            get_item_text({'item_name': ''})
-            get_item_text({'item_name': '   '})
-            get_item_text({'item_name': None})
+            get_string_field_value("item_name",{'item_name': ''})
+            get_string_field_value("item_name",{'item_name': '   '})
+            get_string_field_value("item_name",{'item_name': None})
 
     def test_get_item_text_type_mismatch(self):
         with self.assertRaises(TypeError):
-            get_item_text({'item_name': 1})
-            get_item_text({'item_name': True})
+            get_string_field_value("item_name",{'item_name': 1})
+            get_string_field_value("item_name",{'item_name': True})
 
     #date validation
     def test_normalize_date_valid(self):
