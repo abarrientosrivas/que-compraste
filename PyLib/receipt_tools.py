@@ -68,11 +68,14 @@ def normalize_value(value_string: str) -> float:
     if not value_string:
         raise ValueError(f"Invalid value format")
 
-    if "," in value_string and "." in value_string:
-        value_string = value_string.replace('.', '')
-        value_string = value_string.replace(',', '.')
-    elif "," in value_string:
-        value_string = value_string.replace(',', '.')
+    if len(value_string) > 2:
+        third_to_last = value_string[-3]
+        if third_to_last.isdigit():
+            value_string = value_string.replace(',', '').replace('.', '')
+        elif third_to_last == '.':
+            value_string = value_string.replace(',', '')
+        elif third_to_last == ',':
+            value_string = value_string.replace('.', '').replace(',', '.')
 
     try:
         return float(value_string)

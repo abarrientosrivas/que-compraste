@@ -339,8 +339,10 @@ class TestPurchaseFunctions(unittest.TestCase):
 
     #value validation
     def test_normalize_value_valid(self):
+        self.assertEqual(normalize_value("$10"), 10)
         self.assertEqual(normalize_value("$1615.00"), 1615)
         self.assertEqual(normalize_value("4.500,10"), 4500.1)
+        self.assertEqual(normalize_value("1,399.90"), 1399.9)
         self.assertEqual(normalize_value("5340.00"), 5340)
         self.assertEqual(normalize_value("890,50"), 890.5)
 
