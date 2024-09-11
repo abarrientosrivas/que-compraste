@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, time
 from dateutil import parser
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -64,7 +64,7 @@ def normalize_quantity(quantity_string: str) -> float:
         raise ValueError("Invalid number format")
     
 def normalize_value(value_string: str) -> float:
-    value_string = re.sub(r'[^\d,.-]', '', value_string) # keep numbers, commas and dots
+    value_string = re.sub(r'[^\d,.-]', '', value_string).strip() # keep numbers, commas and dots
     if not value_string:
         raise ValueError(f"Invalid value format")
 
@@ -81,6 +81,19 @@ def normalize_value(value_string: str) -> float:
         return float(value_string)
     except ValueError:
         raise ValueError(f"Invalid value format")
+    
+def normalize_time(time_string: str) -> time:
+    normalized_time = re.sub(r'[^0-9]', ':', time_string.strip())
+    if not normalized_time:
+        raise ValueError("Invalid time format")
+    time_parts = normalized_time.split(':')
+    try:
+        hours = int(time_parts[0])
+        minutes = int(time_parts[1]) if len(time_parts) > 1 else 0
+        seconds = int(time_parts[2]) if len(time_parts) > 2 else 0
+        return time(hours, minutes, seconds)
+    except ValueError:
+        raise ValueError("Invalid time format")
     
 def normalize_entity_id(entity_id_string: str) -> int:
     match = re.search(r'[0-9-]+', entity_id_string)

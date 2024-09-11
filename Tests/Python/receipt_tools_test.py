@@ -1,6 +1,6 @@
 import unittest
-from datetime import datetime
-from PyLib.receipt_tools import get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value
+from datetime import datetime, time
+from PyLib.receipt_tools import get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -351,6 +351,18 @@ class TestPurchaseFunctions(unittest.TestCase):
             normalize_value("notavalue")
             normalize_value("")
             normalize_value(None)
+
+    #time validation
+    def test_normalize_time_valid(self):
+        self.assertEqual(normalize_time("10:30"), time(10,30))
+        self.assertEqual(normalize_time("10:30:50"), time(10,30,50))
+        self.assertEqual(normalize_time("10.30.50"), time(10,30,50))
+
+    def test_normalize_time_invalid(self):
+        with self.assertRaises(ValueError):
+            normalize_time("notatime")
+            normalize_time("")
+            normalize_time(None)
 
 if __name__ == '__main__':
     unittest.main()
