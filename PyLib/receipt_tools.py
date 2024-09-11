@@ -1,23 +1,7 @@
 import re
 from datetime import datetime, time
 from dateutil import parser
-from pydantic import BaseModel, Field
-from typing import List, Optional
-
-class PurchaseItem(BaseModel):
-    key: Optional[str]
-    text: Optional[str]
-    quantity: Optional[float]
-    price: Optional[float]
-
-class Purchase(BaseModel):
-    entity_id: Optional[int]
-    store_name: Optional[str]
-    store_address: Optional[str]
-    date: Optional[datetime]
-    subtotal: Optional[float]
-    total: Optional[float]
-    items: List[PurchaseItem] = Field(default_factory=list)
+from typing import List
 
 def get_field_value(json_data: dict, field: str):
     if field not in json_data:
@@ -39,7 +23,7 @@ def get_string_field_value(field: str, json_data: dict) -> str:
         raise TypeError(f"The value for '{field}' field is not a string.")
     return value
 
-def get_list_field_value(field: str, json_data: dict) -> list:
+def get_list_field_value(field: str, json_data: dict) -> List[dict]:
     value = get_valid_field_value(json_data, field)
     if not isinstance(value, list):
         raise TypeError(f"The value for '{field}' field is not a list.")
@@ -173,58 +157,7 @@ def validate_cuit(cuit: str) -> bool:
     
     return True
 
-def get_purchase(json_data: dict) -> Purchase:
-    entity_id = normalize_entity_id(get_string_field_value("entity_id", json_data))
-    store_name = get_string_field_value("store_name", json_data)
-    store_address = get_string_field_value("store_name", json_data)
+def get_purchase_date(json_data: dict) -> datetime:
     date = normalize_date(get_string_field_value("date", json_data), True, False)
-    purchase = Purchase(
-        entity_id = entity_id,
-        store_name = store_name,
-        store_address = store_address,
-        date = date,
-        subtotal=None,
-        total=None,
-    )
-    return purchase
-    
-if __name__ == '__main__':
-    purchase = get_purchase({
-        "store_name": "La Anonima Sucursal 45",
-        "store_addr": "Italia 500 - Puerto Madryn Provincia de Chubut",
-        "entity_id": "30-50673003-8",
-        "phone": "",
-        "date": "11-08-24",
-        "time": "10:04",
-        "subtotal": "$6725.60",
-        "svc": "",
-        "tax": "",
-        "total": "$6725.60",
-        "tips": "",
-        "discount": "",
-        "line_items": [
-            {
-                "item_key": "75010517538",
-                "item_name": "BRIQUETA CAR",
-                "item_value": "$3250,00",
-                "item_quantity": "1"
-            },
-            {
-                "item_key": "203708700000",
-                "item_name": "PAPA",
-                "item_value": "$945.00",
-                "item_quantity": "0.756"
-            },
-            {
-                "item_key": "206848200000",
-                "item_name": "CHORIZO PARR",
-                "item_value": "$5900.00",
-                "item_quantity": "0.468"
-            }
-        ]
-    }
-    )
-    print(purchase.entity_id)
-    print(purchase.store_name)
-    print(purchase.store_address)
-    print(purchase.date)
+    time = normalize_time(get_string_field_value("time", json_data))
+    return datetime.combine(date, time)

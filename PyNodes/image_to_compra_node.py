@@ -2,6 +2,8 @@ import torch
 import json
 import os
 import logging
+import PyLib.receipt_tools as rt
+from PyLib.model import Purchase, PurchaseItem
 from PIL import Image
 from pydantic import BaseModel
 from pydantic import ValidationError
@@ -33,6 +35,79 @@ class ImageToCompraNode:
         self.publisher = publisher
         self.input_queue = input_queue
 
+    def convert_data_to_purchase(self, json_data: dict) -> Purchase:
+        entity_id = None
+        try:
+            entity_id = rt.normalize_entity_id(rt.get_string_field_value("entity_id", json_data))
+        except Exception as e:
+            logging.warning(f"Could not recover the entity's id: {e}")
+        store_name = None
+        try:
+            store_name = rt.get_string_field_value("store_name", json_data)
+        except Exception as e:
+            logging.warning(f"Could not recover the store's name: {e}")
+        store_address = None
+        try:
+            store_address = rt.get_string_field_value("store_addr", json_data)
+        except Exception as e:
+            logging.warning(f"Could not recover the store's address: {e}")
+        total = None
+        try:
+            total = rt.normalize_value(rt.get_string_field_value("total", json_data))
+        except Exception as e:
+            logging.warning(f"Could not recover the purchase's total: {e}")
+        subtotal = None
+        try:
+            subtotal = rt.normalize_value(rt.get_string_field_value("subtotal", json_data))
+        except Exception as e:
+            logging.warning(f"Could not recover the purchase's subtotal: {e}")
+        date = None
+        try:
+            date = rt.get_purchase_date(json_data)
+        except Exception as e:
+            logging.warning(f"Could not recover the purchase's date: {e}")
+        purchase = Purchase(
+            entity_id = entity_id,
+            store_name = store_name,
+            store_address = store_address,
+            date = date,
+            subtotal = subtotal,
+            total = total,
+        )
+        items = []
+        try:
+            items = rt.get_list_field_value("line_items", json_data)
+        except Exception as e:
+            logging.warning(f"Could not recover the purchase's items: {e}")
+        for item in items:
+            key = None
+            try:
+                key = rt.normalize_product_key(rt.get_string_field_value("item_key", item))
+            except Exception as e:
+                logging.warning(f"Could not recover an item's key: {e}")
+            text = None
+            try:
+                text = rt.get_string_field_value("item_name", item)
+            except Exception as e:
+                logging.warning(f"Could not recover an item's text: {e}")
+            quantity = None
+            try:
+                quantity = rt.normalize_quantity(rt.get_string_field_value("item_quantity", item))
+            except Exception as e:
+                logging.warning(f"Could not recover an item's quantity: {e}")
+            value = None
+            try:
+                value = rt.normalize_value(rt.get_string_field_value("item_value", item))
+            except Exception as e:
+                logging.warning(f"Could not recover an item's value: {e}")
+            purchase.items.append(PurchaseItem(
+                key= key,
+                text= text,
+                quantity= quantity,
+                value= value,
+            ))
+        return purchase
+
     def read_receipt_image(self, image_path: str):
         """
         Generate text from an image using the trained model.
@@ -63,9 +138,10 @@ class ImageToCompraNode:
         return decoded_text
     
     def callback(self, message: ImageLocation):
-        result = self.read_receipt_image(message.path)
-        json_result = json.dumps(result, indent=4)
-        print(json_result)
+        json_data = self.read_receipt_image(message.path)
+        if not json_data or isinstance(json_data, dict):
+            print("error")
+        purchase = self.convert_data_to_purchase(json_data)
         
     def error_callback(self, error: Exception):        
         if isinstance(error, JSONDecodeError):

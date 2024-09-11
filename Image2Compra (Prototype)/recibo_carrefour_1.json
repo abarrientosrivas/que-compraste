@@ -1,0 +1,293 @@
+{
+    "store_name": "Carrefour",
+    "phone": "",
+    "date": "",
+    "time": "12/10.2006",
+    "subtotal": "",
+    "svc": "",
+    "tax": "",
+    "total": "$33952.65",
+    "tips": "",
+    "discount": "",
+    "line_items": [
+        {
+            "item_key": "",
+            "item_name": "P.V. No.:12609",
+            "item_value": "16:51:15",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "Caja 0005",
+            "item_value": "",
+            "item_quantity": ""
+        },
+        {
+            "item_key": "",
+            "item_name": "Almocon",
+            "item_value": "",
+            "item_quantity": ""
+        },
+        {
+            "item_key": "",
+            "item_name": "ATION EN ACETTE LOMITOS CARREFOUR IATA",
+            "item_value": "3980.00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "",
+            "item_name": "15x10.0-MP PUBLIO100",
+            "item_value": "-597.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "PATE TOME SHEET LATA X 90 ORS",
+            "item_value": "150.00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "",
+            "item_name": "2 X 70.00",
+            "item_value": "-231.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "179002002020202020201201201",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "AVREA SECAS REMOADAS CLASSIC LATA X.3",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "2 x 579.00 2.00lv010.01",
+            "item_value": "1158.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "15xd.0-MP PUBLIC100",
+            "item_value": "-173.70",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "AIMIDONDO DE MA12 MA12 MA12MA BOLSA X 510GRS",
+            "item_value": "2259.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "15xdto-EP PUBLIC00",
+            "item_value": "-338.85",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "779400007468",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "LECHE DELACTOSADA UHT LAS TRES N.NAS X",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "4 x 1900.00 (21.00%)",
+            "item_value": "7600.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "2d060xM- CRF-LAS",
+            "item_value": "-1900.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "7983338020221",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "Hogar Bazar",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "PABELA MAPA PLISSE SATINADO-",
+            "item_value": "4890.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "1\u00d7 849.000.00",
+            "item_value": "4890.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "15xdto-MP PUBLICO",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "J8BON LIUORA PARA DILUTR N BOTEILA SKI",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "1\u00d7 979.00 (21.00%)",
+            "item_value": "9793.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "35Xuni-SKI-P-LABONA",
+            "item_value": "3408.66",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "PAPELA MOTEANCOULS BLANGOUS IND FELIPIA",
+            "item_value": "4400.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "15xdto--EMP PUBLICO",
+            "item_value": "8660.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "79918200007384",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "DETERGENITE ULTRA MARISTRA MEGISTRALBOT",
+            "item_value": "2529.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "35Xuni-NAGISTRA-2",
+            "item_value": "-885.15",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "7500435X1-RAGITAL",
+            "item_value": "-447.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "LIMITAOOREN GEL CLAVANDINA CIF 513G",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": {
+                "item_key": ""
+            },
+            "item_value": "-997.50",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "7991820007338084",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "PETERGENITE ULTRA MARISTRALBOT",
+            "item_value": "2529.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "35Xuni-NAGISTRA-2",
+            "item_value": "-885.15",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "7500435X1-NAGISTRA-2",
+            "item_value": "-447.00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "",
+            "item_name": "7500432X-1647",
+            "item_value": "-44.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "LIMITAOOREN GEL CLAVANDINA CIF 513G",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": {
+                "item_key": ""
+            },
+            "item_value": "-997.50",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "7991820007338084",
+            "item_value": "",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "Perfumeria",
+            "item_value": "",
+            "item_quantity": ""
+        },
+        {
+            "item_key": "",
+            "item_name": "JABON TOCADOR GILCERINA CARREFOUR 3 X 90",
+            "item_value": "",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "",
+            "item_name": "3Xuni-NAGISTRA-2",
+            "item_value": "-290.00",
+            "item_quantity": "2"
+        },
+        {
+            "item_key": "",
+            "item_name": "15%dto-EMP PUBLICO",
+            "item_value": "-447.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "1798159716004",
+            "item_value": "$43725.00",
+            "item_quantity": "1"
+        }
+    ]
+}

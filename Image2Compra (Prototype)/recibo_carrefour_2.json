@@ -1,0 +1,45 @@
+{
+    "store_name": "Carrefour",
+    "store_addr": "165 PUERTO MADRYN",
+    "phone": "",
+    "date": "13/06/24",
+    "time": "11:42:31",
+    "subtotal": "$13168.40",
+    "svc": "",
+    "tax": "",
+    "total": "$13168.40",
+    "tips": "",
+    "discount": "",
+    "line_items": [
+        {
+            "item_key": "",
+            "item_name": "LEGHE CLASSICA 3% FORTIFICADA UATLAS 3 NI",
+            "item_value": "6800.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "779836820028 GARBANZOS SECOS REMOJADOS INCA LATA X 35",
+            "item_value": "",
+            "item_quantity": ""
+        },
+        {
+            "item_key": "",
+            "item_name": "2do80%-INCA-CONSE 1",
+            "item_value": "-2136.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "7790790120325 ARE VIAS SECAS REMOJAD S SAL INALPA VIDA",
+            "item_value": "5274.00",
+            "item_quantity": "1"
+        },
+        {
+            "item_key": "",
+            "item_name": "2do80%-INA-PA-4",
+            "item_value": "-21009.60",
+            "item_quantity": "1"
+        }
+    ]
+}
