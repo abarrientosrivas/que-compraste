@@ -52,8 +52,8 @@ def normalize_date(date_str: str, day_first: bool, year_first: bool) -> datetime
     except ValueError:
         raise ValueError("Invalid date format")
     
-def normalize_quantity(amount_string: str) -> float:
-    match = re.search(r'([0-9]*[.,]?[0-9]+)', amount_string)
+def normalize_quantity(quantity_string: str) -> float:
+    match = re.search(r'([0-9]*[.,]?[0-9]+)', quantity_string)
     if not match:
         raise ValueError("Invalid number format")
     numeric_part = match.group(1)
@@ -62,6 +62,22 @@ def normalize_quantity(amount_string: str) -> float:
         return float(normalized_string)
     except ValueError:
         raise ValueError("Invalid number format")
+    
+def normalize_value(value_string: str) -> float:
+    value_string = re.sub(r'[^\d,.-]', '', value_string) # keep numbers, commas and dots
+    if not value_string:
+        raise ValueError(f"Invalid value format")
+
+    if "," in value_string and "." in value_string:
+        value_string = value_string.replace('.', '')
+        value_string = value_string.replace(',', '.')
+    elif "," in value_string:
+        value_string = value_string.replace(',', '.')
+
+    try:
+        return float(value_string)
+    except ValueError:
+        raise ValueError(f"Invalid value format")
     
 def normalize_entity_id(entity_id_string: str) -> int:
     match = re.search(r'[0-9-]+', entity_id_string)
