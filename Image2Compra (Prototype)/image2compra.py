@@ -4,7 +4,13 @@ import argparse
 import os
 import json
 from PIL import Image
+from dotenv import load_dotenv
 from transformers import DonutProcessor, VisionEncoderDecoderModel
+from huggingface_hub import HfFolder
+
+load_dotenv()
+hf_token = os.getenv('HF_TOKEN')
+HfFolder.save_token(hf_token)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(f"Device is: {device}\n")
