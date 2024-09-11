@@ -1,6 +1,23 @@
 import re
 from datetime import datetime
 from dateutil import parser
+from pydantic import BaseModel
+from typing import List
+
+class PurchaseItem(BaseModel):
+    key: str
+    text: str
+    quantity: float
+    price: float
+
+class Purchase(BaseModel):
+    entity_id: int
+    store_name: str
+    store_address: str
+    date: datetime
+    subtotal: float
+    total: float
+    items: List[Purchase_Item]
 
 def get_field_value(json_data: dict, field: str):
     if field not in json_data:
