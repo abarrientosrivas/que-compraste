@@ -11,8 +11,11 @@ from json.decoder import JSONDecodeError
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 from PyMessaging.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
 from dotenv import load_dotenv
+from huggingface_hub import HfFolder
 
 load_dotenv()
+hf_token = os.getenv('HF_TOKEN')
+HfFolder.save_token(hf_token)
 
 class ImageLocation(BaseModel):
     path: str
