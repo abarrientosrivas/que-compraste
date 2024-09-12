@@ -34,7 +34,7 @@
                 text-align: center;
                 font-size: 16px;
                 color: #d85f7d;
-                margin-bottom: 20px;
+                margin-bottom: -5x;
                 position: relative;
                 overflow: hidden;
                 box-sizing: border-box;
@@ -67,6 +67,12 @@
                 margin-top: auto;
                 padding-bottom: 20px;
                 font-size: 14px;
+            }
+            .file-warning {
+                color: #6c757d;
+                font-size: 0.75rem;
+                margin-top: -7px;
+                margin-bottom: 4px;
             }
             @media (max-width: 600px) {
                 .container, .drop-area {
@@ -101,8 +107,9 @@
     <body>
         <div class="container">
             <h1>Subí tus recibos</h1>
-            <p>Tus imágenes serán guardadas en nuestros servidores de forma anónima y se utilizarán para entrenar nuestro lector de recibos de compras. </p>
+            <p>Tus documentos e imágenes serán guardados en nuestros servidores de forma anónima y se utilizarán para entrenar nuestro lector de recibos de compras. </p>
             <p><b>¡Muchas gracias!</b></p>
+            <p class="file-warning">Archivos mayores a 10MB o que no sean imagen/PDF serán ignorados.</p>
             <form action="/upload" method="post" enctype="multipart/form-data"
                     hx-post="/upload"
                     hx-target="#response"
@@ -110,8 +117,8 @@
                     hx-trigger="change"
                     hx-encoding="multipart/form-data">
                 <div class="drop-area">
-                    Arrastrá tus imágenes acá o hacé click para seleccionarlas
-                    <input type="file" name="images" multiple accept="image/*">
+                    Arrastrá tus imágenes y PDFs acá o hacé click para seleccionarlos
+                    <input type="file" name="files" multiple accept="image/*,application/pdf">
                 </div>
             </form>
             <div id="response"></div>
