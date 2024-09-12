@@ -63,7 +63,7 @@ def generate_filename(sender_ip: str, original_filename: str):
 async def favicon():
     return FileResponse('icon.ico')
 
-@app.get("/receipt")
+@app.get("/recibos")
 async def receipt(request: Request):
     return templates.TemplateResponse("receipt.html", {"request": request})
 
@@ -110,4 +110,4 @@ async def upload_files(request: Request, files: List[UploadFile] = File(...)):
 
 @app.get("/{path:path}")
 async def redirect_to_receipt(path: str):
-    return RedirectResponse(url="/receipt")
+    return RedirectResponse(url="/recibos")
