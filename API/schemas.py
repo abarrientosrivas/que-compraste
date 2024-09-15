@@ -2,134 +2,43 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
-
-# --------------------
-# Entity Schemas
-# --------------------
-class EntityBase(BaseModel):
-    identification_number: int
-    name: str
-
-    class Config:
-        orm_mode = True
-
-
-class EntityCreate(EntityBase):
-    pass
-
-
-class Entity(EntityBase):
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime] = None
-
-
-# --------------------
-# Establishment Schemas
-# --------------------
-class EstablishmentBase(BaseModel):
-    name: str
-    address: str
-
-    class Config:
-        orm_mode = True
-
-
-class EstablishmentCreate(EstablishmentBase):
-    pass
-
-
-class Establishment(EstablishmentBase):
-    id: int
-    entity_id: int
-    entity: Entity
-    created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime] = None
-
-
-# --------------------
-# Product Schemas
-# --------------------
-class ProductBase(BaseModel):
-    name: str
-    description: str
-
-    class Config:
-        orm_mode = True
-
-
-class ProductCreate(ProductBase):
-    pass
-
-
-class Product(ProductBase):
-    id: int
-    entity_id: int
-    entity: Entity
-    created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime] = None
-
-
-# --------------------
-# Currency Schemas
-# --------------------
-class CurrencyBase(BaseModel):
-    code: str
-    name: str
-    symbol: str
-
-    class Config:
-        orm_mode = True
-
-
-class CurrencyCreate(CurrencyBase):
-    pass
-
-
-class Currency(CurrencyBase):
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime] = None
-
-
 # --------------------
 # PurchaseItem Schemas
 # --------------------
 class PurchaseItemBase(BaseModel):
-    text: str
-    quantity: Optional[float]
-    value: Optional[float]
+    read_product_key: Optional[str] = None
+    read_product_text: Optional[str] = None
+    quantity: Optional[float] = None
+    value: Optional[float] = None
+    total: Optional[float] = None
 
     class Config:
         orm_mode = True
 
 
 class PurchaseItemCreate(PurchaseItemBase):
-    product_id: int
-    currency_id: int
+    pass
 
 
 class PurchaseItem(PurchaseItemBase):
     id: int
     purchase_id: int
-    product: Product
-    currency: Currency
-    created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime] = None
 
 
 # --------------------
 # Purchase Schemas
 # --------------------
 class PurchaseBase(BaseModel):
+    read_entity_name: Optional[str] = None
+    read_entity_branch: Optional[str] = None
+    read_entity_location: Optional[str] = None
+    read_entity_address: Optional[str] = None
+    read_entity_identification: Optional[str] = None
+    read_entity_phone: Optional[str] = None
     date: datetime
-    subtotal: Optional[float]
-    discount: Optional[float]
+    subtotal: Optional[float] = None
+    discount: Optional[float] = None
+    tips: Optional[float] = None
     total: float
 
     class Config:
@@ -137,16 +46,12 @@ class PurchaseBase(BaseModel):
 
 
 class PurchaseCreate(PurchaseBase):
-    establishment_id: Optional[int]
-    currency_id: Optional[int]
-    items: List[PurchaseItemCreate]
+    items: List[PurchaseItemCreate] = Field(default_factory=list)
 
 
 class Purchase(PurchaseBase):
     id: int
-    establishment: Optional[Establishment]
-    currency: Optional[Currency]
-    items: List[PurchaseItem]
+    items: List[PurchaseItem] = Field(default_factory=list)
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
