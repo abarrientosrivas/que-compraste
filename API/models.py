@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, ForeignKey, Text, func
+    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event
 )
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -36,3 +36,14 @@ class PurchaseItem(Base):
     total = Column(Float, nullable=True)
 
     purchase = relationship('Purchase', back_populates='items')
+
+def update_purchase_updated_at(mapper, connection, target):
+    connection.execute(
+        Purchase.__table__.update()
+        .where(Purchase.id == target.purchase_id)
+        .values(updated_at=func.now())
+    )
+
+event.listen(PurchaseItem, 'after_insert', update_purchase_updated_at)
+event.listen(PurchaseItem, 'after_update', update_purchase_updated_at)
+event.listen(PurchaseItem, 'after_delete', update_purchase_updated_at)
