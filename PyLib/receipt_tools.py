@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, time
-from dateutil import parser
+from dateutil import parser, tz
 from typing import List
 
 def get_field_value(json_data: dict, field: str):
@@ -29,10 +29,13 @@ def get_list_field_value(field: str, json_data: dict) -> List[dict]:
         raise TypeError(f"The value for '{field}' field is not a list.")
     return value
 
-def normalize_date(date_str: str, day_first: bool, year_first: bool) -> datetime:
+def normalize_date(date_str: str, day_first: bool, year_first: bool, timezone=tz.tzlocal()) -> datetime:
     date_str = date_str.strip()
     try:
-        return parser.parse(date_str, dayfirst=day_first, yearfirst=year_first)
+        dt = parser.parse(date_str, dayfirst=day_first, yearfirst=year_first)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone)
+        return dt
     except ValueError:
         raise ValueError("Invalid date format")
     
@@ -158,6 +161,9 @@ def validate_cuit(cuit: str) -> bool:
     return True
 
 def get_purchase_date(json_data: dict) -> datetime:
-    date = normalize_date(get_string_field_value("date", json_data), True, False)
-    time = normalize_time(get_string_field_value("time", json_data))
-    return datetime.combine(date, time)
+    default_timezone = tz.gettz('America/Argentina/Buenos_Aires') # TODO: provide timezone
+    date = normalize_date(get_string_field_value("date", json_data), True, False, default_timezone)
+    time_part = normalize_time(get_string_field_value("time", json_data))
+    combined_datetime = datetime.combine(date.date(), time_part, tzinfo=date.tzinfo)
+    utc_datetime = combined_datetime.astimezone(tz.UTC)
+    return utc_datetime
