@@ -13,7 +13,7 @@ class PurchaseItemBase(BaseModel):
     total: Optional[float] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PurchaseItemCreate(PurchaseItemBase):
@@ -42,11 +42,11 @@ class PurchaseBase(BaseModel):
     total: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PurchaseCreate(PurchaseBase):
-    date: Optional[datetime] = None
+    date: Optional[datetime]
     total: Optional[float] = None
     items: List[PurchaseItemCreate] = Field(default_factory=list)
 

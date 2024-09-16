@@ -13,7 +13,7 @@ async def root():
     return {"message": "Hello World"}
 
 @app.post("/purchases/", response_model=schemas.Purchase)
-def create_entity(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
+def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
     calculated_total = purchase.total
     calculated_date = purchase.date or datetime.now(UTC)
 
@@ -89,6 +89,6 @@ def create_entity(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db
     return db_entity
 
 @app.get("/purchases/", response_model=List[schemas.Purchase])
-def read_entity(db: Session = Depends(get_db)):
+def get_purchases(db: Session = Depends(get_db)):
     db_entity = db.query(models.Purchase).all()
     return db_entity
