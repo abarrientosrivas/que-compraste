@@ -251,7 +251,7 @@ if __name__ == '__main__':
         endpoint_url)
 
     try:
-        logging.error("Node succesfully initialized")
+        logging.info("Node succesfully initialized")
         node.start()
     except KeyboardInterrupt:
         node.stop()
