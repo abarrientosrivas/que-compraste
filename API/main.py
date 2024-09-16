@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .dependencies import get_db
 from typing import List
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 app = FastAPI()
 
@@ -15,7 +15,7 @@ async def root():
 @app.post("/purchases/", response_model=schemas.Purchase)
 def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
     calculated_total = purchase.total
-    calculated_date = purchase.date or datetime.now(UTC)
+    calculated_date = purchase.date or datetime.now(timezone.utc)
 
     purchase.items = [
         item for item in purchase.items
