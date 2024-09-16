@@ -249,7 +249,9 @@ if __name__ == '__main__':
         broker.get_publisher(), 
         broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 
         endpoint_url)
+
     try:
+        logging.error("Node succesfully initialized")
         node.start()
     except KeyboardInterrupt:
         node.stop()
