@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from .dependencies import get_db
 from typing import List
 from datetime import datetime, timezone
+import logging
 
 app = FastAPI()
 
@@ -93,19 +94,63 @@ def get_purchases(db: Session = Depends(get_db)):
     db_entity = db.query(models.Purchase).all()
     return db_entity
 
-@app.get("/categories/dumb")
-def set_categories(db: Session = Depends(get_db)):
-    db_entity = models.Category(
-        name="purchase.read_entity_name",
-    )    
-    db.add(db_entity)
-    db_entity = models.Category(
-    )    
-    db.add(db_entity)
-    db.commit()
-    db.refresh(db_entity)
+def category_from_string(category_str: str) -> models.Category | None:
+    category_str = category_str.strip()
+    if not category_str:
+        return None
+    code_str = category_str.split('-')[0].strip()
+    if '>' in category_str:
+        name = category_str.split('>').pop().strip()
+    else:
+        name = category_str.split('-')[1].strip()
+    if code_str and name and code_str.isdigit():
+        code = int(code_str)
+        return models.Category(code=code, name=name, original_text=category_str)
+    return None
+
+@app.post("/categories/")
+def set_categories(categories: List[str], db: Session = Depends(get_db)):
+    try:
+        with db.begin():
+            existing_categories = db.query(models.Category).with_for_update().all()
+            categories_by_code = {category.code: category for category in existing_categories}
+            categories_by_string = {
+                category.original_text.split('-', 1)[1].strip(): category for category in existing_categories if '-' in category.original_text
+            }
+
+            for category_str in categories:
+                category = category_from_string(category_str)
+                if not category:
+                    continue
+
+                existing = categories_by_code.get(category.code)
+                if existing:
+                    categories_by_string.pop(existing.original_text.split('-', 1)[1].strip())
+                    existing.name = category.name
+                    existing.description = category.description
+                    existing.original_text = category.original_text
+                    category = existing
+                    categories_by_string[category.original_text.split('-', 1)[1].strip()] = category
+                else:
+                    db.add(category)
+                    categories_by_code[category.code] = category
+                    categories_by_string[category.original_text.split('-', 1)[1].strip()] = category
+
+                if " > " in category_str:
+                    parent_str = category_str.split('-', 1)[1].strip()
+                    parent_str = parent_str.rsplit(' > ', 1)[0].strip()
+                    parent_category = categories_by_string.get(parent_str)
+                    if parent_category:
+                        category.parent = parent_category
+
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error processing categories: {str(e)}")
 
 @app.get("/categories/", response_model=List[schemas.Category])
 def get_categories(db: Session = Depends(get_db)):
-    db_entity = db.query(models.Category).all()
-    return db_entity
+    entities = db.query(models.Category).all()
+    for entity in entities:
+        entity.children = []
+    return entities
