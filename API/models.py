@@ -37,7 +37,21 @@ class PurchaseItem(Base):
 
     purchase = relationship('Purchase', back_populates='items')
 
-def update_purchase_updated_at(mapper, connection, target):
+class Category(Base):
+    __tablename__ = 'categories'
+    id = Column(Integer, primary_key=True, index=True)
+    parent_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
+    code = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+
+    parent = relationship('Category', remote_side=[id], back_populates='children')
+    children = relationship('Category', back_populates='parent') 
+
+def update_purchase_updated_at(_, connection, target):
     connection.execute(
         Purchase.__table__.update()
         .where(Purchase.id == target.purchase_id)

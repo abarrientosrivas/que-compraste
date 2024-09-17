@@ -92,3 +92,20 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
 def get_purchases(db: Session = Depends(get_db)):
     db_entity = db.query(models.Purchase).all()
     return db_entity
+
+@app.get("/categories/dumb")
+def set_categories(db: Session = Depends(get_db)):
+    db_entity = models.Category(
+        name="purchase.read_entity_name",
+    )    
+    db.add(db_entity)
+    db_entity = models.Category(
+    )    
+    db.add(db_entity)
+    db.commit()
+    db.refresh(db_entity)
+
+@app.get("/categories/", response_model=List[schemas.Category])
+def get_categories(db: Session = Depends(get_db)):
+    db_entity = db.query(models.Category).all()
+    return db_entity

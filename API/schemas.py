@@ -57,3 +57,28 @@ class Purchase(PurchaseBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Category Schemas
+# --------------------
+class CategoryBase(BaseModel):
+    code: int
+    name: str
+    description: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class Category(CategoryBase):
+    id: int
+    parent: Optional['Category'] = None
+    children: List['Category'] = []
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
