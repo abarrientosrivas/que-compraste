@@ -41,9 +41,10 @@ class Category(Base):
     __tablename__ = 'categories'
     id = Column(Integer, primary_key=True, index=True)
     parent_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
-    code = Column(String(255), nullable=False)
+    code = Column(Integer, nullable=False, unique=True)
     name = Column(String(255), nullable=False)
     description = Column(String(255), nullable=True)
+    original_text = Column(String(255), nullable=False, unique=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)

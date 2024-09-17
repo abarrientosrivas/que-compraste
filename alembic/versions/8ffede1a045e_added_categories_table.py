@@ -1,8 +1,8 @@
-"""added categories
+"""added categories table
 
-Revision ID: 72b327bce580
+Revision ID: 8ffede1a045e
 Revises: 9492072725ce
-Create Date: 2024-09-17 14:27:38.055760
+Create Date: 2024-09-17 16:50:13.364120
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '72b327bce580'
+revision: str = '8ffede1a045e'
 down_revision: Union[str, None] = '9492072725ce'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,14 +23,17 @@ def upgrade() -> None:
     op.create_table('categories',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('parent_id', sa.Integer(), nullable=True),
-    sa.Column('code', sa.String(length=255), nullable=False),
+    sa.Column('code', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('original_text', sa.String(length=255), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['parent_id'], ['categories.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('code'),
+    sa.UniqueConstraint('original_text')
     )
     op.create_index(op.f('ix_categories_id'), 'categories', ['id'], unique=False)
     # ### end Alembic commands ###
