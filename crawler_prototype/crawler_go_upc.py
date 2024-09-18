@@ -13,18 +13,15 @@ def create_driver():
     driver = webdriver.Chrome(options=chrome_options)
     return driver
 
-def get_page_source(driver, url):
-    driver.get(url)
-    return driver.page_source
-
-def main(product_code):
-    driver = create_driver()
+def get_page_source(product_code):
     try:
+        driver = create_driver()
         search_url = f'https://go-upc.com/search?q={product_code}'
-        html_content = get_page_source(driver, search_url)
-        return html_content
+        driver.get(search_url)
+        return driver.page_source
     finally:
         driver.quit()
+    
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -33,5 +30,5 @@ if __name__ == "__main__":
 
     product_code = sys.argv[1]
 
-    html_content = main(product_code)
+    html_content = get_page_source(product_code)
     print(html_content)
