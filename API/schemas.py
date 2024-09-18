@@ -65,7 +65,8 @@ class Purchase(PurchaseBase):
 class CategoryBase(BaseModel):
     code: int
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
+    original_text: str
 
     class Config:
         from_attributes = True
@@ -77,8 +78,9 @@ class CategoryCreate(CategoryBase):
 
 class Category(CategoryBase):
     id: int
+    parent_id: Optional[int] = None
     parent: Optional['Category'] = None
-    children: List['Category'] = []
+    children: List['Category'] = Field(default_factory=list)
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None

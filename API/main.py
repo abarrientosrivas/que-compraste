@@ -1,7 +1,7 @@
 from . import schemas
 from . import models
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, noload
 from .dependencies import get_db
 from typing import List
 from datetime import datetime, timezone
@@ -148,9 +148,7 @@ def set_categories(categories: List[str], db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Error processing categories: {str(e)}")
 
-@app.get("/categories/", response_model=List[schemas.Category])
+@app.get("/categories/", response_model=List[schemas.Category], response_model_exclude_none=True)
 def get_categories(db: Session = Depends(get_db)):
-    entities = db.query(models.Category).all()
-    for entity in entities:
-        entity.children = []
+    entities = db.query(models.Category).options(noload(models.Category.children), noload(models.Category.parent)).all()
     return entities
