@@ -1,11 +1,33 @@
 from . import schemas
 from . import models
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Path
 from sqlalchemy.orm import Session, noload
 from .dependencies import get_db
 from typing import List
 from datetime import datetime, timezone
 import logging
+
+def calculate_purchase_total(purchase: schemas.PurchaseCreate) -> float | None:    
+    if purchase.total is not None:
+        return purchase.total
+    if purchase.subtotal is not None:
+        discount = purchase.discount or 0
+        tips = purchase.tips or 0
+        return purchase.subtotal - discount - tips
+    if purchase.items:
+        total_from_items = 0
+        empty_flag = True
+        for item in purchase.items:
+            if item.total is not None:
+                empty_flag = False
+                total_from_items += item.total
+            elif item.value is not None:
+                empty_flag = False
+                quantity_mod = item.quantity or 1
+                total_from_items += item.value * quantity_mod
+        if not empty_flag:
+            return total_from_items
+    return None
 
 app = FastAPI()
 
@@ -15,9 +37,6 @@ async def root():
 
 @app.post("/purchases/", response_model=schemas.Purchase)
 def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
-    calculated_total = purchase.total
-    calculated_date = purchase.date or datetime.now(timezone.utc)
-
     purchase.items = [
         item for item in purchase.items
         if not all(
@@ -31,26 +50,10 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             ]
         )
     ]
-
-    if not calculated_total:
-        if purchase.subtotal:
-            discount = purchase.discount or 0
-            tips = purchase.tips or 0
-            calculated_total = purchase.subtotal - discount - tips
-        elif purchase.items:
-            total_from_items = 0
-            empty_flag = True
-            for item in purchase.items:
-                if item.total is not None:
-                    empty_flag = False
-                    total_from_items += item.total
-                elif item.value is not None:
-                    empty_flag = False
-                    quantity_mod = item.quantity or 1
-                    total_from_items += item.value * quantity_mod
-            if not empty_flag:
-                calculated_total = total_from_items
     
+    calculated_total = calculate_purchase_total(purchase)
+    calculated_date = purchase.date or datetime.now(timezone.utc)
+
     if calculated_total is None:
         raise HTTPException(
             status_code=400,
@@ -88,6 +91,25 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
     db.commit()
     db.refresh(db_entity)
     return db_entity
+
+@app.put("/purchases/{purchase_id}", response_model=schemas.Purchase)
+def update_purchase(
+    purchase: schemas.PurchaseBase,
+    db: Session = Depends(get_db),
+    purchase_id: int = Path(..., description="The ID of the purchase to update")
+):
+    db_purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
+    if not db_purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    
+    purchase_data = purchase.model_dump(exclude_unset=True)
+    for key, value in purchase_data.items():
+        if key != "items":
+            setattr(db_purchase, key, value)
+
+    db.commit()
+    db.refresh(db_purchase)
+    return db_purchase
 
 @app.get("/purchases/", response_model=List[schemas.Purchase])
 def get_purchases(db: Session = Depends(get_db)):
