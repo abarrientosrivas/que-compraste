@@ -7,17 +7,17 @@ from typing import List
 from datetime import datetime, timezone
 import logging
 
-def calculate_purchase_total(purchase: schemas.PurchaseCreate) -> float | None:    
+def calculate_purchase_total(purchase: schemas.PurchaseBase, items: List[schemas.PurchaseItemBase]) -> float | None:    
     if purchase.total is not None:
         return purchase.total
     if purchase.subtotal is not None:
         discount = purchase.discount or 0
         tips = purchase.tips or 0
         return purchase.subtotal - discount - tips
-    if purchase.items:
+    if items:
         total_from_items = 0
         empty_flag = True
-        for item in purchase.items:
+        for item in items:
             if item.total is not None:
                 empty_flag = False
                 total_from_items += item.total
@@ -51,13 +51,13 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
         )
     ]
     
-    calculated_total = calculate_purchase_total(purchase)
+    calculated_total = calculate_purchase_total(purchase, purchase.items)
     calculated_date = purchase.date or datetime.now(timezone.utc)
 
     if calculated_total is None:
         raise HTTPException(
             status_code=400,
-            detail="The purchase total could not be calculated."
+            detail="The purchase's total could not be calculated."
         )
 
     db_entity = models.Purchase(
@@ -94,7 +94,7 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
 
 @app.put("/purchases/{purchase_id}", response_model=schemas.Purchase)
 def update_purchase(
-    purchase: schemas.PurchaseBase,
+    purchase: schemas.PurchaseUpdate,
     db: Session = Depends(get_db),
     purchase_id: int = Path(..., description="The ID of the purchase to update")
 ):
@@ -103,9 +103,13 @@ def update_purchase(
         raise HTTPException(status_code=404, detail="Purchase not found")
     
     purchase_data = purchase.model_dump(exclude_unset=True)
+    if "total" in purchase_data and purchase_data["total"] is None:
+        purchase_data["total"] = calculate_purchase_total(purchase, db_purchase.items)
+        if purchase_data["total"] is None:
+            raise HTTPException(status_code=400, detail="The purchase's total could not be calculated.")
+    
     for key, value in purchase_data.items():
-        if key != "items":
-            setattr(db_purchase, key, value)
+        setattr(db_purchase, key, value)
 
     db.commit()
     db.refresh(db_purchase)

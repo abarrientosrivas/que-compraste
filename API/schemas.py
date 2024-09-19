@@ -46,9 +46,14 @@ class PurchaseBase(BaseModel):
 
 
 class PurchaseCreate(PurchaseBase):
-    date: Optional[datetime]
+    date: Optional[datetime] = None
     total: Optional[float] = None
     items: List[PurchaseItemCreate] = Field(default_factory=list)
+    
+
+class PurchaseUpdate(PurchaseBase):
+    date: Optional[datetime] = None
+    total: Optional[float] = None
 
 
 class Purchase(PurchaseBase):
