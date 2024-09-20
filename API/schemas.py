@@ -93,3 +93,29 @@ class Category(CategoryBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Product Schemas
+# --------------------
+class ProductBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    read_category: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+    
+
+class PurchaseUpdate(PurchaseBase):
+    name: Optional[str] = None
+    category_id: Optional[int] = None
+
+
+class Product(ProductBase):
+    id: int
+    category_id: Optional[int] = None
+    category: Optional[Category] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
