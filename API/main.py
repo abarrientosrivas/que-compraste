@@ -1,7 +1,7 @@
 from . import schemas
 from . import models
 from fastapi import FastAPI, Depends, HTTPException, Path
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session, noload
 from .dependencies import get_db
 from typing import List, Optional
@@ -35,10 +35,6 @@ app = FastAPI()
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse('API/icon.ico')
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
 
 @app.post("/purchases/", response_model=schemas.Purchase)
 def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
@@ -217,3 +213,7 @@ def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
         query = query.filter(models.Category.code == code)
     entities = query.all()
     return entities
+
+@app.get("/{path:path}")
+async def redirect_to_receipt(_: str):
+    return RedirectResponse(url="/recibos/")
