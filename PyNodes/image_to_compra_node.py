@@ -3,13 +3,9 @@ import sys
 import os
 import logging
 import PyLib.receipt_tools as rt
-import requests
-import time
 import threading
 import argparse
 import logging
-from requests import Response
-from requests.exceptions import ConnectionError, Timeout
 from API.schemas import PurchaseCreate, PurchaseItemCreate
 from PIL import Image
 from pydantic import BaseModel, ValidationError
@@ -18,7 +14,6 @@ from transformers import DonutProcessor, VisionEncoderDecoderModel
 from PyLib import typed_messaging, request_tools
 from dotenv import load_dotenv
 from huggingface_hub import HfFolder
-from threading import Event
 
 load_dotenv()
 hf_token = os.getenv('HF_TOKEN')
@@ -34,26 +29,6 @@ def load_and_preprocess_image(image_path: str, processor):
     image = Image.open(image_path).convert("RGB")
     pixel_values = processor(image, return_tensors="pt").pixel_values
     return pixel_values
-
-def send_request_with_retries(url: str, json_data, stop_event: Event) -> Response:
-    wait_times = [0, 5, 10, 15, 30, 45, 60]
-    retry_count = 0
-
-    while not stop_event.is_set():
-        try:
-            return requests.post(url, json=json_data)
-
-        except (ConnectionError, Timeout) as e:
-            if retry_count < len(wait_times):
-                wait_time = wait_times[retry_count]
-            else:
-                wait_time = 60
-
-            print(f"Connection failed: {e}. Retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
-            retry_count += 1
-    logging.warning("Stop event set before request could complete.")
-    raise Exception("Operation cancelled by user.")
 
 class ImageToCompraNode:
     def __init__(self, consumer: typed_messaging.PydanticQueueConsumer, publisher: typed_messaging.PydanticExchangePublisher, input_queue: str, output_endpoint: str):
@@ -242,7 +217,7 @@ if __name__ == '__main__':
     LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
     
     parser = argparse.ArgumentParser(description="Product classifier service.")
-    parser.add_argument('--logging', default='WARNING', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
+    parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
     broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
     args = parser.parse_args()
 

@@ -81,11 +81,12 @@ def describe_product(product: schemas.Product) -> str:
     return f"{product_str} {description_str}"
 
 class ProductClassifierNode:
-    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str, categories_endpoint: str):
+    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str, categories_endpoint: str, products_endpoint: str):
         self.consumer = consumer
         self.publisher = publisher
         self.input_queue = input_queue
         self.categories_endpoint = categories_endpoint
+        self.products_endpoint = products_endpoint
         self.stop_event = threading.Event()
         client = chromadb.PersistentClient(path=os.getenv("TAXONOMY_CHROMA_PATH"))
         try:
@@ -113,14 +114,27 @@ class ProductClassifierNode:
         if response is None:
             raise Exception("No response")
         if response.status_code == 200:
-            categories = [schemas.Category(**item) for item in response.json()]
-            if not categories:
-                logging.error(f"Failed to retrieve category with code {category_code}. Server response was empty.")
-                return
             logging.info(f"Category with code {category_code} retrieved successfully")
-            logging.info(f"Assigned category: {categories[0].original_text}")
         else:
             logging.error(f"Failed to retrieve category. Status code: {response.status_code}. Server response: {response.text}")
+            return
+        
+        categories = [schemas.Category(**item) for item in response.json()]
+        if not categories:
+            logging.error(f"Failed to retrieve category with code {category_code}. Server response was empty.")
+            return
+        logging.info(f"Assigned category: {categories[0].original_text}")
+        
+        update_product = schemas.ProductUpdate(category_id=categories[0].id)
+        update_product_data = update_product.model_dump(mode='json')
+        response = request_tools.send_request_with_retries("put", f"{self.products_endpoint}{message.id}", update_product_data, stop_event=self.stop_event)
+        if response is None:
+            raise Exception("No response")
+        if response.status_code == 200:
+            logging.info(f"Product with id {message.id} updated successfully")
+        else:
+            logging.error(f"Failed to update product. Status code: {response.status_code}. Server response: {response.text}")
+            return
 
     def error_callback(self, error: Exception):        
         if isinstance(error, ValueError):
@@ -144,7 +158,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Product classifier service.")
     parser.add_argument('--init', action='store_true', help='Initialize taxonomy synchronization')
-    parser.add_argument('--logging', default='WARNING', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
+    parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
     parser.add_argument('file_path', type=str, nargs='?', help='The path to the product taxonomy text file (required if --init is used)')
     parser.add_argument('product_description', type=str, nargs='?', help='Description of the product to classify (used if --init is not present)')
     args = parser.parse_args()
@@ -159,14 +173,20 @@ if __name__ == '__main__':
         broker = PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
         categories_endpoint = os.getenv('CATEGORIES_ENDPOINT')
         if not categories_endpoint:
-            logging.error("Endpoint URL was not provided")
+            logging.error("Categories endpoint URL was not provided")
+            sys.exit(1)
+            
+        products_endpoint = os.getenv('PRODUCTS_ENDPOINT')
+        if not products_endpoint:
+            logging.error("Products endpoint URL was not provided")
             sys.exit(1)
 
         node = ProductClassifierNode(
             broker.get_consumer(), 
             broker.get_publisher(), 
             broker.ensure_queue(os.getenv('PRODUCT_CLASSIFIER_INPUT_QUEUE', '')), 
-            categories_endpoint)
+            categories_endpoint,
+            products_endpoint)
 
         try:
             logging.info("Node succesfully initialized")

@@ -153,6 +153,15 @@ def category_from_string(category_str: str) -> models.Category | None:
         return models.Category(code=code, name=name, original_text=category_str)
     return None
 
+@app.put("/products/{product_id}")
+def update_purchase_item(
+    product: schemas.ProductUpdate,
+    db: Session = Depends(get_db),
+    product_id: int = Path(..., description="The ID of the product to update")
+):
+    logging.info(f"Would update product with id {product_id} with category with id {product.category_id}")
+    return True
+
 @app.post("/categories/")
 def set_categories(categories: List[str], db: Session = Depends(get_db)):
     try:

@@ -15,7 +15,7 @@ def send_request_with_retries(method: str, url: str, json_data = None, params: d
             elif method.lower() == 'post':
                 return requests.post(url, json=json_data, params=params)
             elif method.lower() == 'put':
-                return requests.post(url, json=json_data, params=params)
+                return requests.put(url, json=json_data, params=params)
             elif method.lower() == 'delete':
                 return requests.delete(url, params=params)
             else:

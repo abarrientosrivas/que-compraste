@@ -107,7 +107,7 @@ class ProductBase(BaseModel):
         from_attributes = True
     
 
-class PurchaseUpdate(PurchaseBase):
+class ProductUpdate(ProductBase):
     name: Optional[str] = None
     category_id: Optional[int] = None
 
