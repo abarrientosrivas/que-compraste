@@ -65,7 +65,7 @@ def normalize_value(value_string: str) -> float:
             value_string = value_string.replace('.', '').replace(',', '.')
 
     try:
-        return float(value_string)
+        return abs(float(value_string))
     except ValueError:
         raise ValueError(f"Invalid value format")
     

@@ -51,9 +51,14 @@
                 opacity: 0;
                 cursor: pointer;
             }
-            p, ul {
+            .container p, .container ul {
                 text-align: left;
                 padding: 0 20px;
+            }
+
+            #response p, #response ul {
+                text-align: center;
+                padding: 0;
             }
             ul {
                 list-style-type: none;
@@ -109,9 +114,9 @@
             <h1>Subí tus recibos</h1>
             <p>Tus documentos e imágenes serán guardados en nuestros servidores de forma anónima y se utilizarán para entrenar nuestro lector de recibos de compras. </p>
             <p><b>¡Muchas gracias!</b></p>
-            <p class="file-warning">Archivos mayores a 10MB o que no sean imagen/PDF serán ignorados.</p>
-            <form action="/upload" method="post" enctype="multipart/form-data"
-                    hx-post="/upload"
+            <p class="file-warning">Archivos mayores a 16MB o que no sean imagen/PDF serán ignorados.</p>
+            <form action="upload" method="post" enctype="multipart/form-data"
+                    hx-post="/recibos/upload"
                     hx-target="#response"
                     hx-swap="innerHTML"
                     hx-trigger="change"

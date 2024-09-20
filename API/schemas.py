@@ -20,6 +20,10 @@ class PurchaseItemCreate(PurchaseItemBase):
     pass
 
 
+class PurchaseItemUpdate(PurchaseItemBase):
+    pass
+
+
 class PurchaseItem(PurchaseItemBase):
     id: int
     purchase_id: int
@@ -46,9 +50,14 @@ class PurchaseBase(BaseModel):
 
 
 class PurchaseCreate(PurchaseBase):
-    date: Optional[datetime]
+    date: Optional[datetime] = None
     total: Optional[float] = None
     items: List[PurchaseItemCreate] = Field(default_factory=list)
+    
+
+class PurchaseUpdate(PurchaseBase):
+    date: Optional[datetime] = None
+    total: Optional[float] = None
 
 
 class Purchase(PurchaseBase):
@@ -81,6 +90,32 @@ class Category(CategoryBase):
     parent_id: Optional[int] = None
     parent: Optional['Category'] = None
     children: List['Category'] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Product Schemas
+# --------------------
+class ProductBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    read_category: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+    
+
+class ProductUpdate(ProductBase):
+    name: Optional[str] = None
+    category_id: Optional[int] = None
+
+
+class Product(ProductBase):
+    id: int
+    category_id: Optional[int] = None
+    category: Optional[Category] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None

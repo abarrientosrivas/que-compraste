@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, time
+from dateutil import tz
 from PyLib.receipt_tools import get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
 
 class TestPurchaseFunctions(unittest.TestCase):
@@ -290,9 +291,9 @@ class TestPurchaseFunctions(unittest.TestCase):
 
     #date validation
     def test_normalize_date_valid(self):
-        self.assertEqual(normalize_date(" 6/7/24", True, False), datetime(2024, 7, 6))
-        self.assertEqual(normalize_date("6. 8.24", True, False), datetime(2024, 8, 6))
-        self.assertEqual(normalize_date("4-8-24;", True, False), datetime(2024, 8, 4))
+        self.assertEqual(normalize_date(" 6/7/24", True, False), datetime(2024, 7, 6, tzinfo=tz.tzlocal()))
+        self.assertEqual(normalize_date("6. 8.24", True, False), datetime(2024, 8, 6, tzinfo=tz.tzlocal()))
+        self.assertEqual(normalize_date("4-8-24;", True, False), datetime(2024, 8, 4, tzinfo=tz.tzlocal()))
 
     def test_normalize_date_invalid(self):
         with self.assertRaises(ValueError):

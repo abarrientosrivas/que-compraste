@@ -4,7 +4,7 @@ import logging
 import threading
 import aiofiles
 from datetime import datetime
-from fastapi import FastAPI, File, UploadFile, Request
+from fastapi import FastAPI, File, UploadFile, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -30,7 +30,7 @@ app = FastAPI()
 app.add_middleware(CustomHeaderMiddleware)
 templates = Jinja2Templates(directory="templates")
 
-MAX_FOLDER_SIZE = 1024 * 1024 * 1024 # 1 GB
+MAX_FOLDER_SIZE = 20 * 1024 * 1024 * 1024 # 20 GB
 files_dir = "uploaded_files"
 os.makedirs(files_dir, exist_ok=True)
 
@@ -63,32 +63,35 @@ def generate_filename(sender_ip: str, original_filename: str):
 async def favicon():
     return FileResponse('icon.ico')
 
-@app.get("/recibos")
+@app.get("/")
 async def receipt(request: Request):
     return templates.TemplateResponse("receipt.html", {"request": request})
 
 @app.post("/upload", response_class=HTMLResponse)
 async def upload_files(request: Request, files: List[UploadFile] = File(...)):
-    max_file_size = 10 * 1024 * 1024  # 10 MB
+    max_file_size = 16 * 1024 * 1024  # 16 MB
+    ignored_files = 0
 
     with lock:
         if not files:
-            return "Ningún archivo recibido."
+            return "<div>Ningún archivo recibido.</div>"
         
         current_folder_size = get_folder_size(files_dir)
         saved_files = []
         for file in files:
             if not (file.content_type.startswith("image") or file.content_type == "application/pdf"):
+                ignored_files += 1
                 await file.close()
                 continue
 
             if file.size > max_file_size:
+                ignored_files += 1
                 await file.close()
                 continue
 
             future_size = current_folder_size + file.size
             if future_size > MAX_FOLDER_SIZE:
-                return "Servidor en capacidad máxima."
+                return "<div>Servidor en capacidad máxima.</div>"
 
             try:
                 filename = generate_filename(request.client.host, file.filename)
@@ -102,12 +105,49 @@ async def upload_files(request: Request, files: List[UploadFile] = File(...)):
 
             await file.close()
 
+        response_content = "<div>"
+        if ignored_files > 0:
+            response_content += f"<p>Archivos ignorados: {ignored_files}</p>"
         if not saved_files:
-            return "Ningún archivo recibido."
-        response_content = "<div>Archivos recibidos:</div>"
+            response_content +="<p>Ningún archivo guardado.</p></div>"
+            return response_content
+        response_content += "<p>Archivos guardados:</p>"
         response_content += "<ul>" + "".join(f"<li>{filename}</li>" for filename in saved_files) + "</ul>"
+        response_content += "<p><b>Gracias por tu aporte.</b></p>"
+        response_content += "</div>"
         return response_content
 
+@app.get("/status")
+def get_status():
+    full_path = os.path.abspath(files_dir)
+
+    if not os.path.isdir(full_path):
+        raise HTTPException(status_code=404, detail="Directory not found")
+
+    total_size = 0
+    file_count = 0
+
+    for dirpath, _, filenames in os.walk(full_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            if not os.path.islink(fp):
+                try:
+                    file_count += 1
+                    total_size += os.path.getsize(fp)
+                except OSError:
+                    continue
+
+    total_size_gb = bytes_to_gb(total_size)
+
+    return {
+        "uploaded_files": file_count,
+        "disk_gbs_used": total_size_gb
+    }
+
+def bytes_to_gb(size_in_bytes):
+    """Convert bytes to gigabytes."""
+    return size_in_bytes / (1024 ** 3)
+
 @app.get("/{path:path}")
-async def redirect_to_receipt(path: str):
-    return RedirectResponse(url="/recibos")
+async def redirect_to_root(path: str):
+    return RedirectResponse(url="/")

@@ -1,4 +1,4 @@
-from PyMessaging.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
+from PyLib.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
 from pydantic import BaseModel
 import os
 

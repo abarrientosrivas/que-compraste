@@ -3,21 +3,17 @@ import sys
 import os
 import logging
 import PyLib.receipt_tools as rt
-import requests
-import time
 import threading
-from requests import Response
-from requests.exceptions import ConnectionError, Timeout
+import argparse
+import logging
 from API.schemas import PurchaseCreate, PurchaseItemCreate
 from PIL import Image
-from pydantic import BaseModel
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from json.decoder import JSONDecodeError
 from transformers import DonutProcessor, VisionEncoderDecoderModel
-from PyMessaging.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
+from PyLib import typed_messaging, request_tools
 from dotenv import load_dotenv
 from huggingface_hub import HfFolder
-from threading import Event
 
 load_dotenv()
 hf_token = os.getenv('HF_TOKEN')
@@ -34,28 +30,8 @@ def load_and_preprocess_image(image_path: str, processor):
     pixel_values = processor(image, return_tensors="pt").pixel_values
     return pixel_values
 
-def send_request_with_retries(url: str, json_data, stop_event: Event) -> Response:
-    wait_times = [0, 5, 10, 15, 30, 45, 60]
-    retry_count = 0
-
-    while not stop_event.is_set():
-        try:
-            return requests.post(url, json=json_data)
-
-        except (ConnectionError, Timeout) as e:
-            if retry_count < len(wait_times):
-                wait_time = wait_times[retry_count]
-            else:
-                wait_time = 60
-
-            print(f"Connection failed: {e}. Retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
-            retry_count += 1
-    logging.warning("Stop event set before request could complete.")
-    raise Exception("Operation cancelled by user.")
-
 class ImageToCompraNode:
-    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str, output_endpoint: str):
+    def __init__(self, consumer: typed_messaging.PydanticQueueConsumer, publisher: typed_messaging.PydanticExchangePublisher, input_queue: str, output_endpoint: str):
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.processor = DonutProcessor.from_pretrained("AdamCodd/donut-receipts-extract")
         self.model = VisionEncoderDecoderModel.from_pretrained("AdamCodd/donut-receipts-extract")
@@ -214,7 +190,7 @@ class ImageToCompraNode:
         purchase = self.convert_data_to_purchase(json_data)
         purchase_data = purchase.model_dump(mode='json')
 
-        response = send_request_with_retries(self.output_endpoint, purchase_data, self.stop_event)
+        response =  request_tools.send_request_with_retries("post", self.output_endpoint, purchase_data, stop_event= self.stop_event)
         if response.status_code == 200:
             logging.info("Purchase created successfully")
         else:
@@ -238,7 +214,15 @@ class ImageToCompraNode:
         self.consumer.stop()
 
 if __name__ == '__main__':
-    broker = PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+    LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
+    
+    parser = argparse.ArgumentParser(description="Product classifier service.")
+    parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
+    broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+    args = parser.parse_args()
+
+    logging.basicConfig(level=args.logging.upper())
+
     endpoint_url = os.getenv('IMAGE_TO_COMPRA_OUTPUT_ENDPOINT')
     if not endpoint_url:
         logging.error("Endpoint URL was not provided")
