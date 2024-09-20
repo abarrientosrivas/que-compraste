@@ -10,11 +10,10 @@ from requests import Response
 from requests.exceptions import ConnectionError, Timeout
 from API.schemas import PurchaseCreate, PurchaseItemCreate
 from PIL import Image
-from pydantic import BaseModel
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from json.decoder import JSONDecodeError
 from transformers import DonutProcessor, VisionEncoderDecoderModel
-from PyMessaging.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
+from PyLib.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
 from dotenv import load_dotenv
 from huggingface_hub import HfFolder
 from threading import Event
