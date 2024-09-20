@@ -69,26 +69,29 @@ async def receipt(request: Request):
 
 @app.post("/upload", response_class=HTMLResponse)
 async def upload_files(request: Request, files: List[UploadFile] = File(...)):
-    max_file_size = 10 * 1024 * 1024  # 10 MB
+    max_file_size = 16 * 1024 * 1024  # 16 MB
+    ignored_files = 0
 
     with lock:
         if not files:
-            return "Ningún archivo recibido."
+            return "<div>Ningún archivo recibido.</div>"
         
         current_folder_size = get_folder_size(files_dir)
         saved_files = []
         for file in files:
             if not (file.content_type.startswith("image") or file.content_type == "application/pdf"):
+                ignored_files += 1
                 await file.close()
                 continue
 
             if file.size > max_file_size:
+                ignored_files += 1
                 await file.close()
                 continue
 
             future_size = current_folder_size + file.size
             if future_size > MAX_FOLDER_SIZE:
-                return "Servidor en capacidad máxima."
+                return "<div>Servidor en capacidad máxima.</div>"
 
             try:
                 filename = generate_filename(request.client.host, file.filename)
@@ -102,10 +105,16 @@ async def upload_files(request: Request, files: List[UploadFile] = File(...)):
 
             await file.close()
 
+        response_content = "<div>"
+        if ignored_files > 0:
+            response_content += f"<p>Archivos ignorados: {ignored_files}</p>"
         if not saved_files:
-            return "Ningún archivo recibido."
-        response_content = "<div>Archivos recibidos:</div>"
+            response_content +="<p>Ningún archivo guardado.</p></div>"
+            return response_content
+        response_content += "<p>Archivos guardados:</p>"
         response_content += "<ul>" + "".join(f"<li>{filename}</li>" for filename in saved_files) + "</ul>"
+        response_content += "<p><b>Gracias por tu aporte.</b></p>"
+        response_content += "</div>"
         return response_content
 
 @app.get("/{path:path}")
