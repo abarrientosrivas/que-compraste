@@ -1,6 +1,7 @@
 from . import schemas
 from . import models
 from fastapi import FastAPI, Depends, HTTPException, Path
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, noload
 from .dependencies import get_db
 from typing import List, Optional
@@ -30,6 +31,10 @@ def calculate_purchase_total(purchase: schemas.PurchaseBase, items: List[schemas
     return None
 
 app = FastAPI()
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse('API/icon.ico')
 
 @app.get("/")
 async def root():
