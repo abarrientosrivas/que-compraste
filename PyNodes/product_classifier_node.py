@@ -140,14 +140,16 @@ class ProductClassifierNode:
         self.consumer.stop()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description="Product classifier service.")
+    LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
 
+    parser = argparse.ArgumentParser(description="Product classifier service.")
     parser.add_argument('--init', action='store_true', help='Initialize taxonomy synchronization')
+    parser.add_argument('--logging', default='WARNING', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
     parser.add_argument('file_path', type=str, nargs='?', help='The path to the product taxonomy text file (required if --init is used)')
     parser.add_argument('product_description', type=str, nargs='?', help='Description of the product to classify (used if --init is not present)')
-
     args = parser.parse_args()
+
+    logging.basicConfig(level=args.logging.upper())
 
     if args.init:
         if not args.file_path:
