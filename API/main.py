@@ -1,6 +1,7 @@
 from . import schemas
 from . import models
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, noload
 from .dependencies import get_db
 from typing import List
@@ -9,9 +10,28 @@ import logging
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:4200",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.post("/upload/")
+async def receive_ticket_image(file: UploadFile = File(...)):
+    #contents = await file.read()
+    #with open(f"./{file.filename}", "wb") as f:
+    #    f.write(contents)
+    return {"filename": file.filename}
 
 @app.post("/purchases/", response_model=schemas.Purchase)
 def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):

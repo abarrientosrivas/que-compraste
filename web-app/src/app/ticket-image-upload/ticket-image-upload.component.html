@@ -1,0 +1,12 @@
+<form>
+  <label for="fileInput">Seleccionar Imagen: </label>
+  <input type="file" id="fileInput" (change)="onFileSelected($event)" />
+  <button
+    type="button"
+    (click)="onSubmit()"
+    [disabled]="!selectedFile"
+    class="upload-button"
+  >
+    Subir Imagen
+  </button>
+</form>
