@@ -149,5 +149,5 @@ def bytes_to_gb(size_in_bytes):
     return size_in_bytes / (1024 ** 3)
 
 @app.get("/{path:path}")
-async def redirect_to_receipt(_: str):
+async def redirect_to_root(path: str):
     return RedirectResponse(url="/")

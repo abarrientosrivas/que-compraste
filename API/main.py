@@ -215,5 +215,5 @@ def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
     return entities
 
 @app.get("/{path:path}")
-async def redirect_to_receipt(_: str):
+async def redirect_to_receipt(path: str):
     return RedirectResponse(url="/recibos/")
