@@ -20,6 +20,10 @@ class PurchaseItemCreate(PurchaseItemBase):
     pass
 
 
+class PurchaseItemUpdate(PurchaseItemBase):
+    pass
+
+
 class PurchaseItem(PurchaseItemBase):
     id: int
     purchase_id: int

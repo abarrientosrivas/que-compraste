@@ -120,6 +120,25 @@ def get_purchases(db: Session = Depends(get_db)):
     db_entity = db.query(models.Purchase).all()
     return db_entity
 
+@app.put("/purchase_items/{purchase_item_id}", response_model=schemas.PurchaseItem)
+def update_purchase_item(
+    purchase_item: schemas.PurchaseItemUpdate,
+    db: Session = Depends(get_db),
+    purchase_item_id: int = Path(..., description="The ID of the purchase item to update")
+):
+    db_purchase_item = db.query(models.PurchaseItem).filter(models.PurchaseItem.id == purchase_item_id).first()
+    if not db_purchase_item:
+        raise HTTPException(status_code=404, detail="Purchase item not found")
+    
+    purchase_item_data = purchase_item.model_dump(exclude_unset=True)
+    
+    for key, value in purchase_item_data.items():
+        setattr(db_purchase_item, key, value)
+
+    db.commit()
+    db.refresh(db_purchase_item)
+    return db_purchase_item
+
 def category_from_string(category_str: str) -> models.Category | None:
     category_str = category_str.strip()
     if not category_str:
