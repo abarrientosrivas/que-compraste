@@ -119,3 +119,49 @@ class Product(ProductBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Entity Schemas
+# --------------------
+class EntityBase(BaseModel):
+    name: str = None
+
+    class Config:
+        from_attributes = True
+    
+
+class EntityCreate(EntityBase):
+    pass
+
+
+class Entity(EntityBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Establishment Schemas
+# --------------------
+class EstablishmentBase(BaseModel):
+    name: Optional[str] = None
+    location: str
+    address: str
+
+    class Config:
+        from_attributes = True
+    
+
+class EstablishmentCreate(EstablishmentBase):
+    entity_id: int
+
+
+class Establishment(EstablishmentBase):
+    id: int
+    entity_id: int
+    entity: Entity
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None

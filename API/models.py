@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event
+    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint
 )
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -37,6 +37,17 @@ class PurchaseItem(Base):
 
     purchase = relationship('Purchase', back_populates='items')
 
+def update_purchase_updated_at(_, connection, target):
+    connection.execute(
+        Purchase.__table__.update()
+        .where(Purchase.id == target.purchase_id)
+        .values(updated_at=func.now())
+    )
+
+event.listen(PurchaseItem, 'after_insert', update_purchase_updated_at)
+event.listen(PurchaseItem, 'after_update', update_purchase_updated_at)
+event.listen(PurchaseItem, 'after_delete', update_purchase_updated_at)
+
 class Category(Base):
     __tablename__ = 'categories'
     id = Column(Integer, primary_key=True, index=True)
@@ -52,13 +63,25 @@ class Category(Base):
     parent = relationship('Category', remote_side=[id], back_populates='children')
     children = relationship('Category', back_populates='parent') 
 
-def update_purchase_updated_at(_, connection, target):
-    connection.execute(
-        Purchase.__table__.update()
-        .where(Purchase.id == target.purchase_id)
-        .values(updated_at=func.now())
-    )
+class Entity(Base):
+    __tablename__ = 'entities'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
 
-event.listen(PurchaseItem, 'after_insert', update_purchase_updated_at)
-event.listen(PurchaseItem, 'after_update', update_purchase_updated_at)
-event.listen(PurchaseItem, 'after_delete', update_purchase_updated_at)
+class Establishment(Base):
+    __tablename__ = 'establishments'
+    id = Column(Integer, primary_key=True, index=True)
+    entity_id = Column(Integer, ForeignKey('entities.id'), nullable=True)
+    name = Column(String(255), nullable=True)
+    location = Column(String(255), nullable=False)
+    address = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+
+    entity = relationship('Entity') 
+    
+    __table_args__ = (UniqueConstraint('entity_id', 'location', 'address', name='uix_entity_location_address'),)

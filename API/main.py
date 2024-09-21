@@ -179,7 +179,7 @@ def category_from_string(category_str: str) -> models.Category | None:
     return None
 
 @app.put("/products/{product_id}")
-def update_purchase_item(
+def update_product(
     product: schemas.ProductUpdate,
     db: Session = Depends(get_db),
     product_id: int = Path(..., description="The ID of the product to update")
@@ -237,6 +237,24 @@ def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
         query = query.filter(models.Category.code == code)
     entities = query.all()
     return entities
+
+@app.get("/establishments/", response_model=List[schemas.Establishment])
+def get_establishments(db: Session = Depends(get_db)):
+    db_entity = db.query(models.Establishment).all()
+    return db_entity
+
+@app.post("/establishments/", response_model=schemas.Establishment)
+def create_establishment(establishment: schemas.EstablishmentCreate, db: Session = Depends(get_db)):
+    db_entity = models.Establishment(
+        entity_id = establishment.entity_id,
+        name = establishment.name,
+        location = establishment.location,
+        address = establishment.address
+    )    
+    db.add(db_entity)
+    db.commit()
+    db.refresh(db_entity)
+    return db_entity
 
 @app.get("/{path:path}")
 async def redirect_to_receipt(path: str):
