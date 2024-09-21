@@ -4,6 +4,7 @@ from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session, noload
+from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -251,9 +252,13 @@ def create_establishment(establishment: schemas.EstablishmentCreate, db: Session
         location = establishment.location,
         address = establishment.address
     )    
-    db.add(db_entity)
-    db.commit()
-    db.refresh(db_entity)
+    try:
+        db.add(db_entity)
+        db.commit()
+        db.refresh(db_entity)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
     return db_entity
 
 @app.get("/{path:path}")
