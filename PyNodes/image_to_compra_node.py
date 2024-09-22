@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=args.logging.upper())
 
-    endpoint_url = os.getenv('IMAGE_TO_COMPRA_OUTPUT_ENDPOINT')
+    endpoint_url = os.getenv('PURCHASES_ENDPOINT')
     if not endpoint_url:
         logging.error("Endpoint URL was not provided")
         sys.exit(1)
