@@ -1,14 +1,11 @@
 from io import BytesIO
 import sys
-import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from PIL import Image
 import pytesseract
 
@@ -58,16 +55,15 @@ def get_page_source(cuit):
                         EC.presence_of_element_located((By.XPATH, "//div[@id='menssage_captcha']"))).text
                     
                     if captcha_message == "":
-                        print("Captcha resuelto correctamente.")
+                        #print("Captcha resuelto correctamente.")
                         return driver.page_source
 
                     if captcha_message == "Por favor intrese el texto que aparece arriba" and counter > 5:
-                        print("Volviendo a intentar el captcha")
+                        #print("Volviendo a intentar el captcha")
                         break
 
-                except Exception as e:
-                    print("Posiblemente se resolvió el CAPTCHA y la página cambió.")
-                    time.sleep(5)
+                except NoSuchElementException:
+                    #print("Posiblemente se resolvió el CAPTCHA y la página cambió.")
                     return driver.page_source
                 
                 captcha_input.send_keys(Keys.CONTROL + "a")
