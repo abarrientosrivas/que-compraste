@@ -42,7 +42,7 @@ def canvas_to_str(canvas):
     image = Image.open(image_data)
     return pytesseract.image_to_string(image, config='--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')
 
-class EntityIdentificationMessage(BaseModel):
+class EntityIdentification(BaseModel):
     identification: str
 
 class ProductFinderNode:
@@ -138,7 +138,7 @@ class ProductFinderNode:
 
         return json.dumps(result, indent=4, ensure_ascii=False)
 
-    def callback(self, message: EntityIdentificationMessage):
+    def callback(self, message: EntityIdentification):
         received_identification =  message.identification.strip()
         if not received_identification:
             logging.info(f"Ignoring empty message")
@@ -161,7 +161,7 @@ class ProductFinderNode:
             logging.error(f"An unexpected error ({error.__class__.__name__}) occurred: {error}")
         
     def start(self):
-        self.consumer.start(self.input_queue, self.callback, EntityIdentificationMessage, self.error_callback)
+        self.consumer.start(self.input_queue, self.callback, EntityIdentification, self.error_callback)
 
     def stop(self):
         self.stop_event.set()

@@ -24,7 +24,7 @@ def create_driver():
     driver = webdriver.Chrome(options=chrome_options)
     return driver
 
-class ProductCodeMessage(BaseModel):
+class ProductCode(BaseModel):
     code: str
 
 class ProductFinderNode:
@@ -43,9 +43,6 @@ class ProductFinderNode:
         except Exception as e:
             logging.error(f"Error while fetching page source: {e}")
             raise
-        finally:
-            if self.driver:
-                self.driver.quit()
     
     def get_product_defails(self, product_code):
         page_source = self.get_page_source(product_code)
@@ -68,7 +65,7 @@ class ProductFinderNode:
         
         return json.dumps(result, indent=4, ensure_ascii=False)
 
-    def callback(self, message: ProductCodeMessage):
+    def callback(self, message: ProductCode):
         received_code =  message.code.strip()
         if not received_code:
             logging.info(f"Ignoring empty message")
@@ -88,7 +85,7 @@ class ProductFinderNode:
             logging.error(f"An unexpected error ({error.__class__.__name__}) occurred: {error}")
         
     def start(self):
-        self.consumer.start(self.input_queue, self.callback, ProductCodeMessage, self.error_callback)
+        self.consumer.start(self.input_queue, self.callback, ProductCode, self.error_callback)
 
     def stop(self):
         self.stop_event.set()
