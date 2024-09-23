@@ -16,6 +16,21 @@ def get_datos_efiscal(cuit):
     else:
         result['nombre_fantasia'] = None
 
+    email_h5 = soup.find('h5', string='Correo electrónico')
+    if email_h5:
+        email = email_h5.find_next_sibling('p')
+        result['email'] = email.get_text(strip=True)
+    else:
+        result['email'] = None
+
+    telefono_h5 = soup.find('h5', string='Teléfono')
+    if telefono_h5:
+        telefono = telefono_h5.find_next_sibling('p')
+        result['telefono'] = telefono.get_text(strip=True)
+    else:
+        result['telefono'] = None
+
+
     return json.dumps(result, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
