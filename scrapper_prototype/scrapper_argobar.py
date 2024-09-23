@@ -30,6 +30,12 @@ def get_datos_efiscal(cuit):
     else:
         result['telefono'] = None
 
+    domicilio_h5 = soup.find('h5', string='Domicilio')
+    if domicilio_h5:
+        domicilio = domicilio_h5.find_next_sibling('p')
+        result['domicilio'] = domicilio.get_text(strip=True)
+    else:
+        result['domicilio'] = None
 
     return json.dumps(result, indent=4, ensure_ascii=False)
 
