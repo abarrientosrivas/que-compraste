@@ -1,11 +1,18 @@
 <form>
-  <label for="fileInput">Seleccionar Imagen: </label>
-  <input type="file" id="fileInput" (change)="onFileSelected($event)" />
+  <div class="mb-3">
+    <label for="fileInput" class="form-label">Seleccionar Imagen:</label>
+    <input
+      type="file"
+      class="form-control"
+      id="fileInput"
+      (change)="onFileSelected($event)"
+    />
+  </div>
   <button
     type="button"
     (click)="onSubmit()"
     [disabled]="!selectedFile"
-    class="upload-button"
+    class="btn btn-primary"
   >
     Subir Imagen
   </button>
