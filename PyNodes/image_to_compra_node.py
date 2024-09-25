@@ -12,11 +12,15 @@ from pydantic import BaseModel, ValidationError
 from json.decoder import JSONDecodeError
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 from PyLib import typed_messaging, request_tools
+from PyLib.donut_model import DonutTrainer
 from dotenv import load_dotenv
 from huggingface_hub import HfFolder
 
 load_dotenv()
 hf_token = os.getenv('HF_TOKEN')
+if hf_token is None or not hf_token.strip():
+    logging.error(f"No Hugging Face token was provided")
+    raise
 HfFolder.save_token(hf_token)
 
 class ImageLocation(BaseModel):
@@ -217,26 +221,56 @@ if __name__ == '__main__':
     LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
     
     parser = argparse.ArgumentParser(description="Product classifier service.")
+    parser.add_argument('--train', action='store_true', help='Train receipt reader model')
+    parser.add_argument('--dev_mode', action='store_true', help='Train receipt reader model')
     parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
     broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
     args = parser.parse_args()
 
     logging.basicConfig(level=args.logging.upper())
+    
+    if args.train:
+        try:
+            model_path = os.getenv('IMAGE_TO_COMPRA_MODEL_PATH','')
+            if not model_path.strip():
+                logging.error("Model path was not provided")
+                sys.exit(1)
+            dataset_path = os.getenv('IMAGE_TO_COMPRA_DATASET_PATH','')
+            if not dataset_path.strip():
+                logging.error("Dataset path was not provided")
+                sys.exit(1)
+            target_path = os.getenv('IMAGE_TO_COMPRA_TARGET_PATH','')
+            if not target_path.strip():
+                logging.error("Target path was not provided")
+                sys.exit(1)
+            device = os.getenv('IMAGE_TO_COMPRA_DEVICE','')
+            if not device.strip():
+                logging.error("Target device was not provided")
+                sys.exit(1)
+            precision = os.getenv('IMAGE_TO_COMPRA_PRECISION','')
+            if not precision.strip():
+                logging.error("Training precision was not provided")
+                sys.exit(1)
+            trainer = DonutTrainer(model_path, dataset_path, target_path, 1280, 960, 768, device, precision, args.dev_mode)
+            trainer.run()
+        except Exception as e:
+            logging.error(f"Unexpected error: {e}")
+            sys.exit(1)
+    else:
+        endpoint_url = os.getenv('PURCHASES_ENDPOINT')
+        if not endpoint_url:
+            logging.error("Endpoint URL was not provided")
+            sys.exit(1)
 
-    endpoint_url = os.getenv('PURCHASES_ENDPOINT')
-    if not endpoint_url:
-        logging.error("Endpoint URL was not provided")
-        sys.exit(1)
+        node = ImageToCompraNode(
+            broker.get_consumer(), 
+            broker.get_publisher(), 
+            broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 
+            endpoint_url)
 
-    node = ImageToCompraNode(
-        broker.get_consumer(), 
-        broker.get_publisher(), 
-        broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 
-        endpoint_url)
-
-    try:
-        logging.info("Node succesfully initialized")
-        node.start()
-    except KeyboardInterrupt:
-        node.stop()
-        sys.exit(0)
+        try:
+            logging.info("Node succesfully initialized")
+            node.start()
+        except KeyboardInterrupt:
+            node.stop()
+            sys.exit(0)

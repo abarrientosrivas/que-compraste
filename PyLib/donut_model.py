@@ -1,14 +1,18 @@
+from transformers import VisionEncoderDecoderConfig, DonutProcessor, VisionEncoderDecoderModel
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import Callback, EarlyStopping
+from datasets.exceptions import DatasetNotFoundError
 from datasets import load_dataset
 from nltk import edit_distance
 from torch.utils.data import Dataset, DataLoader
 from typing import Any, List, Tuple
-from pytorch_lightning.callbacks import Callback
+import pytorch_lightning as pl
+import logging
 import re
 import json
 import random
 import numpy as np
 import torch
-import pytorch_lightning as pl
 
 class DonutDataset(Dataset):
     """
@@ -166,15 +170,15 @@ class DonutModelPLModule(pl.LightningModule):
         self.max_length = max_length
         # feel free to increase the batch size if you have a lot of memory
         # I'm fine-tuning on Colab and given the large image size, batch size > 1 is not feasible
-        self.stored_train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=4)
-        self.stored_val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=4)
+        self.stored_train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=4, persistent_workers=True)
+        self.stored_val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=4, persistent_workers= True)
 
     def training_step(self, batch, batch_idx):
         pixel_values, labels, _ = batch
         
         outputs = self.model(pixel_values, labels=labels)
         loss = outputs.loss
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, batch_size=pixel_values.size(0))
         return loss
 
     def validation_step(self, batch, batch_idx, dataset_idx=0):
@@ -186,7 +190,7 @@ class DonutModelPLModule(pl.LightningModule):
         outputs = self.model.generate(pixel_values,
                                    decoder_input_ids=decoder_input_ids,
                                    max_length=self.max_length,
-                                   early_stopping=True,
+                                   early_stopping=False,
                                    pad_token_id=self.processor.tokenizer.pad_token_id,
                                    eos_token_id=self.processor.tokenizer.eos_token_id,
                                    use_cache=True,
@@ -202,7 +206,7 @@ class DonutModelPLModule(pl.LightningModule):
 
         scores = []
         for pred, answer in zip(predictions, answers):
-            pred = re.sub(r"(?:(?<=>) | (?=", "", answer, count=1)
+            pred = re.sub(r'(?:(?<=>)\s|(?=\s<))', '', pred, count=1)
             answer = answer.replace(self.processor.tokenizer.eos_token, "")
             scores.append(edit_distance(pred, answer) / max(len(pred), len(answer)))
 
@@ -211,7 +215,7 @@ class DonutModelPLModule(pl.LightningModule):
                 print(f"    Answer: {answer}")
                 print(f" Normed ED: {scores[0]}")
 
-        self.log("val_edit_distance", np.mean(scores))
+        self.log("val_edit_distance", np.mean(scores), batch_size=pixel_values.size(0))
         
         return scores
 
@@ -229,14 +233,140 @@ class DonutModelPLModule(pl.LightningModule):
     
 
 class PushToHubCallback(Callback):
+    def __init__(self, target_path: str):
+        self.target_path = target_path
+
     def on_train_epoch_end(self, trainer, pl_module):
         print(f"Pushing model to the hub, epoch {trainer.current_epoch}")
-        pl_module.model.push_to_hub("nielsr/donut-demo",
+        pl_module.model.push_to_hub(self.target_path,
                                     commit_message=f"Training in progress, epoch {trainer.current_epoch}")
 
     def on_train_end(self, trainer, pl_module):
         print(f"Pushing model to the hub after training")
-        pl_module.processor.push_to_hub("nielsr/donut-demo",
+        pl_module.processor.push_to_hub(self.target_path,
                                     commit_message=f"Training done")
-        pl_module.model.push_to_hub("nielsr/donut-demo",
+        pl_module.model.push_to_hub(self.target_path,
                                     commit_message=f"Training done")
+
+class DonutTrainer():
+    def __init__(
+            self, 
+            model_path: str, 
+            dataset_path: str, 
+            target_path: str, 
+            image_resize_width: int, 
+            image_resize_height: int, 
+            token_sequence_max_length: int,
+            device: str,
+            precision: int,
+            dev_mode: bool = False):
+        image_size = [image_resize_width, image_resize_height]
+
+        logging.info("Initializing model trainer")
+        # update image_size of the encoder
+        # during pre-training, a larger image size was used
+        try:
+            config = VisionEncoderDecoderConfig.from_pretrained(model_path)
+        except OSError:
+            logging.error(f"Could not find model config at {model_path}")
+            raise
+        except Exception as e:
+            logging.error(f"Could not initialize model config: {e}")
+            raise
+        config.encoder.image_size = image_size # (height, width)
+        # update max_length of the decoder (for generation)
+        config.decoder.max_length = token_sequence_max_length
+        # TODO we should actually update max_position_embeddings and interpolate the pre-trained ones:
+        # https://github.com/clovaai/donut/blob/0acc65a85d140852b8d9928565f0f6b2d98dc088/donut/model.py#L602
+        try:
+            processor = DonutProcessor.from_pretrained(model_path)
+        except OSError:
+            logging.error(f"Could not find processor at {model_path}")
+            raise
+        except Exception as e:
+            logging.error(f"Could not initialize processor: {e}")
+            raise
+        try:
+            model = VisionEncoderDecoderModel.from_pretrained(model_path, config=config)
+        except OSError:
+            logging.error(f"Could not find model at {model_path}")
+            raise
+        except Exception as e:
+            logging.error(f"Could not initialize model: {e}")
+            raise
+        # we update some settings which differ from pretraining; namely the size of the images + no rotation required
+        # source: https://github.com/clovaai/donut/blob/master/config/train_cord.yaml
+        processor.image_processor.size = image_size[::-1] # should be (width, height)
+        processor.image_processor.do_align_long_axis = False
+
+        logging.info("Initializing datasets")
+        try:
+            train_dataset = DonutDataset(dataset_path, max_length=token_sequence_max_length,
+                                            processor=processor, model=model,
+                                            split="train", task_start_token="", prompt_end_token="",
+                                            sort_json_key=False, # cord dataset is preprocessed, so no need for this
+                                            )
+
+            val_dataset = DonutDataset(dataset_path, max_length=token_sequence_max_length,
+                                            processor=processor, model=model,
+                                            split="validation", task_start_token="", prompt_end_token="",
+                                            sort_json_key=False, # cord dataset is preprocessed, so no need for this
+                                            )
+        except DatasetNotFoundError:
+            logging.error(f"Could not find dataset at {dataset_path}")
+            raise
+        except Exception as e:
+            logging.error(f"Could not initialize dataset: {e}")
+            raise
+
+
+        model.config.pad_token_id = processor.tokenizer.pad_token_id
+        model.config.decoder_start_token_id = processor.tokenizer.convert_tokens_to_ids([''])[0]
+
+        config = {"max_epochs":30,
+            "val_check_interval":0.2, # how many times we want to validate during an epoch
+            "check_val_every_n_epoch":1,
+            "gradient_clip_val":1.0,
+            "num_training_samples_per_epoch": 800,
+            "lr":3e-5,
+            "train_batch_sizes": [8],
+            "val_batch_sizes": [1],
+            # "seed":2022,
+            "num_nodes": 1,
+            "warmup_steps": 300, # 800/8*30/10, 10%
+            "result_path": target_path,
+            "verbose": True,
+            }
+
+        logging.info("Initializing module")
+        try:
+            self.model_module = DonutModelPLModule(config, processor, model, token_sequence_max_length, train_dataset, val_dataset)
+        except Exception as e:
+            logging.error(f"Could not initialize model module: {e}")
+            raise
+
+        wandb_logger = WandbLogger(project="Donut", name="demo-run-cord")
+
+        early_stop_callback = EarlyStopping(monitor="val_edit_distance", patience=3, verbose=False, mode="min")
+
+        logging.info("Training model")
+        try:
+            self.trainer = pl.Trainer(
+                        accelerator=device,
+                        devices=1,
+                        max_epochs=config.get("max_epochs"),
+                        fast_dev_run=dev_mode,
+                        precision=precision,
+                        num_sanity_val_steps=0,
+                        logger=wandb_logger,
+                        callbacks=[PushToHubCallback(target_path), early_stop_callback],
+            )
+        except Exception as e:
+            logging.error(f"Could not initialize trainer: {e}")
+            raise
+
+    def run(self):
+        try:
+            self.trainer.fit(self.model_module)
+        except Exception as e:
+            logging.error(f"Failed to run trainer: {e}")
