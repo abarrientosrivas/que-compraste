@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session, noload
 from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
 import logging
 
@@ -60,6 +60,51 @@ async def receive_ticket_image(file: UploadFile = File(...)):
     #with open(f"./{file.filename}", "wb") as f:
     #    f.write(contents)
     return {"filename": file.filename}
+
+@app.get("/reportes/total-by-category", response_model=List[Dict[str, Union[str, int]]])
+async def get_total_by_category(start_date: str, end_date: str):
+    categories = [
+        {"name": "Cat Food", "value": 2000},
+        {"name": "Art Ink", "value": 500},
+        {"name": "Electronics", "value": 15000},
+        {"name": "Clothing", "value": 8000},
+        {"name": "Furniture", "value": 12000},
+        {"name": "Health & Beauty", "value": 4000},
+        {"name": "Sports & Outdoors", "value": 3000},
+        {"name": "Toys & Games", "value": 2500},
+        {"name": "Automotive Parts & Accessories", "value": 6000},
+        {"name": "Books", "value": 1500},
+        {"name": "Pet Supplies", "value": 3500},
+        {"name": "Home & Garden", "value": 9000},
+        {"name": "Video Games", "value": 4500},
+        {"name": "Watches", "value": 7000},
+        {"name": "Bags & Accessories", "value": 3000},
+        {"name": "Computers", "value": 18000},
+        {"name": "Kitchen Appliances", "value": 5000},
+        {"name": "Musical Instruments", "value": 3500},
+        {"name": "Fitness Equipment", "value": 4000},
+        {"name": "Baby Products", "value": 6000},
+        {"name": "Office Supplies", "value": 2000},
+        {"name": "Shoes", "value": 7000},
+        {"name": "Jewelry", "value": 3000},
+        {"name": "Home Decor", "value": 4000},
+        {"name": "Gardening Tools", "value": 2500},
+        {"name": "Camping & Hiking", "value": 3500},
+        {"name": "Fishing Gear", "value": 3000},
+        {"name": "Luggage & Travel Gear", "value": 4500},
+        {"name": "Cosmetics", "value": 2500},
+        {"name": "Smart Home Devices", "value": 6000},
+        {"name": "Cleaning Supplies", "value": 1500},
+        {"name": "Safety Equipment", "value": 2000},
+        {"name": "Mobile Accessories", "value": 3000},
+        {"name": "Personal Care Appliances", "value": 2500},
+        {"name": "Dietary Supplements", "value": 2000},
+        {"name": "Gifts & Crafts", "value": 4000},
+        {"name": "Tickets & Experiences", "value": 7000},
+        {"name": "Party Supplies", "value": 1500},
+        {"name": "Digital Products", "value": 3000}
+    ]
+    return categories
 
 @app.post("/purchases/", response_model=schemas.Purchase)
 def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
