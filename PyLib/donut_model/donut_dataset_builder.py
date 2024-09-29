@@ -78,8 +78,8 @@ def generate_dataset(json_dir: str, img_dir: str, target_dir: str):
 
     # Split files into train, validation, and test sets
     total_files = len(json_files)
-    train_size = int(total_files * 0.5)
-    val_size = int(total_files * 0.25)
+    train_size = int(total_files * 0.8)
+    val_size = int(total_files * 0.1)
     train_files = json_files[:train_size]
     val_files = json_files[train_size:train_size+val_size]
     test_files = json_files[train_size+val_size:]
