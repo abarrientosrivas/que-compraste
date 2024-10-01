@@ -23,6 +23,8 @@ class DonutModelPLModule(pl.LightningModule):
         # I'm fine-tuning on Colab and given the large image size, batch size > 1 is not feasible
         self.stored_train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=4, persistent_workers=True)
         self.stored_val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=4, persistent_workers= True)
+        print("Train dataloader: ", len(self.stored_train_dataloader))
+        print("Validation dataloader: ", len(self.stored_val_dataloader))
 
     def training_step(self, batch, batch_idx):
         pixel_values, labels, _ = batch
@@ -137,15 +139,21 @@ class DonutTrainer():
         try:
             train_dataset = DonutDatasetInput(dataset_path, max_length=token_sequence_max_length,
                                             processor=processor, model=model,
-                                            split="train", task_start_token="", prompt_end_token="",
+                                            split="train", task_start_token="<s_cord-v2>", prompt_end_token="<s_cord-v2>",
                                             sort_json_key=False, # cord dataset is preprocessed, so no need for this
                                             )
 
             val_dataset = DonutDatasetInput(dataset_path, max_length=token_sequence_max_length,
                                             processor=processor, model=model,
-                                            split="validation", task_start_token="", prompt_end_token="",
+                                            split="validation", task_start_token="<s_cord-v2>", prompt_end_token="<s_cord-v2>",
                                             sort_json_key=False, # cord dataset is preprocessed, so no need for this
                                             )
+            
+            print(len(train_dataset.added_tokens))
+            print(len(val_dataset.added_tokens))
+            print(train_dataset.added_tokens)
+            print(val_dataset.added_tokens)
+            print(processor.decode([57560]))
         except DatasetNotFoundError:
             logging.error(f"Could not find dataset at {dataset_path}")
             raise
@@ -153,9 +161,11 @@ class DonutTrainer():
             logging.error(f"Could not initialize dataset: {e}")
             raise
 
-
         model.config.pad_token_id = processor.tokenizer.pad_token_id
-        model.config.decoder_start_token_id = processor.tokenizer.convert_tokens_to_ids([''])[0]
+        model.config.decoder_start_token_id = processor.tokenizer.convert_tokens_to_ids(['<s_cord-v2>'])[0]
+        # sanity check
+        print("Pad token ID:", processor.decode([model.config.pad_token_id]))
+        print("Decoder start token ID:", processor.decode([model.config.decoder_start_token_id]))
 
         config = {"max_epochs":30,
             "val_check_interval":0.2, # how many times we want to validate during an epoch

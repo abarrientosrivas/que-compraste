@@ -30,7 +30,7 @@ class DonutDatasetInput(Dataset):
         model,
         split: str = "train",
         ignore_id: int = -100,
-        task_start_token: str = "",
+        task_start_token: str = "<s>",
         prompt_end_token: str = None,
         sort_json_key: bool = True,
     ):
@@ -91,15 +91,15 @@ class DonutDatasetInput(Dataset):
                     keys = obj.keys()
                 for k in keys:
                     if update_special_tokens_for_json_key:
-                        self.add_tokens([fr"", fr""])
+                        self.add_tokens([fr"<s_{k}>", fr"</s_{k}>"])
                     output += (
-                        fr""
+                        fr"<s_{k}>"
                         + self.json2token(obj[k], update_special_tokens_for_json_key, sort_json_key)
-                        + fr""
+                        + fr"</s_{k}>"
                     )
                 return output
         elif type(obj) == list:
-            return r"".join(
+            return r"<sep/>".join(
                 [self.json2token(item, update_special_tokens_for_json_key, sort_json_key) for item in obj]
             )
         else:
