@@ -6,6 +6,7 @@ import threading
 import os
 import sys
 from PyLib import request_tools
+from PyLib.product_classification import describe_product, translate_to_english
 from API import schemas
 from PyLib.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
 from pydantic import ValidationError
@@ -71,15 +72,6 @@ def init(file_path: str):
     
     logging.info("Taxonomy collection created successfully")
 
-def describe_product(product: schemas.Product) -> str:
-    if product.read_category and not product.read_category.strip():
-        return product.read_category
-    product_str = product.name or ""
-    description_str = product.description or ""
-    if not product_str.strip() and not description_str.strip():
-        raise ValueError("Could not form a description for product")
-    return f"{product_str} {description_str}"
-
 class ProductClassifierNode:
     def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str, categories_endpoint: str, products_endpoint: str):
         self.consumer = consumer
@@ -109,7 +101,11 @@ class ProductClassifierNode:
         logging.info(f"Processing a product: {message.name}")
 
         product_description = describe_product(message)
-        category_code = self.get_category_code(product_description)
+        if product_description is None:
+            logging.error(f"Cannot describe product.")
+            return
+        
+        category_code = self.get_category_code(translate_to_english(product_description))
         response = request_tools.send_request_with_retries("get", self.categories_endpoint, params = {"code": category_code}, stop_event=self.stop_event)
         if response is None:
             raise Exception("No response")
