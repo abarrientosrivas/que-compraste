@@ -85,3 +85,25 @@ class Establishment(Base):
     entity = relationship('Entity') 
     
     __table_args__ = (UniqueConstraint('entity_id', 'location', 'address', name='uix_entity_location_address'),)
+
+class Product(Base):
+    __tablename__ = 'products'
+    id = Column(Integer, primary_key=True, index=True)
+    entity_id = Column(Integer, ForeignKey('entities.id'), nullable=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    read_category = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
+    
+    entity = relationship('Entity') 
+
+class ProductCode(Base):
+    __tablename__ = 'product_codes'
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    format = Column(String(255), nullable=False)
+    code = Column(String(255), nullable=False)
+    
+    product = relationship('Product') 

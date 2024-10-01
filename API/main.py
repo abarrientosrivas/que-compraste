@@ -8,29 +8,9 @@ from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
+from PyLib import typed_messaging, purchases_tools
 import logging
-
-def calculate_purchase_total(purchase: schemas.PurchaseBase, items: List[schemas.PurchaseItemBase]) -> float | None:    
-    if purchase.total is not None:
-        return purchase.total
-    if purchase.subtotal is not None:
-        discount = purchase.discount or 0
-        tips = purchase.tips or 0
-        return purchase.subtotal - discount - tips
-    if items:
-        total_from_items = 0
-        empty_flag = True
-        for item in items:
-            if item.total is not None:
-                empty_flag = False
-                total_from_items += item.total
-            elif item.value is not None:
-                empty_flag = False
-                quantity_mod = item.quantity or 1
-                total_from_items += item.value * quantity_mod
-        if not empty_flag:
-            return total_from_items
-    return None
+import os
 
 app = FastAPI()
 
@@ -45,6 +25,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+publisher = conn.get_publisher()
 
 @app.get("/")
 async def root():
@@ -122,7 +105,7 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
         )
     ]
     
-    calculated_total = calculate_purchase_total(purchase, purchase.items)
+    calculated_total = purchases_tools.calculate_purchase_total(purchase, purchase.items)
     calculated_date = purchase.date or datetime.now(timezone.utc)
 
     if calculated_total is None:
@@ -149,6 +132,8 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
     db.refresh(db_entity)
     
     for item in purchase.items:
+        product_code = purchases_tools.detect_product_code(item.read_product_key)
+
         db_item = models.PurchaseItem(
             purchase_id=db_entity.id,
             read_product_key=item.read_product_key,
@@ -175,7 +160,7 @@ def update_purchase(
     
     purchase_data = purchase.model_dump(exclude_unset=True)
     if "total" in purchase_data and purchase_data["total"] is None:
-        purchase_data["total"] = calculate_purchase_total(purchase, db_purchase.items)
+        purchase_data["total"] = purchases_tools.calculate_purchase_total(purchase, db_purchase.items)
         if purchase_data["total"] is None:
             raise HTTPException(status_code=400, detail="The purchase's total could not be calculated.")
     
