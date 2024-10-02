@@ -130,6 +130,10 @@ class DonutTrainer():
         except Exception as e:
             logging.error(f"Could not initialize model: {e}")
             raise
+
+        # for name, param in model.named_parameters():
+        #     print(f"name: {name}, grad: {param.requires_grad}")
+
         # we update some settings which differ from pretraining; namely the size of the images + no rotation required
         # source: https://github.com/clovaai/donut/blob/master/config/train_cord.yaml
         processor.image_processor.size = image_size[::-1] # should be (width, height)
