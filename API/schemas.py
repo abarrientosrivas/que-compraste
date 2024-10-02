@@ -120,7 +120,8 @@ class Product(ProductBase):
 # Entity Schemas
 # --------------------
 class EntityBase(BaseModel):
-    name: str = None
+    name: str
+    identification: int
 
     class Config:
         from_attributes = True

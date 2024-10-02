@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
-from PyLib import typed_messaging, purchases_tools
+from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
 import logging
 import os
@@ -36,9 +36,17 @@ PRODUCT_CODE_NEW_KEY = os.getenv("PRODUCT_CODE_NEW_KEY",'')
 if not PRODUCT_CODE_NEW_KEY.strip():
     logging.error("Product code output variables not provided")
     sys.exit(1)
+    
+ENTITY_EXCHANGE = os.getenv("ENTITY_EXCHANGE",'')
+ENTITY_NEW_KEY = os.getenv("ENTITY_NEW_KEY",'')
+
+if not ENTITY_NEW_KEY.strip():
+    logging.error("Entity code output variables not provided")
+    sys.exit(1)
 
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
+conn.ensure_exchange(ENTITY_EXCHANGE)
 publisher = conn.get_publisher()
 
 @app.get("/")
@@ -182,6 +190,14 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             status_code=400,
             detail="The purchase's total could not be calculated."
         )
+    
+    try:
+        cuit = receipt_tools.normalize_entity_id(purchase.read_entity_identification)
+        db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
+        if not db_entity:
+            publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=purchase.read_entity_name or "", identification=cuit))
+    except:
+        pass
 
     db_entity = models.Purchase(
         read_entity_name=purchase.read_entity_name,
