@@ -9,8 +9,12 @@ from .dependencies import get_db
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
 from PyLib import typed_messaging, purchases_tools
+from dotenv import load_dotenv
 import logging
 import os
+import sys
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -26,7 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+PRODUCT_CODE_EXCHANGE = os.getenv("PRODUCT_CODE_EXCHANGE",'')
+PRODUCT_CODE_NEW_KEY = os.getenv("PRODUCT_CODE_NEW_KEY",'')
+
+if not PRODUCT_CODE_NEW_KEY.strip():
+    logging.error("Product code output variables not provided")
+    sys.exit(1)
+
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
 publisher = conn.get_publisher()
 
 @app.get("/")
@@ -190,6 +202,9 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
     
     for item in purchase.items:
         product_code = purchases_tools.detect_product_code(item.read_product_key)
+        db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+        if not db_product_code:
+            publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
 
         db_item = models.PurchaseItem(
             purchase_id=db_entity.id,

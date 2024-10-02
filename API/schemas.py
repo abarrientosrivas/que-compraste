@@ -105,11 +105,6 @@ class ProductBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
-
-class ProductUpdate(ProductBase):
-    name: Optional[str] = None
-    category_id: Optional[int] = None
 
 
 class Product(ProductBase):
@@ -162,6 +157,62 @@ class Establishment(EstablishmentBase):
     id: int
     entity_id: int
     entity: Entity
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Product Schemas
+# --------------------
+class ProductBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    read_category: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+    
+
+class ProductCreate(ProductBase):
+    pass
+    
+
+class ProductUpdate(ProductBase):
+    title: Optional[str] = None
+    category_id: Optional[int] = None
+
+
+class Product(ProductBase):
+    id: int
+    entity_id: Optional[int]
+    entity: Optional[Entity]
+    category_id: Optional[int] = None
+    category: Optional[Category] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# ProductCode Schemas
+# --------------------
+class ProductCodeBase(BaseModel):
+    format: str
+    code: str
+
+    class Config:
+        from_attributes = True
+    
+
+class ProductCodeCreate(ProductCodeBase):
+    pass
+
+
+class ProductCode(ProductCodeBase):
+    id: int
+    product_id: int
+    product: Product
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None

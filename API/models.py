@@ -90,6 +90,7 @@ class Product(Base):
     __tablename__ = 'products'
     id = Column(Integer, primary_key=True, index=True)
     entity_id = Column(Integer, ForeignKey('entities.id'), nullable=True)
+    category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     read_category = Column(String(255), nullable=True)
@@ -98,6 +99,7 @@ class Product(Base):
     deleted_at = Column(DateTime, nullable=True)
     
     entity = relationship('Entity') 
+    category = relationship('Category') 
 
 class ProductCode(Base):
     __tablename__ = 'product_codes'
@@ -105,5 +107,8 @@ class ProductCode(Base):
     product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
     format = Column(String(255), nullable=False)
     code = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
     
     product = relationship('Product') 
