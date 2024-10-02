@@ -1,0 +1,43 @@
+<div *ngIf="compra" class="purchase-details container">
+  <div class="header-section row align-items-center mb-4">
+    <h1 class="store-name display-5">{{ compra.store_name }}</h1>
+
+    <div class="col-md-6">
+      <p class="store-address text-muted">{{ compra.store_addr }}</p>
+      <p class="purchase-info text-muted">
+        Fecha: {{ compra.date }} | Hora: {{ compra.time }}
+      </p>
+    </div>
+    <div class="col-md-6 text-md-right">
+      <h2 class="total-amount display-5 text-success">
+        Total: {{ compra.total }}
+      </h2>
+      <p class="subtotal text-muted">Subtotal: {{ compra.subtotal }}</p>
+      <p class="discount text-danger">Descuento: {{ compra.discount }}</p>
+    </div>
+  </div>
+
+  <table class="table table-striped table-hover table-responsive-md">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Producto</th>
+        <th scope="col">Precio Unitario</th>
+        <th scope="col">Cantidad</th>
+        <th scope="col">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of compra.line_items">
+        <td>{{ item.item_name }}</td>
+        <td>{{ item.item_value }}</td>
+        <td>{{ item.item_quantity }}</td>
+        <td>
+          {{
+            convertToInt(item.item_value.substring(1)) * item.item_quantity
+              | currency : "USD"
+          }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
