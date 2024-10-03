@@ -207,7 +207,7 @@ class ProductCodeBase(BaseModel):
     
 
 class ProductCodeCreate(ProductCodeBase):
-    pass
+    product_id: int
 
 
 class ProductCode(ProductCodeBase):

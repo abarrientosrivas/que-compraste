@@ -29,6 +29,7 @@ class PurchaseItem(Base):
     __tablename__ = 'purchase_items'
     id = Column(Integer, primary_key=True, index=True)
     purchase_id = Column(Integer, ForeignKey('purchases.id'), nullable=False)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=True)
     read_product_key = Column(String(255), nullable=True)
     read_product_text = Column(String(255), nullable=True)
     quantity = Column(Float, nullable=True)
@@ -36,6 +37,7 @@ class PurchaseItem(Base):
     total = Column(Float, nullable=True)
 
     purchase = relationship('Purchase', back_populates='items')
+    product = relationship('Product')
 
 def update_purchase_updated_at(_, connection, target):
     connection.execute(

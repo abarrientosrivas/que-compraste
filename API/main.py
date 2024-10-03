@@ -305,6 +305,30 @@ def category_from_string(category_str: str) -> models.Category | None:
         return models.Category(code=code, name=name, original_text=category_str)
     return None
 
+@app.post("/product_codes/", response_model=schemas.ProductCode)
+def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = Depends(get_db)):
+    db_entity = models.ProductCode(
+        product_id=product_code.product_id,
+        format=product_code.format,
+        code=product_code.code,
+    )    
+    db.add(db_entity)
+    db.commit()
+    db.refresh(db_entity)
+
+    purchase_items_to_update = db.query(models.PurchaseItem).filter(
+            models.PurchaseItem.product_id.is_(None),
+            models.PurchaseItem.read_product_key == db_entity.code
+        ).all()
+    
+    for item in purchase_items_to_update:
+        item.product_id = db_entity.product_id
+        db.add(item)
+    
+    db.commit()
+
+    return db_entity
+
 @app.post("/products/", response_model=schemas.Product)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     db_entity = models.Product(
