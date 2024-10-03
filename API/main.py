@@ -34,23 +34,11 @@ app.add_middleware(
 PRODUCT_CODE_EXCHANGE = os.getenv("PRODUCT_CODE_EXCHANGE",'')
 PRODUCT_CODE_NEW_KEY = os.getenv("PRODUCT_CODE_NEW_KEY",'')
 
-if not PRODUCT_CODE_NEW_KEY.strip():
-    logging.error("Product code output variables not provided")
-    sys.exit(1)
-    
 ENTITY_EXCHANGE = os.getenv("ENTITY_EXCHANGE",'')
 ENTITY_NEW_KEY = os.getenv("ENTITY_NEW_KEY",'')
 
-if not ENTITY_NEW_KEY.strip():
-    logging.error("Entity code output variables not provided")
-    sys.exit(1)
-    
 PRODUCT_EXCHANGE = os.getenv("PRODUCT_EXCHANGE",'')
 PRODUCT_CLASSIFY_KEY = os.getenv("PRODUCT_CLASSIFY_KEY",'')
-
-if not PRODUCT_CLASSIFY_KEY.strip():
-    logging.error("Product output variables not provided")
-    sys.exit(1)
 
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
