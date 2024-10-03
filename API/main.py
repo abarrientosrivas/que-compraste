@@ -43,9 +43,17 @@ ENTITY_NEW_KEY = os.getenv("ENTITY_NEW_KEY",'')
 if not ENTITY_NEW_KEY.strip():
     logging.error("Entity code output variables not provided")
     sys.exit(1)
+    
+PRODUCT_EXCHANGE = os.getenv("PRODUCT_EXCHANGE",'')
+PRODUCT_CLASSIFY_KEY = os.getenv("PRODUCT_CLASSIFY_KEY",'')
+
+if not PRODUCT_CLASSIFY_KEY.strip():
+    logging.error("Product output variables not provided")
+    sys.exit(1)
 
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
+conn.ensure_exchange(PRODUCT_EXCHANGE)
 conn.ensure_exchange(ENTITY_EXCHANGE)
 publisher = conn.get_publisher()
 
@@ -296,6 +304,19 @@ def category_from_string(category_str: str) -> models.Category | None:
         code = int(code_str)
         return models.Category(code=code, name=name, original_text=category_str)
     return None
+
+@app.post("/products/", response_model=schemas.Product)
+def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
+    db_entity = models.Product(
+        title=product.title,
+        description=product.description,
+        read_category=product.read_category,
+    )    
+    db.add(db_entity)
+    db.commit()
+    db.refresh(db_entity)
+    publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_entity))
+    return db_entity
 
 @app.put("/products/{product_id}")
 def update_product(
