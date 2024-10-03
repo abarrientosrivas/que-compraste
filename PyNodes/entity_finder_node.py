@@ -7,7 +7,7 @@ import json
 import pytesseract
 import time
 import random
-from PyLib.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
+from PyLib import typed_messaging, receipt_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from dotenv import load_dotenv
@@ -46,7 +46,7 @@ class EntityIdentification(BaseModel):
     identification: str
 
 class ProductFinderNode:
-    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str):
+    def __init__(self, consumer: typed_messaging.PydanticQueueConsumer, publisher: typed_messaging.PydanticExchangePublisher, input_queue: str):
         self.consumer = consumer
         self.publisher = publisher
         self.input_queue = input_queue
@@ -104,7 +104,7 @@ class ProductFinderNode:
             print("El boton 'Ver' no se cargó en el tiempo esperado")
 
     def get_datos_efiscal(self, cuit):
-        page_source = self.get_page_source(cuit)
+        page_source = self.get_page_source(str(cuit))
         soup = BeautifulSoup(page_source, 'html.parser')
         result = {}
 
@@ -142,10 +142,15 @@ class ProductFinderNode:
         received_identification =  message.identification.strip()
         if not received_identification:
             logging.info(f"Ignoring empty message")
+        try:
+            cuit = receipt_tools.normalize_entity_id(received_identification)
+        except ValueError as ex:
+            logging.error(f"Invalid entity identification: {ex}")
+            return
 
-        logging.info(f"Processing an entity identification: {received_identification}")
+        logging.info(f"Processing an entity identification: {cuit}")
 
-        print(self.get_datos_efiscal(message.identification))
+        print(self.get_datos_efiscal(cuit))
         
         logging.info(f"Complying with crawler delay")
         time.sleep(TASK_DELAY + random.uniform(0, 2)) 
@@ -178,7 +183,7 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=args.logging.upper())
 
-    broker = PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+    broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 
     node = ProductFinderNode(
         broker.get_consumer(), 
