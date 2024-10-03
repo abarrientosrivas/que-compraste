@@ -153,11 +153,14 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             detail="The purchase's total could not be calculated."
         )
     
+    entity_id = None
     try:
         cuit = receipt_tools.normalize_entity_id(purchase.read_entity_identification)
         db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
         if not db_entity:
             publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=purchase.read_entity_name or "", identification=cuit))
+        else:
+            entity_id = db_entity.id
     except:
         pass
 
@@ -173,6 +176,7 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
         discount = purchase.discount,
         tips = purchase.tips,
         total = calculated_total,
+        entity_id = entity_id
     )    
     db.add(db_entity)
     db.commit()
@@ -181,9 +185,9 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
     for item in purchase.items:
         product_code = purchases_tools.detect_product_code(item.read_product_key)
         db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+        product_id = None
         if not db_product_code:
             publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
-            product_id = None
         else:
             product_id = db_product_code.product_id
 
