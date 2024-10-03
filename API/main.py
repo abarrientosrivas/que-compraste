@@ -1,10 +1,10 @@
 from . import schemas
 from . import models
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import func
-from sqlalchemy.orm import Session, noload
+from sqlalchemy.orm import Session, noload, joinedload
 from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db
 from typing import Dict, List, Optional, Union
@@ -294,6 +294,24 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
     db.commit()
 
     return db_entity
+
+@app.get("/product_codes/", response_model=List[schemas.ProductCode], response_model_exclude_none=True)
+def get_product_codes(lookahead: Optional[str] = None, db: Session = Depends(get_db)):
+    if lookahead is not None and len(lookahead) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lookahead must be at least 3 characters long"
+        )
+    query = db.query(models.ProductCode).options(
+        joinedload(models.ProductCode.product).joinedload(models.Product.category).options(
+            noload(models.Category.children),
+            noload(models.Category.parent)
+        )
+    )
+    if lookahead is not None:
+        query = query.filter(models.ProductCode.code.like(f"{lookahead}%"))
+    entities = query.all()
+    return entities
 
 @app.post("/products/", response_model=schemas.Product)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
