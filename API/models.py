@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint
+    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint, BigInteger
 )
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -8,6 +8,7 @@ Base = declarative_base()
 class Purchase(Base):
     __tablename__ = 'purchases'
     id = Column(Integer, primary_key=True, index=True)
+    entity_id = Column(Integer, ForeignKey('entities.id'), nullable=True)
     read_entity_name=Column(String(255), nullable=True)
     read_entity_branch=Column(String(255), nullable=True)
     read_entity_location=Column(String(255), nullable=True)
@@ -24,6 +25,7 @@ class Purchase(Base):
     deleted_at = Column(DateTime, nullable=True)
 
     items = relationship('PurchaseItem', back_populates='purchase')
+    entity = relationship('Entity')
 
 class PurchaseItem(Base):
     __tablename__ = 'purchase_items'
@@ -69,7 +71,10 @@ class Entity(Base):
     __tablename__ = 'entities'
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    identification = Column(Integer, nullable=False, unique=True)
+    identification = Column(BigInteger, nullable=False, unique=True)
+    email = Column(String(255), nullable=True)
+    address = Column(String(255), nullable=True)
+    phone = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
@@ -115,3 +120,5 @@ class ProductCode(Base):
     deleted_at = Column(DateTime, nullable=True)
     
     product = relationship('Product') 
+
+    __table_args__ = (UniqueConstraint('format', 'code', name='uix_format_code'),)

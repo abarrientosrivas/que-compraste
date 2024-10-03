@@ -62,6 +62,8 @@ class PurchaseUpdate(PurchaseBase):
 
 class Purchase(PurchaseBase):
     id: int
+    entity_id: Optional[int] = None
+    entity: Optional['Entity'] = None
     items: List[PurchaseItem] = Field(default_factory=list)
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -122,6 +124,9 @@ class Product(ProductBase):
 class EntityBase(BaseModel):
     name: str
     identification: int
+    email: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
 
     class Config:
         from_attributes = True

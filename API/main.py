@@ -3,6 +3,7 @@ from . import models
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session, noload
 from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db
@@ -265,9 +266,13 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
         format=product_code.format,
         code=product_code.code,
     )    
-    db.add(db_entity)
-    db.commit()
-    db.refresh(db_entity)
+    try:
+        db.add(db_entity)
+        db.commit()
+        db.refresh(db_entity)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
 
     purchase_items_to_update = db.query(models.PurchaseItem).filter(
             models.PurchaseItem.product_id.is_(None),
@@ -375,6 +380,36 @@ def create_establishment(establishment: schemas.EstablishmentCreate, db: Session
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
+    return db_entity
+
+@app.post("/entities/", response_model=schemas.Entity)
+def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
+    db_entity = models.Entity(
+        name = entity.name,
+        identification = entity.identification,
+        email = entity.email,
+        address = entity.address,
+        phone = entity.phone,
+    )    
+    try:
+        db.add(db_entity)
+        db.commit()
+        db.refresh(db_entity)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
+
+    purchases_to_update = db.query(models.Purchase).filter(
+            models.Purchase.entity_id.is_(None),
+            func.regexp_replace(models.Purchase.read_entity_identification, '[^0-9]', '', 'g') == str(db_entity.identification)
+        ).all()
+    
+    for item in purchases_to_update:
+        item.entity_id = db_entity.id
+        db.add(item)
+    
+    db.commit()
+
     return db_entity
 
 @app.get("/{path:path}")
