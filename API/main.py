@@ -183,6 +183,9 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
         db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
         if not db_product_code:
             publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+            product_id = None
+        else:
+            product_id = db_product_code.product_id
 
         db_item = models.PurchaseItem(
             purchase_id=db_entity.id,
@@ -190,7 +193,8 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             read_product_text=item.read_product_text,
             quantity=item.quantity,
             value=item.value,
-            total=item.total
+            total=item.total,
+            product_id = product_id
         )
         db.add(db_item)
     
