@@ -1,8 +1,9 @@
 from . import schemas
 from . import models
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status
+from pathlib import Path as pt
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,8 @@ from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
 import logging
 import os
+import hashlib
+import aiofiles
 import sys
 
 load_dotenv()
@@ -30,6 +33,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+IMAGE_UPLOADS_BASE_PATH = os.getenv("IMAGE_UPLOADS_BASE_PATH",'./uploads/')
 
 PRODUCT_CODE_EXCHANGE = os.getenv("PRODUCT_CODE_EXCHANGE",'')
 PRODUCT_CODE_NEW_KEY = os.getenv("PRODUCT_CODE_NEW_KEY",'')
@@ -54,12 +59,61 @@ async def root():
 async def favicon():
     return FileResponse('API/icon.ico')
 
+def get_next_sequence(directory: Path, timestamp: str) -> int:
+    sequence = 1
+    while (directory / f"{timestamp}-{sequence}.").exists():
+        sequence += 1
+    return sequence
+
 @app.post("/upload/")
-async def receive_ticket_image(file: UploadFile = File(...)):
-    #contents = await file.read()
-    #with open(f"./{file.filename}", "wb") as f:
-    #    f.write(contents)
-    return {"filename": file.filename}
+async def receive_ticket_images(request: Request, files: List[UploadFile] = File(...)):
+    if not files:
+        raise HTTPException(status_code=400, detail="No files uploaded.")
+    
+    current_time = datetime.now()
+    timestamp = current_time.strftime('%Y%m%d%H%M%S')
+    client_ip = request.client.host
+    ip_hash = hashlib.sha256(client_ip.encode('utf-8')).hexdigest()
+
+    year = current_time.strftime('%Y')
+    month = current_time.strftime('%m')
+    folder_path = pt(f"{IMAGE_UPLOADS_BASE_PATH}/{year}/{month}/{ip_hash}")
+    folder_path.mkdir(parents=True, exist_ok=True)
+
+    starting_sequence = get_next_sequence(folder_path, timestamp)
+    saved_files = []
+    allowed_extensions = {"jpg", "jpeg", "png", "pdf"}
+
+    for idx, file in enumerate(files):
+        if '.' in file.filename:
+            file_extension = file.filename.split(".")[-1]
+        else:
+            file_extension = "bin"
+        
+        if file_extension.lower() not in allowed_extensions:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
+        
+        sequence = starting_sequence + idx
+        filename = f"{timestamp}-{sequence}.{file_extension}"
+        file_path = folder_path / filename
+        
+        try:
+            async with aiofiles.open(file_path, "wb") as out_file:
+                while True:
+                    chunk = await file.read(1024)
+                    if not chunk:
+                        break
+                    await out_file.write(chunk)
+            
+            saved_files.append({
+                "filename": filename
+            })
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
+        finally:
+            await file.close()
+    
+    return JSONResponse(content={"uploaded_files": saved_files})
 
 @app.get("/reportes/total-by-category", response_model=List[Dict[str, Union[str, int]]])
 async def get_total_by_category(start_date: str, end_date: str):
