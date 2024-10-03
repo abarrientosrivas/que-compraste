@@ -117,61 +117,14 @@ async def get_total_by_category(start_date: str, end_date: str):
     ]
     return categories
 
-@app.get("/purchases/{id}")
-async def get_purchase_by_id(id: int):
-   return ({
-    "store_name": "La Anonima Sucursal 167",
-    "store_addr": "Chubut esq. Villarino - Puerto Madryn Provincia de Chubut",
-    "entity_id": "30-50673003-8",
-    "phone": "",
-    "date": "16-04-24",
-    "time": "18:43",
-    "subtotal": "$20615.00",
-    "svc": "",
-    "tax": "",
-    "total": "$20052.50",
-    "tips": "",
-    "discount": "-$562.50",
-    "line_items": [
-        {
-            "item_key": "779940044427",
-            "item_name": "LECHE LA X1L",
-            "item_value": "$2000.00",
-            "item_quantity": "3"
-        },
-        {
-            "item_key": "779040048897",
-            "item_name": "GREEN HILLS X25U",
-            "item_value": "$1615.00",
-            "item_quantity": "1"
-        },
-        {
-            "item_key": "779851870961",
-            "item_name": "AUN EN LOMITOS L",
-            "item_value": "$2600.00",
-            "item_quantity": "3"
-        },
-        {
-            "item_key": "77901520190",
-            "item_name": "LA VIRGINIAx25",
-            "item_value": "$690.00",
-            "item_quantity": "2"
-        },
-        {
-            "item_key": "779940044495",
-            "item_name": "ARVEJAS BEST x300",
-            "item_value": "$785.00",
-            "item_quantity": "2"
-        },
-        {
-            "item_key": "779025001618",
-            "item_name": "PAPEL HIG X12M2",
-            "item_value": "$2250.00",
-            "item_quantity": "1"
-        }
-    ]
-}
-)
+@app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
+def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
+    purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
+    
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    
+    return purchase
 
 
 @app.post("/purchases/", response_model=schemas.Purchase)
