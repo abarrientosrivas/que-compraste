@@ -45,6 +45,11 @@ ENTITY_NEW_KEY = os.getenv("ENTITY_NEW_KEY",'')
 PRODUCT_EXCHANGE = os.getenv("PRODUCT_EXCHANGE",'')
 PRODUCT_CLASSIFY_KEY = os.getenv("PRODUCT_CLASSIFY_KEY",'')
 
+IMAGE_TO_COMPRA_EXCHANGE = os.getenv("IMAGE_TO_COMPRA_EXCHANGE",'')
+IMAGE_TO_COMPRA_INPUT_KEY = os.getenv("IMAGE_TO_COMPRA_INPUT_QUEUE",'')
+
+SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000/")
+
 pt(IMAGE_UPLOADS_BASE_PATH).mkdir(parents=True, exist_ok=True)
 
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
@@ -119,6 +124,11 @@ async def receive_ticket_images(request: Request, files: List[UploadFile] = File
             saved_files.append({
                 "filename": filename
             })
+
+            relative_path = file_path.relative_to(pt(IMAGE_UPLOADS_BASE_PATH)).as_posix()
+            image_url = f"{SERVER_URL}receipts/{relative_path}"
+            publisher.publish(IMAGE_TO_COMPRA_EXCHANGE, IMAGE_TO_COMPRA_INPUT_KEY,schemas.ReceiptImageLocation(url=image_url))
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
         finally:
