@@ -2,6 +2,7 @@ from . import schemas
 from . import models
 from pathlib import Path as pt
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from sqlalchemy import func
@@ -44,6 +45,9 @@ ENTITY_NEW_KEY = os.getenv("ENTITY_NEW_KEY",'')
 
 PRODUCT_EXCHANGE = os.getenv("PRODUCT_EXCHANGE",'')
 PRODUCT_CLASSIFY_KEY = os.getenv("PRODUCT_CLASSIFY_KEY",'')
+
+pt(IMAGE_UPLOADS_BASE_PATH).mkdir(parents=True, exist_ok=True)
+app.mount("/receipts", StaticFiles(directory=IMAGE_UPLOADS_BASE_PATH), name="receipts")
 
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
@@ -225,13 +229,15 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
     db.refresh(db_entity)
     
     for item in purchase.items:
-        product_code = purchases_tools.detect_product_code(item.read_product_key)
-        db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
         product_id = None
-        if not db_product_code:
-            publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
-        else:
-            product_id = db_product_code.product_id
+        
+        if item.read_product_key:
+            product_code = purchases_tools.detect_product_code(item.read_product_key)
+            db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+            if not db_product_code:
+                publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+            else:
+                product_id = db_product_code.product_id
 
         db_item = models.PurchaseItem(
             purchase_id=db_entity.id,

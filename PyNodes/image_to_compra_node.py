@@ -6,9 +6,10 @@ import PyLib.receipt_tools as rt
 import threading
 import argparse
 import logging
-from API.schemas import PurchaseCreate, PurchaseItemCreate
+from API.schemas import PurchaseCreate, PurchaseItemCreate, ReceiptImageLocation
 from PIL import Image
-from pydantic import BaseModel, ValidationError
+from io import BytesIO
+from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 from PyLib import typed_messaging, request_tools
@@ -23,14 +24,24 @@ if hf_token is None or not hf_token.strip():
     raise
 HfFolder.save_token(hf_token)
 
-class ImageLocation(BaseModel):
-    path: str
-
-def load_and_preprocess_image(image_path: str, processor):
+def load_and_preprocess_local_image(image_path: str, processor):
     """
     Load an image and preprocess it for the model.
     """
     image = Image.open(image_path).convert("RGB")
+    pixel_values = processor(image, return_tensors="pt").pixel_values
+    return pixel_values
+
+def load_and_preprocess_remote_image(image_url: str, processor):
+    """
+    Load an image from a URL and preprocess it for the model.
+    """
+    response = request_tools.send_request_with_retries('get', image_url)
+    
+    if response.status_code != 200:
+        raise Exception(f"Failed to load image from URL: {response.status_code}")
+    
+    image = Image.open(BytesIO(response.content)).convert("RGB")
     pixel_values = processor(image, return_tensors="pt").pixel_values
     return pixel_values
 
@@ -155,11 +166,10 @@ class ImageToCompraNode:
             ))
         return purchase
 
-    def read_receipt_image(self, image_path: str):
+    def read_receipt_image(self, pixel_values):
         """
         Generate text from an image using the trained model.
         """
-        pixel_values = load_and_preprocess_image(image_path, self.processor)
         pixel_values = pixel_values.to(self.device)
 
         self.model.eval()
@@ -184,10 +194,18 @@ class ImageToCompraNode:
         decoded_text = self.processor.token2json(decoded_text)
         return decoded_text
     
-    def callback(self, message: ImageLocation):
-        logging.info(f"Processing image with path: {message.path}")
+    def callback(self, message: ReceiptImageLocation):
+        if message.path.strip():
+            logging.info(f"Processing image with path: {message.path}")
+            pixel_values = load_and_preprocess_local_image(message.path, self.processor)
+        elif message.url.strip():
+            logging.info(f"Processing image with url: {message.url}")
+            pixel_values = load_and_preprocess_remote_image(message.url, self.processor)
+        else:
+            logging.warning("Received an empty message. Skipping...")
+            return
 
-        json_data = self.read_receipt_image(message.path)
+        json_data = self.read_receipt_image(pixel_values)
         if not json_data or not isinstance(json_data, dict):
             logging.error("Could not generate proper JSON from image")
             return
@@ -204,14 +222,14 @@ class ImageToCompraNode:
         if isinstance(error, JSONDecodeError):
             logging.error(f"Could not decode message: {error}")
         elif isinstance(error, ValidationError):
-            logging.error(f"Received message was not of type ImageLocation: {error}")
+            logging.error(f"Received message was not of type ReceiptImageLocation: {error}")
         elif isinstance(error, FileNotFoundError):
             logging.error(f"Indicated file was not found: {error}")
         else:
             logging.error(f"An unexpected error ({error.__class__.__name__}) occurred: {error}")
         
     def start(self):
-        self.consumer.start(self.input_queue, self.callback, ImageLocation, self.error_callback)
+        self.consumer.start(self.input_queue, self.callback, ReceiptImageLocation, self.error_callback)
 
     def stop(self):
         self.stop_event.set()

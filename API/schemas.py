@@ -222,3 +222,11 @@ class ProductCode(ProductCodeBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# ReceiptImageLocation Schema
+# --------------------
+class ReceiptImageLocation(BaseModel):
+    path: str = ""
+    url: str = ""
