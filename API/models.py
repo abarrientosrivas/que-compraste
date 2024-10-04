@@ -122,3 +122,12 @@ class ProductCode(Base):
     product = relationship('Product') 
 
     __table_args__ = (UniqueConstraint('format', 'code', name='uix_format_code'),)
+
+class NodeToken(Base):
+    __tablename__ = "node_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    key_hash = Column(String, unique=True, index=True, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)

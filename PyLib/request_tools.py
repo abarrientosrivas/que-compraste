@@ -4,20 +4,20 @@ import logging
 from requests.exceptions import ConnectionError, Timeout
 from threading import Event
 
-def send_request_with_retries(method: str, url: str, json_data = None, params: dict = None, stop_event: Event = None) -> requests.Response | None:
+def send_request_with_retries(method: str, url: str, json_data = None, params: dict = None, headers: dict = None, stop_event: Event = None) -> requests.Response | None:
     wait_times = [0, 5, 10, 15, 30, 45, 60]
     retry_count = 0
 
     while stop_event is None or not stop_event.is_set():
         try:
             if method.lower() == 'get':
-                return requests.get(url, params=params)
+                return requests.get(url, params=params, headers=headers)
             elif method.lower() == 'post':
-                return requests.post(url, json=json_data, params=params)
+                return requests.post(url, json=json_data, params=params, headers=headers)
             elif method.lower() == 'put':
-                return requests.put(url, json=json_data, params=params)
+                return requests.put(url, json=json_data, params=params, headers=headers)
             elif method.lower() == 'delete':
-                return requests.delete(url, params=params)
+                return requests.delete(url, params=params, headers=headers)
             else:
                 raise ValueError("Method not supported.")
 

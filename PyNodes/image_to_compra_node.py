@@ -32,11 +32,14 @@ def load_and_preprocess_local_image(image_path: str, processor):
     pixel_values = processor(image, return_tensors="pt").pixel_values
     return pixel_values
 
-def load_and_preprocess_remote_image(image_url: str, processor):
+def load_and_preprocess_remote_image(image_url: str, node_token: str, processor):
     """
     Load an image from a URL and preprocess it for the model.
     """
-    response = request_tools.send_request_with_retries('get', image_url)
+    headers = {
+        "Authorization": f"Bearer {node_token}"
+    }
+    response = request_tools.send_request_with_retries('get', image_url, headers= headers)
     
     if response.status_code != 200:
         raise Exception(f"Failed to load image from URL: {response.status_code}")
@@ -200,7 +203,7 @@ class ImageToCompraNode:
             pixel_values = load_and_preprocess_local_image(message.path, self.processor)
         elif message.url.strip():
             logging.info(f"Processing image with url: {message.url}")
-            pixel_values = load_and_preprocess_remote_image(message.url, self.processor)
+            pixel_values = load_and_preprocess_remote_image(message.url, os.getenv('IMAGE_TO_COMPRA_TOKEN'), self.processor)
         else:
             logging.warning("Received an empty message. Skipping...")
             return

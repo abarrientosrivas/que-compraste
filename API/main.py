@@ -2,13 +2,12 @@ from . import schemas
 from . import models
 from pathlib import Path as pt
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Request
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload
 from sqlalchemy.exc import IntegrityError
-from .dependencies import get_db
+from .dependencies import get_db, get_node_token
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
 from PyLib import typed_messaging, purchases_tools, receipt_tools
@@ -47,7 +46,6 @@ PRODUCT_EXCHANGE = os.getenv("PRODUCT_EXCHANGE",'')
 PRODUCT_CLASSIFY_KEY = os.getenv("PRODUCT_CLASSIFY_KEY",'')
 
 pt(IMAGE_UPLOADS_BASE_PATH).mkdir(parents=True, exist_ok=True)
-app.mount("/receipts", StaticFiles(directory=IMAGE_UPLOADS_BASE_PATH), name="receipts")
 
 conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
 conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
@@ -58,6 +56,15 @@ publisher = conn.get_publisher()
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/receipts/{file_path:path}")
+async def serve_image_file(file_path: str, _ = Depends(get_node_token)):
+    full_path = os.path.join(IMAGE_UPLOADS_BASE_PATH, file_path)
+
+    if not os.path.isfile(full_path) or not full_path.lower().endswith('.jpg'):
+        raise HTTPException(status_code=404, detail="File not found or invalid")
+
+    return FileResponse(full_path)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
