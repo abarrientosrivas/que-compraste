@@ -15,8 +15,10 @@ from dotenv import load_dotenv
 import logging
 import os
 import hashlib
-import aiofiles
-import sys
+import asyncio
+from PIL import Image
+import io
+from pdf2image import convert_from_bytes
 
 load_dotenv()
 
@@ -82,7 +84,7 @@ def get_next_sequence(directory: Path, timestamp: str) -> int:
     return sequence
 
 @app.post("/upload/")
-async def receive_ticket_images(request: Request, files: List[UploadFile] = File(...)):
+async def receive_receipt_files(request: Request, files: List[UploadFile] = File(...)):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
     
@@ -109,17 +111,28 @@ async def receive_ticket_images(request: Request, files: List[UploadFile] = File
         if file_extension.lower() not in allowed_extensions:
             raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
         
+        try:
+            file_content = await file.read()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to read {file.filename}: {str(e)}")
+        finally:
+            await file.close()
+        
         sequence = starting_sequence + idx
-        filename = f"{timestamp}-{sequence}.{file_extension}"
+        filename = f"{timestamp}-{sequence}.jpg"
         file_path = folder_path / filename
         
         try:
-            async with aiofiles.open(file_path, "wb") as out_file:
-                while True:
-                    chunk = await file.read(1024)
-                    if not chunk:
-                        break
-                    await out_file.write(chunk)
+            if file_extension.lower() in {'jpg', 'jpeg', 'png'}:
+                image = await asyncio.to_thread(Image.open, io.BytesIO(file_content))
+                image = image.convert('RGB')
+                image.save(file_path, format='JPEG')
+            elif file_extension.lower() == 'pdf':
+                images = convert_from_bytes(file_content)
+                image = images[0]
+                image.save(file_path, format='JPEG')
+            else:
+                raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
             
             saved_files.append({
                 "filename": filename
