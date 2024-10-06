@@ -72,7 +72,7 @@ class ImageToCompraNode:
 if __name__ == '__main__':
     LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
     
-    parser = argparse.ArgumentParser(description="Product classifier service.")
+    parser = argparse.ArgumentParser(description="Receipt reader service.")
     parser.add_argument('--train', action='store_true', help='Train receipt reader model')
     parser.add_argument('--dev_mode', action='store_true', help='Train receipt reader model')
     parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
