@@ -10,14 +10,14 @@ def create_node_token():
     return node_token, hashed_key
 
 def add_node_token_to_db(name: str):
-    node_token, hashed_key = create_node_token()
+    node_token_key, hashed_key = create_node_token()
     db = SessionLocal()
     node_token = NodeToken(name=name, key_hash=hashed_key)
     db.add(node_token)
     db.commit()
     db.refresh(node_token)
     db.close()
-    print(f"Node token for {name}: {node_token}")
+    print(f"Node token for {name}: {node_token_key}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Token generator for nodes.")
