@@ -174,7 +174,7 @@ class ImageToCompraNode:
         output_text = self.processor.batch_decode(
             generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )
-        json_str = output_text.removeprefix("```json").removesuffix("```").strip()
+        json_str = output_text[0].removeprefix("```json").removesuffix("```").strip()
         try:
             json_data = json.loads(json_str)
         except json.JSONDecodeError as e:
@@ -222,18 +222,19 @@ if __name__ == '__main__':
         logging.error("Endpoint URL was not provided")
         sys.exit(1)
     
-    endpoint_url = os.getenv('IMAGE_TO_COMPRA_TOKEN')
-    if not endpoint_url:
+    node_token = os.getenv('IMAGE_TO_COMPRA_TOKEN')
+    if not node_token:
         logging.error("Node token was not provided")
         sys.exit(1)
     
-    endpoint_url = os.getenv('IMAGE_TO_COMPRA_RECEIPT_PATH')
-    if not endpoint_url:
+    receipt_path = os.getenv('IMAGE_TO_COMPRA_RECEIPT_PATH')
+    if not receipt_path:
         logging.error("Receipt path was not provided")
         sys.exit(1)
 
     node = ImageToCompraNode(
-        
+        node_token,
+        receipt_path,
         broker.get_consumer(), 
         broker.get_publisher(), 
         broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 

@@ -68,7 +68,7 @@ def convert_data_to_purchase(json_data: dict) -> PurchaseCreate:
         read_entity_branch= store_branch,
         read_entity_location= store_location,
         read_entity_address= store_address,
-        read_entity_identification= entity_id,
+        read_entity_identification= str(entity_id),
         read_entity_phone= store_phone,
         date= date,
         subtotal= subtotal,
