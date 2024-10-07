@@ -13,15 +13,12 @@ from dotenv import load_dotenv
 from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 from PyLib.donut_model import convert_data_to_purchase
-from PIL import Image
-from io import BytesIO
 
 load_dotenv()
 
 class ImageToCompraNode:
-    def __init__(self, node_token: str, receipt_output_path: str, consumer: typed_messaging.PydanticQueueConsumer, publisher: typed_messaging.PydanticExchangePublisher, input_queue: str, output_endpoint: str):
+    def __init__(self, node_token: str, receipt_output_path: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str, output_endpoint: str):
         self.consumer = consumer
-        self.publisher = publisher
         self.input_queue = input_queue
         self.output_endpoint = output_endpoint
         self.node_token = node_token
@@ -236,7 +233,6 @@ if __name__ == '__main__':
         node_token,
         receipt_path,
         broker.get_consumer(), 
-        broker.get_publisher(), 
         broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 
         endpoint_url)
 

@@ -28,9 +28,8 @@ class ProductCode(BaseModel):
     code: str
 
 class ProductFinderNode:
-    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str):
+    def __init__(self, consumer: PydanticQueueConsumer, input_queue: str):
         self.consumer = consumer
-        self.publisher = publisher
         self.input_queue = input_queue
         self.stop_event = threading.Event()
         self.driver = create_driver()
@@ -106,7 +105,6 @@ if __name__ == '__main__':
 
     node = ProductFinderNode(
         broker.get_consumer(), 
-        broker.get_publisher(), 
         broker.ensure_queue(os.getenv('PRODUCT_FINDER_INPUT_QUEUE', '')))
 
     try:

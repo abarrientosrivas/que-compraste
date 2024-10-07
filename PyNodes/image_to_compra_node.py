@@ -20,10 +20,9 @@ if hf_token is None or not hf_token.strip():
 HfFolder.save_token(hf_token)
 
 class ImageToCompraNode:
-    def __init__(self, model_path: str, consumer: typed_messaging.PydanticQueueConsumer, publisher: typed_messaging.PydanticExchangePublisher, input_queue: str, output_endpoint: str):
+    def __init__(self, model_path: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str, output_endpoint: str):
         self.donut = DonutInference(model_path)
         self.consumer = consumer
-        self.publisher = publisher
         self.input_queue = input_queue
         self.output_endpoint = output_endpoint
         self.stop_event = threading.Event()
@@ -122,7 +121,6 @@ if __name__ == '__main__':
         node = ImageToCompraNode(
             model_path,
             broker.get_consumer(), 
-            broker.get_publisher(), 
             broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 
             endpoint_url)
 

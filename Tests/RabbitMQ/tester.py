@@ -1,21 +1,17 @@
 from PyLib import typed_messaging
 from API import schemas
 from PyNodes.product_finder_node import ProductCode
-from PyNodes.image_to_compra_node import ImageLocation
 from PyNodes.entity_finder_node import EntityIdentification
 from datetime import datetime, UTC
-from pika.exceptions import ChannelClosedByBroker
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
-publisher = broker.get_publisher()
-
-try:
-    while True:
-        try:
+with broker.get_publisher() as publisher:
+    try:
+        while True:
             exchange = input("Exchange: ")
             routing_key = input("Routing key: ")
 
@@ -23,8 +19,9 @@ try:
             while exit_flag:
                 typename = input("Type: ")
                 if typename == "img":
-                    payload = ImageLocation(
-                        path=input("path: ")
+                    payload = schemas.ReceiptImageLocation(
+                        path=input("path: "),
+                        url=input("url: ")
                     )
                 elif typename == "pro":
                     payload = schemas.Product(
@@ -47,9 +44,5 @@ try:
                     break
 
                 publisher.publish(exchange, routing_key, payload)
-        except ChannelClosedByBroker:
-            print("Reconnecting...\n")
-            broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
-            publisher = broker.get_publisher()
-except KeyboardInterrupt:
-    print("\nExiting gracefully...")
+    except KeyboardInterrupt:
+        print("\nExiting gracefully...")

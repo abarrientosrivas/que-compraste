@@ -1,5 +1,5 @@
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import ChannelClosedByBroker
+from pika.exceptions import ChannelClosedByBroker, ConnectionClosed, ChannelClosed, AMQPError
 from pika.spec import Basic, BasicProperties
 from pika import BlockingConnection, PlainCredentials, ConnectionParameters
 from urllib.parse import urlparse
@@ -9,6 +9,7 @@ import json
 import time
 import threading
 import queue
+import logging
 
 def bind_queue(queue_name: str, exchange_name: str, routing_key: str | None, conn: BlockingConnection):
     channel = conn.channel()
@@ -44,7 +45,9 @@ def get_connection_by_string(conn_string:str) -> BlockingConnection:
         host=parsed.hostname,
         port=parsed.port,
         virtual_host=parsed.path if parsed.path else '/',
-        credentials=credentials
+        credentials=credentials,
+        heartbeat=600,
+        blocked_connection_timeout=300
     )
     return BlockingConnection(pika_parameters)
 
@@ -106,15 +109,54 @@ class PydanticQueueConsumer:
         self.channel.stop_consuming()
 
 class PydanticExchangePublisher:
-    def __init__(self, channel: BlockingChannel):
-        self.channel = channel
+    def __init__(self, conn_string: str):
+        self.conn_string = conn_string
+        self.connection = None
+        self.channel = None
+
+    def __enter__(self):
+        self._connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def _connect(self):
+        self.connection = get_connection_by_string(self.conn_string)
+        self.channel = self.connection.channel()
 
     def publish(self, exchange_name: str, routing_key: str, payload: BaseModel):
-        self.channel.basic_publish(exchange_name, routing_key, payload.model_dump_json())
+        try:
+            self.channel.basic_publish(
+                exchange=exchange_name,
+                routing_key=routing_key,
+                body=payload.model_dump_json()
+            )
+        except (ConnectionClosed, ChannelClosed) as e:
+            logging.warning(f"Connection or channel closed: {e}. Reconnecting...")
+            self._reconnect()
+            self.channel.basic_publish(
+                exchange=exchange_name,
+                routing_key=routing_key,
+                body=payload.model_dump_json()
+            )
+        except AMQPError as e:
+            logging.error(f"AMQP Error: {e}")
+            raise
+
+    def _reconnect(self):
+        if self.connection and not self.connection.is_closed:
+            self.connection.close()
+        self._connect()
+
+    def close(self):
+        if self.connection and not self.connection.is_closed:
+            self.connection.close()
 
 class PydanticMessageBroker:
     def __init__(self, conn_string: str):
         self.conn = get_connection_by_string(conn_string)
+        self.conn_string = conn_string
 
     def get_channel(self) -> BlockingChannel:
         return self.conn.channel()
@@ -132,4 +174,4 @@ class PydanticMessageBroker:
         return PydanticQueueConsumer(channel = self.get_channel())
     
     def get_publisher(self) -> PydanticExchangePublisher:
-        return PydanticExchangePublisher(channel=self.get_channel())
+        return PydanticExchangePublisher(conn_string=self.conn_string)

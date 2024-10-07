@@ -12,15 +12,16 @@ from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
 from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
+from PIL import Image
+from pdf2image import convert_from_bytes
 import logging
 import os
 import hashlib
 import asyncio
-from PIL import Image
 import io
-from pdf2image import convert_from_bytes
 
 load_dotenv()
+logging.basicConfig(level=os.getenv("API_LOGGING_LEVEL",'ERROR'))
 
 app = FastAPI()
 
@@ -58,7 +59,7 @@ conn = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRI
 conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
 conn.ensure_exchange(PRODUCT_EXCHANGE)
 conn.ensure_exchange(ENTITY_EXCHANGE)
-publisher = conn.get_publisher()
+conn.ensure_exchange(IMAGE_TO_COMPRA_EXCHANGE)
 
 @app.get("/")
 async def root():
@@ -102,50 +103,51 @@ async def receive_receipt_files(request: Request, files: List[UploadFile] = File
     saved_files = []
     allowed_extensions = {"jpg", "jpeg", "png", "pdf"}
 
-    for idx, file in enumerate(files):
-        if '.' in file.filename:
-            file_extension = file.filename.split(".")[-1]
-        else:
-            file_extension = "bin"
-        
-        if file_extension.lower() not in allowed_extensions:
-            raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
-        
-        try:
-            file_content = await file.read()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to read {file.filename}: {str(e)}")
-        finally:
-            await file.close()
-        
-        sequence = starting_sequence + idx
-        filename = f"{timestamp}-{sequence}.jpg"
-        file_path = folder_path / filename
-        
-        try:
-            if file_extension.lower() in {'jpg', 'jpeg', 'png'}:
-                image = await asyncio.to_thread(Image.open, io.BytesIO(file_content))
-                image = image.convert('RGB')
-                image.save(file_path, format='JPEG')
-            elif file_extension.lower() == 'pdf':
-                images = convert_from_bytes(file_content)
-                image = images[0]
-                image.save(file_path, format='JPEG')
+    with conn.get_publisher() as publisher:
+        for idx, file in enumerate(files):
+            if '.' in file.filename:
+                file_extension = file.filename.split(".")[-1]
             else:
+                file_extension = "bin"
+            
+            if file_extension.lower() not in allowed_extensions:
                 raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
             
-            saved_files.append({
-                "filename": filename
-            })
+            try:
+                file_content = await file.read()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to read {file.filename}: {str(e)}")
+            finally:
+                await file.close()
+            
+            sequence = starting_sequence + idx
+            filename = f"{timestamp}-{sequence}.jpg"
+            file_path = folder_path / filename
+            
+            try:
+                if file_extension.lower() in {'jpg', 'jpeg', 'png'}:
+                    image = await asyncio.to_thread(Image.open, io.BytesIO(file_content))
+                    image = image.convert('RGB')
+                    image.save(file_path, format='JPEG')
+                elif file_extension.lower() == 'pdf':
+                    images = convert_from_bytes(file_content)
+                    image = images[0]
+                    image.save(file_path, format='JPEG')
+                else:
+                    raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
+                
+                saved_files.append({
+                    "filename": filename
+                })
 
-            relative_path = file_path.relative_to(pt(IMAGE_UPLOADS_BASE_PATH)).as_posix()
-            image_url = f"{SERVER_URL}receipts/{relative_path}"
-            publisher.publish(IMAGE_TO_COMPRA_EXCHANGE, IMAGE_TO_COMPRA_INPUT_KEY,schemas.ReceiptImageLocation(url=image_url))
+                relative_path = file_path.relative_to(pt(IMAGE_UPLOADS_BASE_PATH)).as_posix()
+                image_url = f"{SERVER_URL}receipts/{relative_path}"
+                publisher.publish(IMAGE_TO_COMPRA_EXCHANGE, IMAGE_TO_COMPRA_INPUT_KEY,schemas.ReceiptImageLocation(url=image_url))
 
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
-        finally:
-            await file.close()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
+            finally:
+                await file.close()
     
     return JSONResponse(content={"uploaded_files": saved_files})
 
@@ -229,59 +231,60 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             detail="The purchase's total could not be calculated."
         )
     
-    entity_id = None
-    try:
-        cuit = receipt_tools.normalize_entity_id(purchase.read_entity_identification)
-        db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
-        if not db_entity:
-            publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=purchase.read_entity_name or "", identification=cuit))
-        else:
-            entity_id = db_entity.id
-    except:
-        pass
-
-    db_entity = models.Purchase(
-        read_entity_name=purchase.read_entity_name,
-        read_entity_branch=purchase.read_entity_branch,
-        read_entity_location=purchase.read_entity_location,
-        read_entity_address=purchase.read_entity_address,
-        read_entity_identification=purchase.read_entity_identification,
-        read_entity_phone=purchase.read_entity_phone,
-        date = calculated_date,
-        subtotal = purchase.subtotal,
-        discount = purchase.discount,
-        tips = purchase.tips,
-        total = calculated_total,
-        entity_id = entity_id
-    )    
-    db.add(db_entity)
-    db.commit()
-    db.refresh(db_entity)
-    
-    for item in purchase.items:
-        product_id = None
-        
-        if item.read_product_key:
-            product_code = purchases_tools.detect_product_code(item.read_product_key)
-            db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
-            if not db_product_code:
-                publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+    with conn.get_publisher() as publisher:
+        entity_id = None
+        try:
+            cuit = receipt_tools.normalize_entity_id(purchase.read_entity_identification)
+            db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
+            if not db_entity:
+                publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=purchase.read_entity_name or "", identification=cuit))
             else:
-                product_id = db_product_code.product_id
+                entity_id = db_entity.id
+        except:
+            pass
 
-        db_item = models.PurchaseItem(
-            purchase_id=db_entity.id,
-            read_product_key=item.read_product_key,
-            read_product_text=item.read_product_text,
-            quantity=item.quantity,
-            value=item.value,
-            total=item.total,
-            product_id = product_id
-        )
-        db.add(db_item)
-    
-    db.commit()
-    db.refresh(db_entity)
+        db_entity = models.Purchase(
+            read_entity_name=purchase.read_entity_name,
+            read_entity_branch=purchase.read_entity_branch,
+            read_entity_location=purchase.read_entity_location,
+            read_entity_address=purchase.read_entity_address,
+            read_entity_identification=purchase.read_entity_identification,
+            read_entity_phone=purchase.read_entity_phone,
+            date = calculated_date,
+            subtotal = purchase.subtotal,
+            discount = purchase.discount,
+            tips = purchase.tips,
+            total = calculated_total,
+            entity_id = entity_id
+        )    
+        db.add(db_entity)
+        db.commit()
+        db.refresh(db_entity)
+        
+        for item in purchase.items:
+            product_id = None
+            
+            if item.read_product_key:
+                product_code = purchases_tools.detect_product_code(item.read_product_key)
+                db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+                if not db_product_code:
+                    publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+                else:
+                    product_id = db_product_code.product_id
+
+            db_item = models.PurchaseItem(
+                purchase_id=db_entity.id,
+                read_product_key=item.read_product_key,
+                read_product_text=item.read_product_text,
+                quantity=item.quantity,
+                value=item.value,
+                total=item.total,
+                product_id = product_id
+            )
+            db.add(db_item)
+        
+        db.commit()
+        db.refresh(db_entity)
     return db_entity
 
 @app.put("/purchases/{purchase_id}", response_model=schemas.Purchase)
@@ -393,15 +396,16 @@ def get_product_codes(lookahead: Optional[str] = None, db: Session = Depends(get
 
 @app.post("/products/", response_model=schemas.Product)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
-    db_entity = models.Product(
-        title=product.title,
-        description=product.description,
-        read_category=product.read_category,
-    )    
-    db.add(db_entity)
-    db.commit()
-    db.refresh(db_entity)
-    publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_entity))
+    with conn.get_publisher() as publisher:
+        db_entity = models.Product(
+            title=product.title,
+            description=product.description,
+            read_category=product.read_category,
+        )    
+        db.add(db_entity)
+        db.commit()
+        db.refresh(db_entity)
+        publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_entity))
     return db_entity
 
 @app.put("/products/{product_id}")

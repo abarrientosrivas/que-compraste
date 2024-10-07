@@ -73,9 +73,8 @@ def init(file_path: str):
     logging.info("Taxonomy collection created successfully")
 
 class ProductClassifierNode:
-    def __init__(self, consumer: PydanticQueueConsumer, publisher: PydanticExchangePublisher, input_queue: str, categories_endpoint: str, products_endpoint: str):
+    def __init__(self, consumer: PydanticQueueConsumer, input_queue: str, categories_endpoint: str, products_endpoint: str):
         self.consumer = consumer
-        self.publisher = publisher
         self.input_queue = input_queue
         self.categories_endpoint = categories_endpoint
         self.products_endpoint = products_endpoint
@@ -179,7 +178,6 @@ if __name__ == '__main__':
 
         node = ProductClassifierNode(
             broker.get_consumer(), 
-            broker.get_publisher(), 
             broker.ensure_queue(os.getenv('PRODUCT_CLASSIFIER_INPUT_QUEUE', '')), 
             categories_endpoint,
             products_endpoint)
