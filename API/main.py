@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload
 from sqlalchemy.exc import IntegrityError
-from .dependencies import get_db, get_node_token
+from .dependencies import get_db, get_node_token, get_client_ip
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone
 from PyLib import typed_messaging, purchases_tools, receipt_tools
@@ -85,13 +85,12 @@ def get_next_sequence(directory: Path, timestamp: str) -> int:
     return sequence
 
 @app.post("/upload/")
-async def receive_receipt_files(request: Request, files: List[UploadFile] = File(...)):
+async def receive_receipt_files(request: Request, files: List[UploadFile] = File(...), client_ip: str = Depends(get_client_ip)):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
     
     current_time = datetime.now()
     timestamp = current_time.strftime('%Y%m%d%H%M%S')
-    client_ip = request.client.host
     ip_hash = hashlib.sha256(client_ip.encode('utf-8')).hexdigest()
 
     year = current_time.strftime('%Y')

@@ -4,11 +4,18 @@ import logging
 import threading
 import aiofiles
 from datetime import datetime
-from fastapi import FastAPI, File, UploadFile, Request, HTTPException
+from fastapi import FastAPI, File, UploadFile, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from typing import List
+
+def get_client_ip(request: Request):
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0]
+    else:
+        return request.client.host
 
 class CustomHeaderMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -68,7 +75,7 @@ async def receipt(request: Request):
     return templates.TemplateResponse("receipt.html", {"request": request})
 
 @app.post("/upload", response_class=HTMLResponse)
-async def upload_files(request: Request, files: List[UploadFile] = File(...)):
+async def upload_files(request: Request, files: List[UploadFile] = File(...), client_ip: str = Depends(get_client_ip)):
     max_file_size = 16 * 1024 * 1024  # 16 MB
     ignored_files = 0
 
@@ -94,7 +101,7 @@ async def upload_files(request: Request, files: List[UploadFile] = File(...)):
                 return "<div>Servidor en capacidad máxima.</div>"
 
             try:
-                filename = generate_filename(request.client.host, file.filename)
+                filename = generate_filename(client_ip, file.filename)
                 file_path = os.path.join(files_dir, filename)
                 async with aiofiles.open(file_path, 'wb') as buffer:
                     contents = await file.read()
