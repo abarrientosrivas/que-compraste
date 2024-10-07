@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { ReportesService } from '../reportes.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [NgxEchartsDirective],
+  imports: [NgxEchartsDirective, FormsModule],
   templateUrl: './reportes.component.html',
   styleUrl: './reportes.component.css',
   providers: [provideEcharts()],
@@ -15,24 +16,28 @@ export class ReportesComponent {
   constructor(private reportesService: ReportesService) {}
 
   chartOptions: any;
+  startDate: any;
+  endDate: any;
 
   ngOnInit(): void {
     this.fetchChartData();
   }
 
   fetchChartData() {
-    this.reportesService.getTotalsByCategory('', '').subscribe({
-      next: (data) => {
-        console.log('Respuesta del servidor:', data);
-        this.setChartOptions(data);
-      },
-      error: (error) => {
-        console.error('Error al hacer la petición:', error);
-      },
-      complete: () => {
-        console.log('Petición completada');
-      },
-    });
+    this.reportesService
+      .getTotalsByCategory(this.startDate, this.endDate)
+      .subscribe({
+        next: (data) => {
+          console.log('Respuesta del servidor:', data);
+          this.setChartOptions(data);
+        },
+        error: (error) => {
+          console.error('Error al hacer la petición:', error);
+        },
+        complete: () => {
+          console.log('Petición completada');
+        },
+      });
   }
 
   setChartOptions(data: any[]) {
