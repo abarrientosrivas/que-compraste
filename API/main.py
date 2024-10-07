@@ -515,7 +515,3 @@ def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
     db.commit()
 
     return db_entity
-
-@app.get("/{path:path}")
-async def redirect_to_receipt(path: str):
-    return RedirectResponse(url="/recibos/")
