@@ -1,1 +1,23 @@
+<div class="row">
+  <div class="col-md-2 form-group">
+    <label for="startDate">Desde: </label>
+    <input
+      type="date"
+      class="form-control"
+      id="startDate"
+      [(ngModel)]="startDate"
+    />
+  </div>
+  <div class="col-md-2 form-group">
+    <label for="endDate">Hasta: </label>
+    <input
+      type="date"
+      class="form-control"
+      id="endDate"
+      [(ngModel)]="endDate"
+    />
+  </div>
+  <div class="col-md-4"></div>
+</div>
+
 <div echarts [options]="chartOptions" class="pie-chart"></div>

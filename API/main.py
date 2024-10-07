@@ -153,45 +153,46 @@ async def receive_receipt_files(request: Request, files: List[UploadFile] = File
 @app.get("/reportes/total-by-category", response_model=List[Dict[str, Union[str, int]]])
 async def get_total_by_category(start_date: str, end_date: str):
     categories = [
-        {"name": "Cat Food", "value": 2000},
-        {"name": "Art Ink", "value": 500},
-        {"name": "Electronics", "value": 15000},
-        {"name": "Clothing", "value": 8000},
-        {"name": "Furniture", "value": 12000},
-        {"name": "Health & Beauty", "value": 4000},
-        {"name": "Sports & Outdoors", "value": 3000},
-        {"name": "Toys & Games", "value": 2500},
-        {"name": "Automotive Parts & Accessories", "value": 6000},
-        {"name": "Books", "value": 1500},
-        {"name": "Pet Supplies", "value": 3500},
-        {"name": "Home & Garden", "value": 9000},
-        {"name": "Video Games", "value": 4500},
-        {"name": "Watches", "value": 7000},
-        {"name": "Bags & Accessories", "value": 3000},
-        {"name": "Computers", "value": 18000},
-        {"name": "Kitchen Appliances", "value": 5000},
-        {"name": "Musical Instruments", "value": 3500},
-        {"name": "Fitness Equipment", "value": 4000},
-        {"name": "Baby Products", "value": 6000},
-        {"name": "Office Supplies", "value": 2000},
-        {"name": "Shoes", "value": 7000},
-        {"name": "Jewelry", "value": 3000},
-        {"name": "Home Decor", "value": 4000},
-        {"name": "Gardening Tools", "value": 2500},
-        {"name": "Camping & Hiking", "value": 3500},
-        {"name": "Fishing Gear", "value": 3000},
-        {"name": "Luggage & Travel Gear", "value": 4500},
-        {"name": "Cosmetics", "value": 2500},
-        {"name": "Smart Home Devices", "value": 6000},
-        {"name": "Cleaning Supplies", "value": 1500},
-        {"name": "Safety Equipment", "value": 2000},
-        {"name": "Mobile Accessories", "value": 3000},
-        {"name": "Personal Care Appliances", "value": 2500},
-        {"name": "Dietary Supplements", "value": 2000},
-        {"name": "Gifts & Crafts", "value": 4000},
-        {"name": "Tickets & Experiences", "value": 7000},
-        {"name": "Party Supplies", "value": 1500},
-        {"name": "Digital Products", "value": 3000}
+        {
+            "name": "Electrónica",
+            "value": 5459
+        },
+        {
+            "name": "Redes",
+            "value": 3425
+        },
+        {
+            "name": "Dispositivos portátiles",
+            "value": 298
+        },
+        {
+            "name": "Vídeo",
+            "value": 4570
+        },
+        {
+            "name": "Sistemas de navegación GPS",
+            "value": 339
+        },
+        {
+            "name": "Deportes y aire libre",
+            "value": 278
+        },
+        {
+            "name": "Hogar y jardín",
+            "value": 3539
+        },
+        {
+            "name": "Ropa y accesorios",
+            "value": 5256
+        },
+        {
+            "name": "Suministros de oficina",
+            "value": 2027
+        },
+        {
+            "name": "Videoconsolas",
+            "value": 1294
+        }
     ]
     return categories
 

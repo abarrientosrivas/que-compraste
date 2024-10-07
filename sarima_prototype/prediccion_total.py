@@ -13,14 +13,13 @@ def estimar(compras_route, ipc_route):
     compras_df = compras_df.set_index('Fecha')
     compras_df = compras_df.asfreq('MS')
 
-    train_size = len(compras_df) - 10
+    train_size = len(compras_df) - 3
     train, test = compras_df[:train_size], compras_df[train_size:]
 
     auto_arima_model = pm.auto_arima(y=train['Total'],
                                 x=train['IPC'],
                                 seasonal=True,
                                 m=12,
-                                method="lbfgs",
                                 information_criterion="aic",
                                 trace=True,
                                 stepwise=True,
