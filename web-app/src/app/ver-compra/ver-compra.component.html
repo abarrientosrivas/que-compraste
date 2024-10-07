@@ -1,19 +1,31 @@
 <div *ngIf="compra" class="purchase-details container">
   <div class="header-section row align-items-center mb-4">
-    <h1 class="store-name display-5">{{ compra.store_name }}</h1>
+    <h1 class="store-name display-5">{{ compra.read_entity_name }}</h1>
 
     <div class="col-md-6">
-      <p class="store-address text-muted">{{ compra.store_addr }}</p>
+      <p class="store-address text-muted">{{ compra.read_entity_address }}</p>
+      <p class="store-address text-muted">{{ compra.read_entity_location }}</p>
       <p class="purchase-info text-muted">
-        Fecha: {{ compra.date }} | Hora: {{ compra.time }}
+        Fecha: {{ fechaFormateada }} | Hora: {{ horaFormateada }}
       </p>
+      <button
+        class="btn btn-primary mb-3"
+        *ngIf="!isEditMode"
+        (click)="editarCompra()"
+      >
+        Editar
+      </button>
     </div>
     <div class="col-md-6 text-md-right">
       <h2 class="total-amount display-5 text-success">
-        Total: {{ compra.total }}
+        Total: {{ compra.total | currency : "USD" }}
       </h2>
-      <p class="subtotal text-muted">Subtotal: {{ compra.subtotal }}</p>
-      <p class="discount text-danger">Descuento: {{ compra.discount }}</p>
+      <p class="subtotal text-muted">
+        Subtotal: {{ compra.subtotal | currency : "USD" }}
+      </p>
+      <p class="discount text-danger">
+        Descuento: {{ compra.discount | currency : "USD" }}
+      </p>
     </div>
   </div>
 
@@ -27,17 +39,46 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let item of compra.line_items">
-        <td>{{ item.item_name }}</td>
-        <td>{{ item.item_value }}</td>
-        <td>{{ item.item_quantity }}</td>
-        <td>
-          {{
-            convertToInt(item.item_value.substring(1)) * item.item_quantity
-              | currency : "USD"
-          }}
+      <tr *ngFor="let item of compra.items; let i = index">
+        <td *ngIf="!isEditMode">{{ item.read_product_text }}</td>
+        <td *ngIf="isEditMode && item === selectedItem">
+          <app-product-search
+            (productSelected)="onProductSelected($event)"
+          ></app-product-search>
         </td>
+        <td *ngIf="isEditMode && item !== selectedItem">
+          {{ item.read_product_text }}
+        </td>
+
+        <td *ngIf="!isEditMode">{{ item.value | currency : "USD" }}</td>
+        <td *ngIf="isEditMode">
+          <input
+            type="number"
+            [(ngModel)]="item.value"
+            (ngModelChange)="onValueChange($event, i)"
+          />
+        </td>
+        <td *ngIf="!isEditMode">{{ item.quantity }}</td>
+        <td *ngIf="isEditMode">
+          <input
+            type="number"
+            [(ngModel)]="item.quantity"
+            (ngModelChange)="onQuantityChange($event, i)"
+          />
+        </td>
+        <td *ngIf="!isEditMode">{{ item.total | currency : "USD" }}</td>
+        <td *ngIf="isEditMode">{{ item.total | currency : "USD" }}</td>
+        <button *ngIf="isEditMode" (click)="seleccionarItem(item)">
+          Editar
+        </button>
       </tr>
     </tbody>
   </table>
+
+  <div class="d-flex justify-content-end" *ngIf="isEditMode">
+    <button class="btn btn-success mr-2" (click)="guardarCambios()">
+      Guardar
+    </button>
+    <button class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+  </div>
 </div>
