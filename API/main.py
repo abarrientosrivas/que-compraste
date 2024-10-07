@@ -3,7 +3,7 @@ from . import models
 from pathlib import Path as pt
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload
 from sqlalchemy.exc import IntegrityError
@@ -36,7 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-IMAGE_UPLOADS_BASE_PATH = os.getenv("IMAGE_UPLOADS_BASE_PATH",'./uploads/')
+IMAGE_UPLOADS_BASE_PATH = os.getenv("IMAGE_UPLOADS_BASE_PATH",'')
 
 PRODUCT_CODE_EXCHANGE = os.getenv("PRODUCT_CODE_EXCHANGE",'')
 PRODUCT_CODE_NEW_KEY = os.getenv("PRODUCT_CODE_NEW_KEY",'')
