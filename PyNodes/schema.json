@@ -1,33 +1,3 @@
-import os
-import base64
-import json
-import argparse
-from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key= api_key)
-gpt_model = os.getenv("GPT_RECEIPT_EXTRACT_MODEL")
-
-def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
-
-def get_receipt_text(image_path: str) -> str:
-  base64_image = encode_image(image_path)
-
-  response = client.chat.completions.create(
-    model=gpt_model,
-    temperature=0.2,
-    messages=[
-      {
-        "role": "user",
-        "content": [
-          {
-              "type": "text", 
-              "text": 
-'''Read the following receipt image and return it's text as clean JSON, and only JSON, under the following schema:
 {
     "type": "object",
     "properties": {
@@ -110,35 +80,3 @@ def get_receipt_text(image_path: str) -> str:
         }
     }
 }
-'''
-              },
-          {
-            "type": "image_url",
-            "image_url": {
-              "url": f"data:image/jpeg;base64,{base64_image}"
-            }
-          },
-        ],
-      }
-    ]
-  )
-
-  result: str = response.choices[0].message.content
-  return result.removeprefix("```json").removesuffix("```").strip()
-
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description="Convert a receipt image into receipt JSON.")
-  parser.add_argument('--image_path', type=str, help='The path to the image file')
-  parser.add_argument('--output_directory', type=str, help='The directory to save the processed JSON')
-  args = parser.parse_args()
-
-  image_name = os.path.splitext(os.path.basename(args.image_path))[0]
-
-  result = get_receipt_text(args.image_path)
-
-  with open(os.getenv("GPT_RECEIPT_EXTRACT_RAW_OUTPUT","output_raw.json"), 'w') as file:
-      file.write(result)
-
-  with open(os.path.join(args.output_directory, f"{image_name}.json"), 'w') as json_file:
-      data = json.loads(result)
-      json.dump(data, json_file, indent=4)
