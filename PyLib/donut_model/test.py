@@ -13,8 +13,8 @@ if hf_token is None or not hf_token.strip():
 HfFolder.save_token(hf_token)
 
 generate_dataset(
-    "D:\\Repositories\\que-compraste\\Recibos\\Clean JSONs",
-    "D:\\Repositories\\que-compraste\\Recibos\\Imagen",
-    "testthing")
+    "E:\\Recibos\\json",
+    "E:\\Recibos\\img",
+    "E:\\Recibos\\demo")
 
-upload_dataset("testthing","abarrientosrivas/dataset-demo")
+upload_dataset("E:\\Recibos\\demo","abarrientosrivas/dataset-demo")

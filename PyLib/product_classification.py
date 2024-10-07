@@ -20,13 +20,13 @@ def extract_keywords(text: str, top_n: int=5) -> List[str]:
 def describe_product(product: Product) -> str | None:
     if product.read_category is not None and product.read_category.strip():
         return product.read_category
-    elif product.name.strip():
-        full_text = f"{product.name} - {product.description}"
+    elif product.title.strip():
+        full_text = f"{product.title} - {product.description}"
         keywords = extract_keywords(full_text, 1)
         if keywords:
             return keywords[0]
         else:
-            return product.name
+            return product.title
     return None
 
 def translate_to_english(text):

@@ -191,8 +191,8 @@ class ProductUpdate(ProductBase):
 
 class Product(ProductBase):
     id: int
-    entity_id: Optional[int]
-    entity: Optional[Entity]
+    entity_id: Optional[int] = None
+    entity: Optional[Entity] = None
     category_id: Optional[int] = None
     category: Optional[Category] = None
     created_at: datetime

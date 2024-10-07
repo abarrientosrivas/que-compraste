@@ -26,7 +26,7 @@ with broker.get_publisher() as publisher:
                 elif typename == "pro":
                     payload = schemas.Product(
                         id=0,
-                        name=input("name: "),
+                        title=input("title: "),
                         description=input("description: "),
                         read_category=input("category: "),
                         created_at=datetime.now(UTC)

@@ -97,7 +97,7 @@ class ProductClassifierNode:
         return results['metadatas'][0][0]['code'] 
 
     def callback(self, message: schemas.Product):
-        logging.info(f"Processing a product: {message.name}")
+        logging.info(f"Processing a product: {message.title}")
 
         product_description = describe_product(message)
         if product_description is None:

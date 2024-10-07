@@ -24,7 +24,7 @@ from PIL import Image
 
 load_dotenv()
 
-TASK_DELAY = os.getenv("CRAWLERS_TASK_DELAY",10)
+TASK_DELAY = int(os.getenv("CRAWLERS_TASK_DELAY","10"))
 
 def create_driver():
     chrome_options = webdriver.ChromeOptions()
