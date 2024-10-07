@@ -1,6 +1,6 @@
 from . import database
 from .models import NodeToken
-from fastapi import Depends, HTTPException, Security, Request
+from fastapi import Depends, HTTPException, Security, Request, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_403_FORBIDDEN
 from sqlalchemy.orm import Session
@@ -15,12 +15,10 @@ def get_db():
 
 security = HTTPBearer()
 
-def get_client_ip(request: Request):
-    x_forwarded_for = request.headers.get("X-Forwarded-For")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0]
-    else:
-        return request.client.host
+def get_client_ip(request: Request, x_real_ip: str = Header(None)):
+    if x_real_ip:
+        return x_real_ip
+    return request.client.host
 
 async def get_node_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
     if not credentials:

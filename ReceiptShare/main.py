@@ -4,18 +4,16 @@ import logging
 import threading
 import aiofiles
 from datetime import datetime
-from fastapi import FastAPI, File, UploadFile, Request, HTTPException, Depends
+from fastapi import FastAPI, File, UploadFile, Request, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from typing import List
 
-def get_client_ip(request: Request):
-    x_forwarded_for = request.headers.get("X-Forwarded-For")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0]
-    else:
-        return request.client.host
+def get_client_ip(request: Request, x_real_ip: str = Header(None)):
+    if x_real_ip:
+        return x_real_ip
+    return request.client.host
 
 class CustomHeaderMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
