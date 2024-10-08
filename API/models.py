@@ -24,7 +24,7 @@ class Purchase(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
 
-    items = relationship('PurchaseItem', back_populates='purchase')
+    items = relationship('PurchaseItem', back_populates='purchase', lazy='selectin')
     entity = relationship('Entity')
 
 class PurchaseItem(Base):
@@ -38,7 +38,7 @@ class PurchaseItem(Base):
     value = Column(Float, nullable=True)
     total = Column(Float, nullable=True)
 
-    purchase = relationship('Purchase', back_populates='items')
+    purchase = relationship('Purchase', back_populates='items', lazy="noload")
     product = relationship('Product')
 
 def update_purchase_updated_at(_, connection, target):
@@ -64,8 +64,8 @@ class Category(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
 
-    parent = relationship('Category', remote_side=[id], back_populates='children')
-    children = relationship('Category', back_populates='parent') 
+    parent = relationship('Category', remote_side=[id], back_populates='children', lazy='noload')
+    children = relationship('Category', back_populates='parent', lazy='noload') 
 
 class Entity(Base):
     __tablename__ = 'entities'

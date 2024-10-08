@@ -5,7 +5,7 @@ from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, sta
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import func
-from sqlalchemy.orm import Session, noload, joinedload
+from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db, get_node_token, get_client_ip
 from typing import Dict, List, Optional, Union
@@ -312,8 +312,13 @@ def update_purchase(
 
 @app.get("/purchases/", response_model=List[schemas.Purchase])
 def get_purchases(db: Session = Depends(get_db)):
-    db_entity = db.query(models.Purchase).all()
-    return db_entity
+    purchases = db.query(models.Purchase).options(
+        noload(models.Purchase.entity),
+        selectinload(models.Purchase.items).options(
+            noload(models.PurchaseItem.product)
+        )
+    ).all()
+    return purchases
 
 @app.put("/purchase_items/{purchase_item_id}", response_model=schemas.PurchaseItem)
 def update_purchase_item(

@@ -26,7 +26,10 @@ class PurchaseItemUpdate(PurchaseItemBase):
 
 class PurchaseItem(PurchaseItemBase):
     id: int
-    purchase_id: int
+    purchase_id: Optional[int]
+    purchase: Optional['Purchase']
+    product_id: Optional[int] = None
+    product: Optional['Product'] = None
 
 
 # --------------------
