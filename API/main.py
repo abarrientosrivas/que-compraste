@@ -417,15 +417,6 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     
     return product
 
-@app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
-def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
-    purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
-    
-    if not purchase:
-        raise HTTPException(status_code=404, detail="Purchase not found")
-    
-    return purchase
-
 @app.put("/products/{product_id}")
 def update_product(
     product: schemas.ProductUpdate,
@@ -537,3 +528,12 @@ def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
     db.commit()
 
     return db_entity
+
+@app.get("/entities/{entities_id}", response_model=schemas.Entity)
+def get_product_by_id(entities_id: int, db: Session = Depends(get_db)):
+    entity = db.query(models.Entity).filter(models.Entity.id == entities_id).first()
+    
+    if not entity:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    
+    return entity
