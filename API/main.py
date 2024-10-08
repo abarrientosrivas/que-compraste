@@ -408,6 +408,24 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
         publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_entity))
     return db_entity
 
+@app.get("/products/{product_id}", response_model=schemas.Product)
+def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return product
+
+@app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
+def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
+    purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
+    
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    
+    return purchase
+
 @app.put("/products/{product_id}")
 def update_product(
     product: schemas.ProductUpdate,
