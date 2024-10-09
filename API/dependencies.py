@@ -1,5 +1,6 @@
 from . import database
-from .models import NodeToken
+from .models import NodeToken as NodeTokenModel
+from .schemas import NodeToken as NodeTokenSchema
 from fastapi import Depends, HTTPException, Security, Request, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_403_FORBIDDEN
@@ -20,7 +21,7 @@ def get_client_ip(request: Request, x_real_ip: str = Header(None)):
         return x_real_ip
     return request.client.host
 
-async def get_node_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+async def get_node_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)) -> NodeTokenSchema:
     if not credentials:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN, detail="No Token provided"
@@ -28,11 +29,11 @@ async def get_node_token(credentials: HTTPAuthorizationCredentials = Security(se
     
     token = credentials.credentials
     hashed_token = hashlib.sha256(token.encode()).hexdigest()
-    node_token = db.query(NodeToken).filter(NodeToken.key_hash == hashed_token).first()
+    node_token = db.query(NodeTokenModel).filter(NodeTokenModel.key_hash == hashed_token).first()
     
     if not node_token:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN, detail="Invalid Token"
         )
     
-    return node_token
+    return NodeTokenSchema.model_validate(node_token)

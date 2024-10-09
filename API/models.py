@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint, BigInteger
+    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint, BigInteger, Boolean, Date
 )
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -126,8 +126,21 @@ class ProductCode(Base):
 class NodeToken(Base):
     __tablename__ = "node_tokens"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False, index=True)
+    name = Column(String, unique=True, nullable=False, index=True)
     key_hash = Column(String, unique=True, index=True, nullable=False)
+    crawl_daily_limit = Column(Integer, default=0, nullable=False)
+    can_view_receipt_images = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
+    
+    crawl_counters = relationship('CrawlCounter', lazy='selectin') 
+
+class CrawlCounter(Base):
+    __tablename__ = "crawl_counters"
+    id = Column(Integer, primary_key=True, index=True)
+    node_token_id = Column(Integer, ForeignKey('node_tokens.id'), nullable=False)
+    date = Column(Date, default=func.current_date())
+    uses = Column(Integer, default=0)
+    
+    __table_args__ = (UniqueConstraint('node_token_id', 'date', name='uix_node_token_date'),)

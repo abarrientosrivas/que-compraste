@@ -233,3 +233,37 @@ class ProductCode(ProductCodeBase):
 class ReceiptImageLocation(BaseModel):
     path: str = ""
     url: str = ""
+
+
+# --------------------
+# CrawlCounter Schema
+# --------------------
+class CrawlCounterBase(BaseModel):
+    date: datetime
+    uses: int
+
+    class Config:
+        from_attributes = True
+    
+
+class CrawlCounter(CrawlCounterBase):
+    id: int
+    node_token_id: int
+
+
+# --------------------
+# NodeToken Schema
+# --------------------
+class NodeTokenBase(BaseModel):
+    name: str
+    key_hash: str
+    crawl_daily_limit: int
+    can_view_receipt_images: bool
+
+
+class NodeToken(NodeTokenBase):
+    id: int
+    crawl_counters: List[CrawlCounter] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
