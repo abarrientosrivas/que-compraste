@@ -1,0 +1,44 @@
+<h2 class="text-center">Historial de compras</h2>
+
+<div *ngIf="purchases" class="pt-3">
+  <table class="table table-responsive table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Fecha</th>
+        <th scope="col">Productos</th>
+        <th scope="col">Descuento</th>
+        <th scope="col">Total</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="" *ngFor="let purchase of purchases; trackBy: identify">
+        <td scope="row">{{ purchase.date }}</td>
+        <td>{{ purchase.items.length }}</td>
+        <td>{{ purchase.discount }}</td>
+        <td>{{ purchase.total }}</td>
+        <td>
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              [routerLink]="['/compras', purchase.id]"
+            >
+              <i class="bi bi-eye"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button
+              type="button"
+              (click)="deletePurchase(purchase.id)"
+              class="btn btn-sm btn-outline-secondary"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
