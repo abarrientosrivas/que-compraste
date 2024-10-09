@@ -318,6 +318,8 @@ class TestPurchaseFunctions(unittest.TestCase):
         self.assertEqual(normalize_entity_id("30-50673003-8"), 30506730038)
         self.assertEqual(normalize_entity_id("30-68731043-4"), 30687310434)
         self.assertEqual(normalize_entity_id("30641844140"), 30641844140)
+        self.assertEqual(normalize_entity_id('C.U.I.T: 30-50673003-8'), 30506730038)
+        self.assertEqual(normalize_entity_id('mi cuit es 20-39441508-2'), 20394415082)
 
     def test_normalize_entity_id_invalid(self):
         with self.assertRaises(ValueError):

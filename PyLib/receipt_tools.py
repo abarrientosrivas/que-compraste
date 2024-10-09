@@ -83,10 +83,11 @@ def normalize_time(time_string: str) -> time:
         raise ValueError("Invalid time format")
     
 def normalize_entity_id(entity_id_string: str) -> int:
-    match = re.search(r'[0-9-]+', entity_id_string)
-    if not match:
-        raise ValueError("Invalid identification format")
-    numeric_part = match.group(0).replace('-', '').strip()
+    numeric_part = ''.join(filter(str.isdigit, entity_id_string))
+    
+    if not numeric_part:
+        raise ValueError("No digits found in identification string")
+    
     if not validate_cuit(numeric_part):
         raise ValueError("Invalid cuit format")
     
@@ -94,28 +95,6 @@ def normalize_entity_id(entity_id_string: str) -> int:
         return int(numeric_part)
     except ValueError:
         raise ValueError("Invalid number format")
-    
-def validate_cuit(cuit: str) -> bool:
-    if len(cuit) != 11 or cuit[:2] not in ['30', '33', '34']:
-        return False
-    
-    base_digits = cuit[:-1]
-    actual_check_digit = int(cuit[-1])
-
-    # Calculate the check digit
-    weights = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
-    sum_product = sum(int(digit) * weight for digit, weight in zip(base_digits, weights))
-    calculated_check_digit = 11 - (sum_product % 11)
-    
-    if calculated_check_digit == 11:
-        calculated_check_digit = 0
-    elif calculated_check_digit == 10:
-        return False
-
-    if actual_check_digit != calculated_check_digit:
-        return False
-    
-    return True
     
 def normalize_product_key(product_key_string: str) -> int:
     product_key_string = product_key_string.strip()
@@ -139,7 +118,7 @@ def calculate_ean13_check_digit(ean_code: str) -> int:
     return check_digit
 
 def validate_cuit(cuit: str) -> bool:
-    if len(cuit) != 11 or cuit[:2] not in ['30', '33', '34']:
+    if len(cuit) != 11 or cuit[:2] not in ['20', '27', '30', '33', '34']:
         return False
     
     base_digits = cuit[:-1]
