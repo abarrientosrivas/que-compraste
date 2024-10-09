@@ -66,7 +66,9 @@ async def root():
     return {"message": "Hello World"}
 
 @app.get("/receipts/{file_path:path}")
-async def serve_image_file(file_path: str, _ = Depends(get_node_token)):
+async def serve_image_file(file_path: str, node_token: schemas.NodeToken = Depends(get_node_token)):
+    if not node_token.can_view_receipt_images:
+        raise HTTPException(status_code=401, detail="Current node is not authorized to view receipt images")
     full_path = os.path.join(IMAGE_UPLOADS_BASE_PATH, file_path)
 
     if not os.path.isfile(full_path) or not full_path.lower().endswith('.jpg'):

@@ -260,6 +260,9 @@ class NodeTokenBase(BaseModel):
     crawl_daily_limit: int
     can_view_receipt_images: bool
 
+    class Config:
+        from_attributes = True
+
 
 class NodeToken(NodeTokenBase):
     id: int
