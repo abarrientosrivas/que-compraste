@@ -155,11 +155,12 @@ class ProductFinderNode:
         }
         wait_times = [30, 60, 90, 150, 240, 390, 630, 1800]
         retry_count = 0
-        while not response or response.status_code == 401:
+        response = None
+        while not response or response.status_code == 429:
             response = request_tools.send_request_with_retries('post',self.crawl_auth_endpoint, headers=headers)
             if response.status_code == 200:
                 break
-            if response.status_code != 200 and response.status_code != 401:
+            if response.status_code != 200 and response.status_code != 429:
                 raise Exception(f"Failed to load image from URL: {response.status_code}")
             if retry_count < len(wait_times):
                 wait_time = wait_times[retry_count]
@@ -173,8 +174,9 @@ class ProductFinderNode:
         logging.info(f"Processing an entity identification: {cuit}")        
         print(self.get_datos_efiscal(cuit))
         
-        logging.info(f"Complying with crawler delay")
-        time.sleep(TASK_DELAY + random.uniform(0, 2)) 
+        logging.info("Complying with crawler delay")
+        time.sleep(TASK_DELAY + random.uniform(0, 5))
+        logging.info("Ready for next message") 
 
     def error_callback(self, error: Exception):        
         if isinstance(error, ValueError):

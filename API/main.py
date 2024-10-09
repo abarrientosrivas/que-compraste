@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError
 from .dependencies import get_db, get_node_token, get_client_ip
 from typing import Dict, List, Optional, Union
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
 from PIL import Image
@@ -544,3 +544,33 @@ def get_product_by_id(entities_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Entity not found")
     
     return entity
+
+@app.post("/node_tokens/authorize_crawl")
+def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_token), db: Session = Depends(get_db)):
+    today = date.today()
+
+    if node_token.crawl_daily_limit <= 0:
+        raise HTTPException(status_code=401, detail="Node Token not valid for crawling")
+    
+    crawl_counter = db.query(models.CrawlCounter).filter_by(
+        node_token_id=node_token.id,
+        date=today
+    ).first()
+
+    if crawl_counter is None:
+        crawl_counter = models.CrawlCounter(
+            node_token_id=node_token.id
+        )
+        db.add(crawl_counter)
+        db.commit() 
+
+    if crawl_counter.uses >= node_token.crawl_daily_limit:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Crawl limit reached for today"
+        )
+    
+    crawl_counter.uses += 1
+    db.commit()
+
+    return {"status": "Authorized", "uses_today": crawl_counter.uses}
