@@ -7,6 +7,7 @@ import json
 import pytesseract
 import time
 import random
+from API.schemas import EntityBase
 from PyLib import typed_messaging, receipt_tools, request_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
@@ -42,14 +43,12 @@ def canvas_to_str(canvas):
     image = Image.open(image_data)
     return pytesseract.image_to_string(image, config='--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')
 
-class EntityIdentification(BaseModel):
-    identification: str
-
 class EntityFinderNode:
-    def __init__(self, node_token: str, crawl_auth_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
+    def __init__(self, node_token: str, crawl_auth_endpoint: str, entities_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
         self.consumer = consumer
         self.input_queue = input_queue
         self.node_token = node_token
+        self.entities_endpoint = entities_endpoint
         self.crawl_auth_endpoint = crawl_auth_endpoint
         self.stop_event = threading.Event()
         self.driver = create_driver()
@@ -139,14 +138,23 @@ class EntityFinderNode:
 
         return json.dumps(result, indent=4, ensure_ascii=False)
 
-    def callback(self, message: EntityIdentification):
-        received_identification =  message.identification.strip()
-        if not received_identification:
-            logging.info(f"Ignoring empty message")
-        try:
-            cuit = receipt_tools.normalize_entity_id(received_identification)
-        except ValueError as ex:
-            logging.error(f"Invalid entity identification: {ex}")
+    def callback(self, message: EntityBase):
+        received_identification =  message.identification
+        if not receipt_tools.validate_cuit(str(received_identification)):
+            logging.error("Invalid entity identification")
+            return
+        
+        logging.info(f"Checking if entity exists")
+        response = request_tools.send_request_with_retries('get',f"{self.entities_endpoint}?identification={received_identification}")
+        if response.status_code != 200:
+            raise Exception(f"Failed to query entites: {response.status_code}")
+        entities = response.json()
+        if isinstance(entities, list):
+            count = len(entities)
+        else:
+            raise Exception("Unexpected response format: expected a JSON list")
+        if count > 0:
+            logging.warning(f"Entity with identification '{received_identification}' exists, skipping...")
             return
 
         logging.info(f"Requesting crawling authorization")
@@ -161,7 +169,7 @@ class EntityFinderNode:
             if response.status_code == 200:
                 break
             if response.status_code != 200 and response.status_code != 429:
-                raise Exception(f"Failed to load image from URL: {response.status_code}")
+                raise Exception(f"Failed to request crawling authorization: {response.status_code}")
             if retry_count < len(wait_times):
                 wait_time = wait_times[retry_count]
             else:
@@ -171,8 +179,8 @@ class EntityFinderNode:
             time.sleep(wait_time)
             retry_count += 1
 
-        logging.info(f"Processing an entity identification: {cuit}")        
-        print(self.get_datos_efiscal(cuit))
+        logging.info(f"Processing an entity identification: {received_identification}")        
+        print(self.get_datos_efiscal(received_identification))
         
         logging.info("Complying with crawler delay")
         time.sleep(TASK_DELAY + random.uniform(0, 5))
@@ -189,7 +197,7 @@ class EntityFinderNode:
             logging.error(f"An unexpected error ({error.__class__.__name__}) occurred: {error}")
         
     def start(self):
-        self.consumer.start(self.input_queue, self.callback, EntityIdentification, self.error_callback)
+        self.consumer.start(self.input_queue, self.callback, EntityBase, self.error_callback)
 
     def stop(self):
         self.stop_event.set()
@@ -217,10 +225,16 @@ if __name__ == '__main__':
     if not crawl_endpoint.strip():
         logging.error("Crawl auth endpoint was not provided")
         sys.exit(1)
+    
+    entities_endpoint = os.getenv('ENTITIES_ENDPOINT','')
+    if not entities_endpoint.strip():
+        logging.error("Entities endpoint was not provided")
+        sys.exit(1)
 
     node = EntityFinderNode(
         token,
         crawl_endpoint,
+        entities_endpoint,
         broker.get_consumer(), 
         broker.ensure_queue(os.getenv('ENTITY_FINDER_INPUT_QUEUE', '')))
 

@@ -545,6 +545,14 @@ def get_product_by_id(entities_id: int, db: Session = Depends(get_db)):
     
     return entity
 
+@app.get("/entities/", response_model=List[schemas.Entity], response_model_exclude_none=True)
+def get_categories(identification: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(models.Entity)
+    if identification is not None:
+        query = query.filter(models.Entity.identification == identification)
+    entities = query.all()
+    return entities
+
 @app.post("/node_tokens/authorize_crawl")
 def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_token), db: Session = Depends(get_db)):
     today = date.today()

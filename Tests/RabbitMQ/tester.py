@@ -1,7 +1,6 @@
 from PyLib import typed_messaging
 from API import schemas
 from PyNodes.product_finder_node import ProductCode
-from PyNodes.entity_finder_node import EntityIdentification
 from datetime import datetime, UTC
 from dotenv import load_dotenv
 import os
@@ -36,7 +35,8 @@ with broker.get_publisher() as publisher:
                         code=input("code: ")
                     )
                 elif typename == "ent":
-                    payload = EntityIdentification(
+                    payload = schemas.EntityBase(
+                        name="",
                         identification=input("cuit: ")
                     )
                 else:
