@@ -45,7 +45,7 @@ def canvas_to_str(canvas):
 class EntityIdentification(BaseModel):
     identification: str
 
-class ProductFinderNode:
+class EntityFinderNode:
     def __init__(self, node_token: str, crawl_auth_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
         self.consumer = consumer
         self.input_queue = input_queue
@@ -218,7 +218,7 @@ if __name__ == '__main__':
         logging.error("Crawl auth endpoint was not provided")
         sys.exit(1)
 
-    node = ProductFinderNode(
+    node = EntityFinderNode(
         token,
         crawl_endpoint,
         broker.get_consumer(), 

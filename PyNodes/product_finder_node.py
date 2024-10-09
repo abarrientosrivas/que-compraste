@@ -4,7 +4,9 @@ import threading
 import os
 import sys
 import json
-from PyLib.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
+import time
+import random
+from PyLib import typed_messaging, request_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from dotenv import load_dotenv
@@ -13,6 +15,8 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 
 load_dotenv()
+
+TASK_DELAY = int(os.getenv("CRAWLERS_TASK_DELAY","10"))
 
 def create_driver():
     chrome_options = webdriver.ChromeOptions()
@@ -28,8 +32,10 @@ class ProductCode(BaseModel):
     code: str
 
 class ProductFinderNode:
-    def __init__(self, consumer: PydanticQueueConsumer, input_queue: str):
+    def __init__(self, node_token: str, crawl_auth_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
         self.consumer = consumer
+        self.crawl_auth_endpoint = crawl_auth_endpoint
+        self.node_token = node_token
         self.input_queue = input_queue
         self.stop_event = threading.Event()
         self.driver = create_driver()
@@ -68,10 +74,36 @@ class ProductFinderNode:
         received_code =  message.code.strip()
         if not received_code:
             logging.info(f"Ignoring empty message")
+            
+        logging.info(f"Requesting crawling authorization")
+        headers = {
+            "Authorization": f"Bearer {self.node_token}"
+        }
+        wait_times = [30, 60, 90, 150, 240, 390, 630, 1800]
+        retry_count = 0
+        response = None
+        while not response or response.status_code == 429:
+            response = request_tools.send_request_with_retries('post',self.crawl_auth_endpoint, headers=headers)
+            if response.status_code == 200:
+                break
+            if response.status_code != 200 and response.status_code != 429:
+                raise Exception(f"Failed to load image from URL: {response.status_code}")
+            if retry_count < len(wait_times):
+                wait_time = wait_times[retry_count]
+            else:
+                wait_time = 3600
+
+            logging.warning(f"No uses available, retrying in {wait_time/60} minutes...")
+            time.sleep(wait_time)
+            retry_count += 1
 
         logging.info(f"Processing a code: {received_code}")
 
         print(self.get_product_defails(received_code))
+        
+        logging.info("Complying with crawler delay")
+        time.sleep(TASK_DELAY + random.uniform(0, 5))
+        logging.info("Ready for next message") 
 
     def error_callback(self, error: Exception):        
         if isinstance(error, ValueError):
@@ -101,9 +133,21 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=args.logging.upper())
 
-    broker = PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+    broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+    
+    token = os.getenv('PRODUCT_FINDER_TOKEN','')
+    if not token.strip():
+        logging.error("Node token was not provided")
+        sys.exit(1)
+    
+    crawl_endpoint = os.getenv('CRAWL_AUTH_ENDPOINT','')
+    if not crawl_endpoint.strip():
+        logging.error("Crawl auth endpoint was not provided")
+        sys.exit(1)
 
     node = ProductFinderNode(
+        token,
+        crawl_endpoint,
         broker.get_consumer(), 
         broker.ensure_queue(os.getenv('PRODUCT_FINDER_INPUT_QUEUE', '')))
 
