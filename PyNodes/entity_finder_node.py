@@ -12,7 +12,6 @@ from PyLib import typed_messaging, receipt_tools, request_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys

@@ -1,6 +1,5 @@
 from PyLib import typed_messaging
 from API import schemas
-from PyNodes.product_finder_node import ProductCode
 from datetime import datetime, UTC
 from dotenv import load_dotenv
 import os
@@ -31,7 +30,8 @@ with broker.get_publisher() as publisher:
                         created_at=datetime.now(UTC)
                     )
                 elif typename == "code":
-                    payload = ProductCode(
+                    payload = schemas.ProductCodeBase(
+                        format="ean13",
                         code=input("code: ")
                     )
                 elif typename == "ent":

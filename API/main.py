@@ -384,7 +384,7 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
     return db_entity
 
 @app.get("/product_codes/", response_model=List[schemas.ProductCode], response_model_exclude_none=True)
-def get_product_codes(lookahead: Optional[str] = None, db: Session = Depends(get_db)):
+def get_product_codes(lookahead: Optional[str] = None, format: Optional[str] = None, code: Optional[str] = None, db: Session = Depends(get_db)):
     if lookahead is not None and len(lookahead) < 3:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -398,6 +398,10 @@ def get_product_codes(lookahead: Optional[str] = None, db: Session = Depends(get
     )
     if lookahead is not None:
         query = query.filter(models.ProductCode.code.like(f"{lookahead}%"))
+    if format is not None:
+        query = query.filter(models.ProductCode.format == format)
+    if code is not None:
+        query = query.filter(models.ProductCode.code == code)
     entities = query.all()
     return entities
 

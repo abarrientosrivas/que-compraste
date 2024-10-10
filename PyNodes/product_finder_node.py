@@ -6,11 +6,11 @@ import sys
 import json
 import time
 import random
+from API.schemas import ProductCodeBase
 from PyLib import typed_messaging, request_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from bs4 import BeautifulSoup
 from selenium import webdriver
 
@@ -28,14 +28,12 @@ def create_driver():
     driver = webdriver.Chrome(options=chrome_options)
     return driver
 
-class ProductCode(BaseModel):
-    code: str
-
 class ProductFinderNode:
-    def __init__(self, node_token: str, crawl_auth_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
+    def __init__(self, node_token: str, crawl_auth_endpoint: str, product_codes_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
         self.consumer = consumer
         self.crawl_auth_endpoint = crawl_auth_endpoint
         self.node_token = node_token
+        self.product_codes_endpoint = product_codes_endpoint
         self.input_queue = input_queue
         self.stop_event = threading.Event()
         self.driver = create_driver()
@@ -70,10 +68,26 @@ class ProductFinderNode:
         
         return json.dumps(result, indent=4, ensure_ascii=False)
 
-    def callback(self, message: ProductCode):
+    def callback(self, message: ProductCodeBase):
         received_code =  message.code.strip()
         if not received_code:
-            logging.info(f"Ignoring empty message")
+            logging.info(f"Ignoring message with no code")
+        received_format =  message.format.strip()
+        if not received_format:
+            logging.info(f"Ignoring message with no format")
+
+        logging.info(f"Checking if product exists")
+        response = request_tools.send_request_with_retries('get',f"{self.product_codes_endpoint}?format={received_format}&code={received_code}")
+        if response.status_code != 200:
+            raise Exception(f"Failed to query entites: {response.status_code}")
+        entities = response.json()
+        if isinstance(entities, list):
+            count = len(entities)
+        else:
+            raise Exception("Unexpected response format: expected a JSON list")
+        if count > 0:
+            logging.warning(f"Entity with identification '{received_code}' exists, skipping...")
+            return
             
         logging.info(f"Requesting crawling authorization")
         headers = {
@@ -116,7 +130,7 @@ class ProductFinderNode:
             logging.error(f"An unexpected error ({error.__class__.__name__}) occurred: {error}")
         
     def start(self):
-        self.consumer.start(self.input_queue, self.callback, ProductCode, self.error_callback)
+        self.consumer.start(self.input_queue, self.callback, ProductCodeBase, self.error_callback)
 
     def stop(self):
         self.stop_event.set()
@@ -144,10 +158,16 @@ if __name__ == '__main__':
     if not crawl_endpoint.strip():
         logging.error("Crawl auth endpoint was not provided")
         sys.exit(1)
+    
+    product_codes_endpoint = os.getenv('PRODUCT_CODES_ENDPOINT','')
+    if not product_codes_endpoint.strip():
+        logging.error("Product codes endpoint was not provided")
+        sys.exit(1)
 
     node = ProductFinderNode(
         token,
         crawl_endpoint,
+        product_codes_endpoint,
         broker.get_consumer(), 
         broker.ensure_queue(os.getenv('PRODUCT_FINDER_INPUT_QUEUE', '')))
 
