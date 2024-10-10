@@ -7,9 +7,9 @@ import { HttpClient } from '@angular/common/http';
 export class TicketUploadService {
   constructor(private http: HttpClient) {}
 
-  uploadFile(file: File) {
+  uploadFile(files: FileList) {
     const formData = new FormData();
-    formData.append('file', file);
+    Array.from(files).forEach((file) => formData.append('files', file));
     return this.http.post('http://127.0.0.1:8000/upload/', formData);
   }
 }

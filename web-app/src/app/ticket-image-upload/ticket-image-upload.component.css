@@ -1,0 +1,10 @@
+.invalid-file {
+  font-style: italic;
+  color: red;
+}
+
+.file-types {
+  color: gray;
+  font-size: 0.9em;
+  margin-top: 0.2em;
+}

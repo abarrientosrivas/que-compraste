@@ -1,17 +1,32 @@
+<h2>Subir Archivos</h2>
+<h6 class="file-types pb-3">
+  Tipos de archivo permitidos: .jpg, .jpeg, .png, .pdf
+</h6>
+
+<ol *ngIf="selectedFiles">
+  <li *ngFor="let file of selectedFilesNames">
+    <span [ngClass]="{ 'invalid-file': !file.isValid }">
+      {{ file.name }}
+    </span>
+  </li>
+</ol>
+
 <form>
   <div class="mb-3">
-    <label for="fileInput" class="form-label">Seleccionar Imagen:</label>
+    <label for="fileInput" class="form-label">Seleccionar Archivos:</label>
     <input
       type="file"
       class="form-control"
       id="fileInput"
-      (change)="onFileSelected($event)"
+      (change)="onFilesSelected($event)"
+      multiple
+      accept=".jpg,.jpeg,.png,.pdf"
     />
   </div>
   <button
     type="button"
     (click)="onSubmit()"
-    [disabled]="!selectedFile"
+    [disabled]="!selectedFiles || hasInvalidFiles"
     class="btn btn-primary"
   >
     Subir Imagen
