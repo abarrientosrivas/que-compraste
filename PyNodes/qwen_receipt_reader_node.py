@@ -5,6 +5,7 @@ import threading
 import argparse
 import logging
 import json
+import torch
 from API.schemas import ReceiptImageLocation
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
@@ -18,16 +19,26 @@ load_dotenv()
 
 class ImageToCompraNode:
     def __init__(self, node_token: str, receipt_output_path: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str, output_endpoint: str):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.consumer = consumer
         self.input_queue = input_queue
         self.output_endpoint = output_endpoint
         self.node_token = node_token
         self.receipt_output_path = receipt_output_path
         self.stop_event = threading.Event()
+        self.min_pixels = 256 * 28 * 28
+        self.max_pixels = 1280 * 28 * 28
         self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-            "Qwen/Qwen2-VL-7B-Instruct", torch_dtype="auto", device_map="auto"
+                "Qwen/Qwen2-VL-7B-Instruct", 
+                torch_dtype="auto",
+                # torch_dtype=torch.bfloat16,
+                # attn_implementation='flash_attention_2',
+            ).to(self.device)
+        self.processor = AutoProcessor.from_pretrained(
+                "Qwen/Qwen2-VL-7B-Instruct",
+                min_pixels = self.min_pixels,
+                max_pixels = self.max_pixels,
             )
-        self.processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-7B-Instruct")
     
     def callback(self, message: ReceiptImageLocation):
         if message.path.strip():
