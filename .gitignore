@@ -167,6 +167,7 @@ cython_debug/
 
 # App folders
 API/static/images
+uploads/
 
 # IDEs
 .vscode/
