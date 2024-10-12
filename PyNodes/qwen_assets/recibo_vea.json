@@ -1,0 +1,58 @@
+{
+  "store_name": "Vea Puerto Madryn",
+  "store_addr": "Dr. Manuel Belgrano 372 Puerto Madryn Chubut",
+  "entity_id": "30590360763",
+  "phone": null,
+  "date": "16/09/2024",
+  "time": "16:56:57",
+  "subtotal": "23.966,00",
+  "svc": null,
+  "tax": null,
+  "total": "18.848,10",
+  "tips": null,
+  "discount": "-5.117,90",
+  "line_items": [
+    {
+      "item_key": "7790250057048",
+      "item_name": "rolcocSUSSEX200p",
+      "item_value": "2.550,00",
+      "item_quantity": "2",
+      "item_total": "5.100,00"
+    },
+    {
+      "item_key": "7790250054344",
+      "item_name": "pandescfaELITEx90p",
+      "item_value": "1.650,00",
+      "item_quantity": "1",
+      "item_total": "1.650,00"
+    },
+    {
+      "item_key": "7790250097587",
+      "item_name": "toafemLSOF",
+      "item_value": "2.500,00",
+      "item_quantity": "2",
+      "item_total": "5.000,00"
+    },
+    {
+      "item_key": "7793670000052",
+      "item_name": "Yer VERDEFLORx500g",
+      "item_value": "2.000,00",
+      "item_quantity": "2",
+      "item_total": "4.000,00"
+    },
+    {
+      "item_key": "7797470199121",
+      "item_name": "PurtomMAROLIO520",
+      "item_value": "686,00",
+      "item_quantity": "6",
+      "item_total": "4.116,00"
+    },
+    {
+      "item_key": "7798085681537",
+      "item_name": "J.Citric Man 1L",
+      "item_value": "4.100,00",
+      "item_quantity": "1",
+      "item_total": "4.100,00"
+    }
+  ]
+}

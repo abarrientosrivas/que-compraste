@@ -1,0 +1,93 @@
+{
+    "read_entity_name": "Vea Puerto Madryn",
+    "read_entity_branch": null,
+    "read_entity_location": null,
+    "read_entity_address": "C/1108 - CH: 30590360763 - DOM COM. Dr. Manuel Belgrano 372 - Puerto Madryn Chubut",
+    "read_entity_identification": "None",
+    "read_entity_phone": "0810-999-9832",
+    "date": "2024-02-16T11:51:00",
+    "subtotal": 18622.57,
+    "discount": 1221.2,
+    "tips": 0.0,
+    "total": 18401.37,
+    "id": 24,
+    "entity_id": null,
+    "entity": null,
+    "items": [
+        {
+            "read_product_key": "1",
+            "read_product_text": "Flautita (p) (10,50)",
+            "quantity": 9.0,
+            "value": null,
+            "total": null,
+            "id": 131,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "2",
+            "read_product_text": "OM.9x2 Fratita V",
+            "quantity": 0.9,
+            "value": 468.0,
+            "total": 468.0,
+            "id": 132,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "3",
+            "read_product_text": "Rayoles VILLA D'AGRI con Pollo y Espina (21,00)",
+            "quantity": 2.0,
+            "value": null,
+            "total": null,
+            "id": 133,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "4",
+            "read_product_text": "FACTURAS SURTIDAS X UN. VEA (21,00)",
+            "quantity": null,
+            "value": 753.2,
+            "total": 753.2,
+            "id": 134,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "5",
+            "read_product_text": "Rhodesia Tornix x 86 grs (21,00)",
+            "quantity": 1.0,
+            "value": null,
+            "total": null,
+            "id": 135,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "6",
+            "read_product_text": "queso sardo CANTA ROSA (21,00)",
+            "quantity": 0.21,
+            "value": null,
+            "total": null,
+            "id": 136,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "7",
+            "read_product_text": "Mayonesa HELLMANNS Clasica (21,00)",
+            "quantity": null,
+            "value": 0.0,
+            "total": 0.0,
+            "id": 137,
+            "purchase_id": 24
+        },
+        {
+            "read_product_key": "8",
+            "read_product_text": "Paleta trozo novillito (10,50)",
+            "quantity": 0.85,
+            "value": null,
+            "total": null,
+            "id": 138,
+            "purchase_id": 24
+        }
+    ],
+    "created_at": "2024-10-12T18:10:39.121227",
+    "updated_at": "2024-10-12T18:10:39.144128",
+    "deleted_at": null
+}

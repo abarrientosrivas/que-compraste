@@ -1,0 +1,93 @@
+{
+    "read_entity_name": "Carrefour",
+    "read_entity_branch": null,
+    "read_entity_location": null,
+    "read_entity_address": "165 PUERTO MADRYN 28 DE JULIO 136",
+    "read_entity_identification": "30687310434",
+    "read_entity_phone": null,
+    "date": "2024-09-24T21:45:11",
+    "subtotal": 25627.32,
+    "discount": 340.0,
+    "tips": null,
+    "total": 25287.32,
+    "id": 31,
+    "entity_id": null,
+    "entity": null,
+    "items": [
+        {
+            "read_product_key": "7790670052371",
+            "read_product_text": "MEDALLON DE CARNE EXPRESS PATY CAJA X 4",
+            "quantity": 2.0,
+            "value": 3100.0,
+            "total": 6200.0,
+            "id": 196,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "7790350054344",
+            "read_product_text": "HAMBURGUESA CARREFOUR CAJA X 4 UNI",
+            "quantity": 1.0,
+            "value": 3590.0,
+            "total": 3590.0,
+            "id": 197,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "7793281492802",
+            "read_product_text": "MC HAMBURGUES-CARR",
+            "quantity": null,
+            "value": null,
+            "total": 340.0,
+            "id": 198,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "7790360026576",
+            "read_product_text": "HAMBURGUESA SWIFT CAJA X4 UNI",
+            "quantity": 1.0,
+            "value": 4200.0,
+            "total": 4200.0,
+            "id": 199,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "7798159719467",
+            "read_product_text": "JAMON COCIO FETEADO CLASSIC X 120 GR",
+            "quantity": 1.0,
+            "value": 3485.0,
+            "total": 3485.0,
+            "id": 200,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "7790360026576",
+            "read_product_text": "QUESO CREMOSO 1 8 CLASSIC X KG",
+            "quantity": 0.516,
+            "value": 10810.0,
+            "total": 5577.96,
+            "id": 201,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "2509403002386",
+            "read_product_text": "LECHUGA FUEGUINA X KG (T)",
+            "quantity": 1.0,
+            "value": 2799.0,
+            "total": 2799.0,
+            "id": 202,
+            "purchase_id": 31
+        },
+        {
+            "read_product_key": "2509450056805",
+            "read_product_text": "TOMATE RED X KG (T)",
+            "quantity": 1.0,
+            "value": 3290.0,
+            "total": 3290.0,
+            "id": 203,
+            "purchase_id": 31
+        }
+    ],
+    "created_at": "2024-10-12T18:35:28.395903",
+    "updated_at": "2024-10-12T18:35:28.425097",
+    "deleted_at": null
+}

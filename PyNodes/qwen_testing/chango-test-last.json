@@ -1,0 +1,120 @@
+{
+    "read_entity_name": "Chango Más",
+    "read_entity_branch": null,
+    "read_entity_location": null,
+    "read_entity_address": "JUAN B. JUSTO 1855, PUERTO MADRYN (9120) - CHUBUT",
+    "read_entity_identification": "30678138300",
+    "read_entity_phone": null,
+    "date": "2024-09-23T21:42:11",
+    "subtotal": null,
+    "discount": 15888.28,
+    "tips": null,
+    "total": 34174.73,
+    "id": 30,
+    "entity_id": null,
+    "entity": null,
+    "items": [
+        {
+            "read_product_key": "7790859612417",
+            "read_product_text": "AQUAR 500CC",
+            "quantity": 6.0,
+            "value": 1069.0,
+            "total": 6414.0,
+            "id": 185,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "0000000002851",
+            "read_product_text": "MAS CLUB",
+            "quantity": null,
+            "value": null,
+            "total": 0.01,
+            "id": 186,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "0000000002255",
+            "read_product_text": "ALIADA SALAM",
+            "quantity": null,
+            "value": null,
+            "total": 11648.0,
+            "id": 187,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7791337061422",
+            "read_product_text": "LSC QSO REG",
+            "quantity": null,
+            "value": null,
+            "total": 3115.0,
+            "id": 188,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7799080017198",
+            "read_product_text": "CURITAS FOOT DED SIL",
+            "quantity": null,
+            "value": null,
+            "total": 3449.0,
+            "id": 189,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7799080017198",
+            "read_product_text": "CURITAS FOOT DEFENSE",
+            "quantity": null,
+            "value": null,
+            "total": 3449.0,
+            "id": 190,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7799080017198",
+            "read_product_text": "HELMI MAYO DP 475G",
+            "quantity": null,
+            "value": null,
+            "total": 6213.0,
+            "id": 191,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7793902586200",
+            "read_product_text": "FARGO PAN LAC",
+            "quantity": null,
+            "value": null,
+            "total": 6980.0,
+            "id": 192,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7799120004182",
+            "read_product_text": "CHECK LARGUITA 150G",
+            "quantity": null,
+            "value": null,
+            "total": 2798.0,
+            "id": 193,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7798119220183",
+            "read_product_text": "SPEED",
+            "quantity": null,
+            "value": null,
+            "total": 4412.0,
+            "id": 194,
+            "purchase_id": 30
+        },
+        {
+            "read_product_key": "7799120004106",
+            "read_product_text": "HUEVOS EG BLANCOS",
+            "quantity": null,
+            "value": null,
+            "total": 1585.0,
+            "id": 195,
+            "purchase_id": 30
+        }
+    ],
+    "created_at": "2024-10-12T18:32:51.933558",
+    "updated_at": "2024-10-12T18:32:51.970430",
+    "deleted_at": null
+}

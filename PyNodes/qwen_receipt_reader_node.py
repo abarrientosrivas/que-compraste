@@ -39,6 +39,14 @@ class ImageToCompraNode:
                 min_pixels = self.min_pixels,
                 max_pixels = self.max_pixels,
             )
+        self.vea_receipt_path = os.path.abspath("qwen_assets\\recibo_vea.jpg")
+        self.chango_receipt_path = os.path.abspath("qwen_assets\\recibo_chango.jpg")
+        
+        if not os.path.exists(self.vea_receipt_path):
+            raise FileNotFoundError("Image receipt for Vea does not exist")
+        
+        if not os.path.exists(self.chango_receipt_path):
+            raise FileNotFoundError("Image receipt for Chango Mas does not exist")
     
     def callback(self, message: ReceiptImageLocation):
         if message.path.strip():
@@ -160,7 +168,7 @@ class ImageToCompraNode:
                 "content": [
                     {
                         "type": "image",
-                        "image": "D:\\Documents\\Recibos\\img\\recibo_imagen (3).jpg",
+                        "image": self.vea_receipt_path,
                     },
                 ],
             },
@@ -238,7 +246,7 @@ class ImageToCompraNode:
                 "content": [
                     {
                         "type": "image",
-                        "image": "D:\\Documents\\Recibos\\img\\recibo_imagen (9).jpg",
+                        "image": self.chango_receipt_path,
                     },
                 ],
             },

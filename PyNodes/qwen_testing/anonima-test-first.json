@@ -1,0 +1,111 @@
+{
+    "read_entity_name": "La Anonima Sucursal 14",
+    "read_entity_branch": null,
+    "read_entity_location": null,
+    "read_entity_address": "25 de Mayo esq Yrigoyen - P Madryn Provincia de Chubut",
+    "read_entity_identification": "30506730038",
+    "read_entity_phone": "04600-02156511",
+    "date": "2024-08-15T13:07:00",
+    "subtotal": 9368.0,
+    "discount": 576.0,
+    "tips": 0.0,
+    "total": 8792.0,
+    "id": 25,
+    "entity_id": null,
+    "entity": null,
+    "items": [
+        {
+            "read_product_key": "7790040614000",
+            "read_product_text": "ALFAJ.BON O",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 1300.0,
+            "id": 139,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "7790386",
+            "read_product_text": "ALF.TERRABUS",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 1800.0,
+            "id": 140,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "7799035",
+            "read_product_text": "SAPITO BCO X",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 330.0,
+            "id": 141,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "7791739",
+            "read_product_text": "CHOCO.REL.",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 330.0,
+            "id": 142,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "3.000 x 220.",
+            "read_product_text": "TURRON BILLI",
+            "quantity": 3.0,
+            "value": 220.0,
+            "total": 660.0,
+            "id": 143,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "3.000 x 220.",
+            "read_product_text": "CARAMELENJUE",
+            "quantity": 3.0,
+            "value": 220.0,
+            "total": 660.0,
+            "id": 144,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "2.000 x 720.",
+            "read_product_text": "CHOCO MILKA",
+            "quantity": 2.0,
+            "value": 720.0,
+            "total": 1440.0,
+            "id": 145,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "7622210795625",
+            "read_product_text": "TEMBLEKE SIM",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 1050.0,
+            "id": 146,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "7791359120114",
+            "read_product_text": "CHOCO MILKA",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 1050.0,
+            "id": 147,
+            "purchase_id": 25
+        },
+        {
+            "read_product_key": "7793158701396",
+            "read_product_text": "CHOCO L.A.",
+            "quantity": 1.0,
+            "value": 21.0,
+            "total": 1798.0,
+            "id": 148,
+            "purchase_id": 25
+        }
+    ],
+    "created_at": "2024-10-12T18:11:23.837629",
+    "updated_at": "2024-10-12T18:11:23.859161",
+    "deleted_at": null
+}
