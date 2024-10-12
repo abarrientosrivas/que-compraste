@@ -39,8 +39,8 @@ class ImageToCompraNode:
                 min_pixels = self.min_pixels,
                 max_pixels = self.max_pixels,
             )
-        self.vea_receipt_path = os.path.abspath("qwen_assets\\recibo_vea.jpg")
-        self.chango_receipt_path = os.path.abspath("qwen_assets\\recibo_chango.jpg")
+        self.vea_receipt_path = os.path.abspath(".\\PyNodes\\qwen_assets\\recibo_vea.jpg")
+        self.chango_receipt_path = os.path.abspath(".\\PyNodes\\qwen_assets\\recibo_chango.jpg")
         
         if not os.path.exists(self.vea_receipt_path):
             raise FileNotFoundError("Image receipt for Vea does not exist")
