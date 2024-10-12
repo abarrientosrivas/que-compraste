@@ -63,16 +63,12 @@ class ImageToCompraNode:
         
         messages = [
             {
-                "role": "user",
+                "role": "system",
                 "content": [
-                    {
-                        "type": "image",
-                        "image": receipt_path,
-                    },
                     {
                         "type": "text", 
                         "text": 
-'''Read the following receipt image and return it's text as clean JSON, and only JSON, under the following schema:
+'''When you receive an image, return it's text as clean JSON (and only JSON) under the following schema:
 {
     "type": "object",
     "properties": {
@@ -158,7 +154,193 @@ class ImageToCompraNode:
 '''
                     },
                 ],
-            }
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "image": "D:\\Documents\\Recibos\\img\\recibo_imagen (3).jpg",
+                    },
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": 
+'''```json
+{
+  "store_name": "Vea Puerto Madryn",
+  "store_addr": "Dr. Manuel Belgrano 372 Puerto Madryn Chubut",
+  "entity_id": "30590360763",
+  "phone": null,
+  "date": "16/09/2024",
+  "time": "16:56:57",
+  "subtotal": "23.966,00",
+  "svc": null,
+  "tax": null,
+  "total": "18.848,10",
+  "tips": null,
+  "discount": "-5.117,90",
+  "line_items": [
+    {
+      "item_key": "7790250057048",
+      "item_name": "rolcocSUSSEX200p",
+      "item_value": "2.550,00",
+      "item_quantity": "2",
+      "item_total": "5.100,00"
+    },
+    {
+      "item_key": "7790250054344",
+      "item_name": "pandescfaELITEx90p",
+      "item_value": "1.650,00",
+      "item_quantity": "1",
+      "item_total": "1.650,00"
+    },
+    {
+      "item_key": "7790250097587",
+      "item_name": "toafemLSOF",
+      "item_value": "2.500,00",
+      "item_quantity": "2",
+      "item_total": "5.000,00"
+    },
+    {
+      "item_key": "7793670000052",
+      "item_name": "Yer VERDEFLORx500g",
+      "item_value": "2.000,00",
+      "item_quantity": "2",
+      "item_total": "4.000,00"
+    },
+    {
+      "item_key": "7797470199121",
+      "item_name": "PurtomMAROLIO520",
+      "item_value": "686,00",
+      "item_quantity": "6",
+      "item_total": "4.116,00"
+    },
+    {
+      "item_key": "7798085681537",
+      "item_name": "J.Citric Man 1L",
+      "item_value": "4.100,00",
+      "item_quantity": "1",
+      "item_total": "4.100,00"
+    }
+  ]
+}
+```'''
+                    },
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "image": "D:\\Documents\\Recibos\\img\\recibo_imagen (9).jpg",
+                    },
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": 
+'''```json
+{
+  "store_name": "Chango Más",
+  "store_addr": "JUAN B. JUSTO 1855, PUERTO MADRYN (9120) - CHUBUT",
+  "entity_id": "30-67813830-0",
+  "phone": null,
+  "date": "21/09/2024",
+  "time": "21:34:38",
+  "subtotal": null,
+  "svc": null,
+  "tax": null,
+  "total": "23446.03",
+  "tips": null,
+  "discount": "6997.60",
+  "line_items": [
+    {
+      "item_key": "0000000040112",
+      "item_name": "BANANA",
+      "item_value": "1989.00",
+      "item_quantity": "1.190",
+      "item_total": "2366.91"
+    },
+    {
+      "item_key": "0000000042253",
+      "item_name": "PALTA HASS",
+      "item_value": "3999.00",
+      "item_quantity": "0.845",
+      "item_total": "3379.16"
+    },
+    {
+      "item_key": "0000000044332",
+      "item_name": "LIMON",
+      "item_value": "1699.00",
+      "item_quantity": "0.955",
+      "item_total": "1622.55"
+    },
+    {
+      "item_key": "7798119220183",
+      "item_name": "SPEED",
+      "item_value": "2206,00",
+      "item_quantity": "3",
+      "item_total": "6618.00"
+    },
+    {
+      "item_key": "0000000002851",
+      "item_name": "MAS CLUB",
+      "item_value": null,
+      "item_quantity": null,
+      "item_total": "0.01"
+    },
+    {
+      "item_key": "7798153719339",
+      "item_name": "CHEK MARI SALV 220G",
+      "item_value": null,
+      "item_quantity": null,
+      "item_total": "1343.00"
+    },
+    {
+      "item_key": "7790380016687",
+      "item_name": "GEORGALOS BANO REPOS",
+      "item_value": "4143.00",
+      "item_quantity": "2",
+      "item_total": "8286.00"
+    },
+    {
+      "item_key": "7799120000818",
+      "item_name": "CHECK ANANA EN TROZO",
+      "item_value": null,
+      "item_quantity": null,
+      "item_total": "2687.00"
+    },
+    {
+      "item_key": "7799120004182",
+      "item_name": "CHECK LARGUITA 150G",
+      "item_value": "1399.00",
+      "item_quantity": "2",
+      "item_total": "2798.00"
+    }
+  ]
+}
+```'''
+                    },
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "image": receipt_path,
+                    },
+                ]
+            },
         ]
 
         text = self.processor.apply_chat_template(
