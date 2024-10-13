@@ -132,7 +132,7 @@ class ProductClassifierNode:
             logging.error(f"Failed to update product. Status code: {response.status_code}. Server response: {response.text}")
             return
 
-    def error_callback(self, error: Exception):        
+    def error_callback(self, error: Exception, _):        
         if isinstance(error, ValueError):
             logging.error(f"Could not assign a category: {error}")
         if isinstance(error, JSONDecodeError):

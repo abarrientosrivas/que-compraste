@@ -4,7 +4,7 @@ from pika.spec import Basic, BasicProperties
 from pika import BlockingConnection, PlainCredentials, ConnectionParameters
 from urllib.parse import urlparse
 from pydantic import BaseModel
-from typing import Callable, Type, Any
+from typing import Callable, Type, Any, Optional
 import json
 import time
 import threading
@@ -64,7 +64,7 @@ class PydanticQueueConsumer:
             body: bytes):
         self.message_queue.put((channel, method_frame, body))
 
-    def start(self, queue_name: str, callback: Callable[[BaseModel], Any], expected_type: Type[BaseModel], error_callback: Callable[[Exception], Any] | None = None):
+    def start(self, queue_name: str, callback: Callable[[BaseModel], Any], expected_type: Type[BaseModel], error_callback: Callable[[Exception, Optional[BaseModel]], Any] | None = None):
         self.should_consume = True
         self.expected_type = expected_type
         self.callback = callback
@@ -98,7 +98,12 @@ class PydanticQueueConsumer:
             )
         except Exception as e:
             if self.error_callback:
-                self.error_callback(e)
+                try:
+                    json_data = json.loads(body.decode())
+                    obj = self.expected_type(**json_data)
+                except:
+                    obj = None
+                self.error_callback(e,obj)
             self.channel.connection.add_callback_threadsafe(
                 lambda: channel.basic_nack(method_frame.delivery_tag, requeue=False)
             )

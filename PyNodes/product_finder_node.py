@@ -149,7 +149,7 @@ class ProductFinderNode:
         time.sleep(TASK_DELAY + random.uniform(0, 5))
         logging.info("Ready for next message") 
 
-    def error_callback(self, error: Exception):        
+    def error_callback(self, error: Exception, _):        
         if isinstance(error, ValueError):
             logging.error(f"Could not find product data: {error}")
         if isinstance(error, JSONDecodeError):

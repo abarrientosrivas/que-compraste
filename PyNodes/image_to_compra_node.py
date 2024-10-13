@@ -51,7 +51,7 @@ class ImageToCompraNode:
         else:
             logging.error(f"Failed to create purchase. Status code: {response.status_code}. Server response: {response.text}")
         
-    def error_callback(self, error: Exception):        
+    def error_callback(self, error: Exception, _):        
         if isinstance(error, JSONDecodeError):
             logging.error(f"Could not decode message: {error}")
         elif isinstance(error, ValidationError):
