@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
 
 # --------------------
 # PurchaseItem Schemas
@@ -56,7 +57,7 @@ class PurchaseCreate(PurchaseBase):
     date: Optional[datetime] = None
     total: Optional[float] = None
     items: List[PurchaseItemCreate] = Field(default_factory=list)
-    
+
 
 class PurchaseUpdate(PurchaseBase):
     date: Optional[datetime] = None
@@ -112,7 +113,7 @@ class EntityBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
+
 
 class EntityCreate(EntityBase):
     pass
@@ -135,7 +136,7 @@ class EstablishmentBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
+
 
 class EstablishmentCreate(EstablishmentBase):
     entity_id: int
@@ -160,11 +161,11 @@ class ProductBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
+
 
 class ProductCreate(ProductBase):
     pass
-    
+
 
 class ProductUpdate(ProductBase):
     title: Optional[str] = None
@@ -191,7 +192,7 @@ class ProductCodeBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
+
 
 class ProductCodeCreate(ProductCodeBase):
     product: ProductCreate
@@ -223,7 +224,7 @@ class CrawlCounterBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
+
 
 class CrawlCounter(CrawlCounterBase):
     id: int
@@ -246,6 +247,37 @@ class NodeTokenBase(BaseModel):
 class NodeToken(NodeTokenBase):
     id: int
     crawl_counters: List[CrawlCounter] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Receipt Schemas
+# --------------------
+class ReceiptStatus(str, Enum):
+    WAITING = "WAITING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    CANCELED = "CANCELED"
+    FAILED = "FAILED"
+
+
+class ReceiptBase(BaseModel):
+    status: ReceiptStatus = ReceiptStatus.WAITING
+    image_url: str
+
+    class Config:
+        from_attributes = True
+
+
+class ReceiptCreate(ReceiptBase):
+    pass
+
+
+class Receipt(ReceiptBase):
+    id: int
+    purchase_id: Optional[int] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None

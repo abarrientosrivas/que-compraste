@@ -1,7 +1,8 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint, BigInteger, Boolean, Date
+    Column, Integer, String, DateTime, Float, ForeignKey, Text, func, event, UniqueConstraint, BigInteger, Boolean, Date, Enum
 )
 from sqlalchemy.orm import relationship, declarative_base
+from .schemas import ReceiptStatus
 
 Base = declarative_base()
 
@@ -144,3 +145,13 @@ class CrawlCounter(Base):
     uses = Column(Integer, default=0)
     
     __table_args__ = (UniqueConstraint('node_token_id', 'date', name='uix_node_token_date'),)
+
+class Receipt(Base):
+    __tablename__ = "receipts"
+    id = Column(Integer, primary_key=True, index=True)
+    status = Column(Enum(ReceiptStatus), default=ReceiptStatus.WAITING, nullable=False)
+    purchase_id = Column(Integer, ForeignKey('purchases.id'), nullable=True)
+    image_url = Column(String, unique=True, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
