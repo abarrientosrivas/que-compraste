@@ -3,10 +3,9 @@ import logging
 import threading
 import os
 import sys
-import json
 import time
 import random
-from API.schemas import ProductCodeBase
+from API.schemas import ProductCodeBase, ProductCodeCreate, ProductCreate
 from PyLib import typed_messaging, request_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
@@ -65,8 +64,15 @@ class ProductFinderNode:
             result['product_description'] = product_description
         else:
             result['product_description'] = None
+
+        category_row = soup.find('td', text='Category')
+        result['product_category'] = None
+        if category_row:
+            category_value_field = category_row.find_next_sibling('td')
+            if category_value_field:
+                result['product_category'] = category_value_field.get_text(strip=True)
         
-        return json.dumps(result, indent=4, ensure_ascii=False)
+        return result
 
     def callback(self, message: ProductCodeBase):
         received_code =  message.code.strip()
@@ -79,14 +85,14 @@ class ProductFinderNode:
         logging.info(f"Checking if product exists")
         response = request_tools.send_request_with_retries('get',f"{self.product_codes_endpoint}?format={received_format}&code={received_code}")
         if response.status_code != 200:
-            raise Exception(f"Failed to query entites: {response.status_code}")
+            raise Exception(f"Failed to query products: {response.status_code}")
         entities = response.json()
         if isinstance(entities, list):
             count = len(entities)
         else:
             raise Exception("Unexpected response format: expected a JSON list")
         if count > 0:
-            logging.warning(f"Entity with identification '{received_code}' exists, skipping...")
+            logging.warning(f"Product with code '{received_code}' exists, skipping...")
             return
             
         logging.info(f"Requesting crawling authorization")
@@ -113,7 +119,31 @@ class ProductFinderNode:
 
         logging.info(f"Processing a code: {received_code}")
 
-        print(self.get_product_defails(received_code))
+        search_result = self.get_product_defails(received_code)
+        if not search_result["product_name"]:
+            logging.error("Could not recover product's title")
+            return
+        
+        new_product = ProductCreate(
+            title=search_result['product_name'],
+            description=search_result['product_description'],
+            read_category=search_result['product_category']
+        )
+
+        new_product_code = ProductCodeCreate(
+            format=received_format,
+            code=received_code,
+            product=new_product
+        )
+        
+        response = request_tools.send_request_with_retries("post", f"{self.product_codes_endpoint}", new_product_code.model_dump(mode='json'), stop_event=self.stop_event)
+        if response is None:
+            raise Exception("No response")
+        if response.status_code == 200:
+            logging.info(f"Product with code {received_code} created successfully")
+        else:
+            logging.error(f"Failed to create product code. Status code: {response.status_code}. Server response: {response.text}")
+            return
         
         logging.info("Complying with crawler delay")
         time.sleep(TASK_DELAY + random.uniform(0, 5))

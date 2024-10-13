@@ -101,27 +101,6 @@ class Category(CategoryBase):
 
 
 # --------------------
-# Product Schemas
-# --------------------
-class ProductBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    read_category: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class Product(ProductBase):
-    id: int
-    category_id: Optional[int] = None
-    category: Optional[Category] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
-
-
-# --------------------
 # Entity Schemas
 # --------------------
 class EntityBase(BaseModel):
@@ -215,7 +194,7 @@ class ProductCodeBase(BaseModel):
     
 
 class ProductCodeCreate(ProductCodeBase):
-    product_id: int
+    product: ProductCreate
 
 
 class ProductCode(ProductCodeBase):

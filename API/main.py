@@ -90,7 +90,7 @@ def get_next_sequence(directory: Path, timestamp: str) -> int:
 async def receive_receipt_files(request: Request, files: List[UploadFile] = File(...), client_ip: str = Depends(get_client_ip)):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
-    
+
     current_time = datetime.now()
     timestamp = current_time.strftime('%Y%m%d%H%M%S')
     ip_hash = hashlib.sha256(client_ip.encode('utf-8')).hexdigest()
@@ -110,21 +110,21 @@ async def receive_receipt_files(request: Request, files: List[UploadFile] = File
                 file_extension = file.filename.split(".")[-1]
             else:
                 file_extension = "bin"
-            
+
             if file_extension.lower() not in allowed_extensions:
                 raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
-            
+
             try:
                 file_content = await file.read()
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Failed to read {file.filename}: {str(e)}")
             finally:
                 await file.close()
-            
+
             sequence = starting_sequence + idx
             filename = f"{timestamp}-{sequence}.jpg"
             file_path = folder_path / filename
-            
+
             try:
                 if file_extension.lower() in {'jpg', 'jpeg', 'png'}:
                     image = await asyncio.to_thread(Image.open, io.BytesIO(file_content))
@@ -136,7 +136,7 @@ async def receive_receipt_files(request: Request, files: List[UploadFile] = File
                     image.save(file_path, format='JPEG')
                 else:
                     raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
-                
+
                 saved_files.append({
                     "filename": filename
                 })
@@ -149,7 +149,7 @@ async def receive_receipt_files(request: Request, files: List[UploadFile] = File
                 raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
             finally:
                 await file.close()
-    
+
     return JSONResponse(content={"uploaded_files": saved_files})
 
 @app.get("/reportes/total-by-category", response_model=List[Dict[str, Union[str, int]]])
@@ -201,10 +201,10 @@ async def get_total_by_category(start_date: str, end_date: str):
 @app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
 def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
     purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
-    
+
     if not purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
-    
+
     return purchase
 
 
@@ -223,7 +223,7 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             ]
         )
     ]
-    
+
     calculated_total = purchases_tools.calculate_purchase_total(purchase, purchase.items)
     calculated_date = purchase.date or datetime.now(timezone.utc)
 
@@ -232,7 +232,7 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             status_code=400,
             detail="The purchase's total could not be calculated."
         )
-    
+
     with conn.get_publisher() as publisher:
         entity_id = None
         try:
@@ -258,14 +258,14 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             tips = purchase.tips,
             total = calculated_total,
             entity_id = entity_id
-        )    
+        )
         db.add(db_entity)
         db.commit()
         db.refresh(db_entity)
-        
+
         for item in purchase.items:
             product_id = None
-            
+
             if item.read_product_key:
                 product_code = purchases_tools.detect_product_code(item.read_product_key)
                 db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
@@ -284,7 +284,7 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
                 product_id = product_id
             )
             db.add(db_item)
-        
+
         db.commit()
         db.refresh(db_entity)
     return db_entity
@@ -298,13 +298,13 @@ def update_purchase(
     db_purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
     if not db_purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
-    
+
     purchase_data = purchase.model_dump(exclude_unset=True)
     if "total" in purchase_data and purchase_data["total"] is None:
         purchase_data["total"] = purchases_tools.calculate_purchase_total(purchase, db_purchase.items)
         if purchase_data["total"] is None:
             raise HTTPException(status_code=400, detail="The purchase's total could not be calculated.")
-    
+
     for key, value in purchase_data.items():
         setattr(db_purchase, key, value)
 
@@ -331,9 +331,9 @@ def update_purchase_item(
     db_purchase_item = db.query(models.PurchaseItem).filter(models.PurchaseItem.id == purchase_item_id).first()
     if not db_purchase_item:
         raise HTTPException(status_code=404, detail="Purchase item not found")
-    
+
     purchase_item_data = purchase_item.model_dump(exclude_unset=True)
-    
+
     for key, value in purchase_item_data.items():
         setattr(db_purchase_item, key, value)
 
@@ -357,11 +357,22 @@ def category_from_string(category_str: str) -> models.Category | None:
 
 @app.post("/product_codes/", response_model=schemas.ProductCode)
 def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = Depends(get_db)):
+    with conn.get_publisher() as publisher:
+        db_product = models.Product(
+            title=product_code.product.title,
+            description=product_code.product.description,
+            read_category=product_code.product.read_category,
+        )
+        db.add(db_product)
+        db.commit()
+        db.refresh(db_product)
+        publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_product))
+
     db_entity = models.ProductCode(
-        product_id=product_code.product_id,
+        product_id=db_product.id,
         format=product_code.format,
         code=product_code.code,
-    )    
+    )
     try:
         db.add(db_entity)
         db.commit()
@@ -374,11 +385,11 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
             models.PurchaseItem.product_id.is_(None),
             models.PurchaseItem.read_product_key == db_entity.code
         ).all()
-    
+
     for item in purchase_items_to_update:
         item.product_id = db_entity.product_id
         db.add(item)
-    
+
     db.commit()
 
     return db_entity
@@ -405,27 +416,13 @@ def get_product_codes(lookahead: Optional[str] = None, format: Optional[str] = N
     entities = query.all()
     return entities
 
-@app.post("/products/", response_model=schemas.Product)
-def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
-    with conn.get_publisher() as publisher:
-        db_entity = models.Product(
-            title=product.title,
-            description=product.description,
-            read_category=product.read_category,
-        )    
-        db.add(db_entity)
-        db.commit()
-        db.refresh(db_entity)
-        publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_entity))
-    return db_entity
-
 @app.get("/products/{product_id}", response_model=schemas.Product)
 def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     return product
 
 @app.put("/products/{product_id}")
@@ -480,7 +477,7 @@ def set_categories(categories: List[str], db: Session = Depends(get_db)):
 @app.get("/categories/", response_model=List[schemas.Category], response_model_exclude_none=True)
 def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(models.Category).options(
-        noload(models.Category.children), 
+        noload(models.Category.children),
         noload(models.Category.parent)
     )
     if code is not None:
@@ -500,7 +497,7 @@ def create_establishment(establishment: schemas.EstablishmentCreate, db: Session
         name = establishment.name,
         location = establishment.location,
         address = establishment.address
-    )    
+    )
     try:
         db.add(db_entity)
         db.commit()
@@ -518,7 +515,7 @@ def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
         email = entity.email,
         address = entity.address,
         phone = entity.phone,
-    )    
+    )
     try:
         db.add(db_entity)
         db.commit()
@@ -531,11 +528,11 @@ def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
             models.Purchase.entity_id.is_(None),
             func.regexp_replace(models.Purchase.read_entity_identification, '[^0-9]', '', 'g') == str(db_entity.identification)
         ).all()
-    
+
     for item in purchases_to_update:
         item.entity_id = db_entity.id
         db.add(item)
-    
+
     db.commit()
 
     return db_entity
@@ -543,10 +540,10 @@ def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
 @app.get("/entities/{entities_id}", response_model=schemas.Entity)
 def get_product_by_id(entities_id: int, db: Session = Depends(get_db)):
     entity = db.query(models.Entity).filter(models.Entity.id == entities_id).first()
-    
+
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
-    
+
     return entity
 
 @app.get("/entities/", response_model=List[schemas.Entity], response_model_exclude_none=True)
@@ -563,7 +560,7 @@ def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_tok
 
     if node_token.crawl_daily_limit <= 0:
         raise HTTPException(status_code=401, detail="Node Token not valid for crawling")
-    
+
     crawl_counter = db.query(models.CrawlCounter).filter_by(
         node_token_id=node_token.id,
         date=today
@@ -574,14 +571,14 @@ def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_tok
             node_token_id=node_token.id
         )
         db.add(crawl_counter)
-        db.commit() 
+        db.commit()
 
     if crawl_counter.uses >= node_token.crawl_daily_limit:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Crawl limit reached for today"
         )
-    
+
     crawl_counter.uses += 1
     db.commit()
 
