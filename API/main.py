@@ -425,14 +425,28 @@ def get_product_by_id(product_id: int, db: Session = Depends(get_db)):
 
     return product
 
-@app.put("/products/{product_id}")
+@app.put("/products/{product_id}", response_model=schemas.Product)
 def update_product(
     product: schemas.ProductUpdate,
     db: Session = Depends(get_db),
     product_id: int = Path(..., description="The ID of the product to update")
 ):
-    logging.info(f"Would update product with id {product_id} with category with id {product.category_id}")
-    return True
+    db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    product_data = product.model_dump(exclude_unset=True, exclude_none=True)
+
+    for key, value in product_data.items():
+        setattr(db_product, key, value)
+
+    try:
+        db.commit()
+        db.refresh(db_product)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not update product due to model constraints.")
+    return db_product
 
 @app.post("/categories/")
 def set_categories(categories: List[str], db: Session = Depends(get_db)):

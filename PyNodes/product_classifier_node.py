@@ -5,10 +5,9 @@ import logging
 import threading
 import os
 import sys
-from PyLib import request_tools
+from PyLib import request_tools, typed_messaging
 from PyLib.product_classification import describe_product, translate_to_english
 from API import schemas
-from PyLib.typed_messaging import PydanticMessageBroker, PydanticExchangePublisher, PydanticQueueConsumer
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from typing import List
@@ -73,7 +72,7 @@ def init(file_path: str):
     logging.info("Taxonomy collection created successfully")
 
 class ProductClassifierNode:
-    def __init__(self, consumer: PydanticQueueConsumer, input_queue: str, categories_endpoint: str, products_endpoint: str):
+    def __init__(self, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str, categories_endpoint: str, products_endpoint: str):
         self.consumer = consumer
         self.input_queue = input_queue
         self.categories_endpoint = categories_endpoint
@@ -104,7 +103,9 @@ class ProductClassifierNode:
             logging.error(f"Cannot describe product.")
             return
         
-        category_code = self.get_category_code(translate_to_english(product_description))
+        category_str = translate_to_english(product_description)
+        logging.info(f"Using keywords:{category_str}")
+        category_code = self.get_category_code(category_str)
         response = request_tools.send_request_with_retries("get", self.categories_endpoint, params = {"code": category_code}, stop_event=self.stop_event)
         if response is None:
             raise Exception("No response")
@@ -165,7 +166,7 @@ if __name__ == '__main__':
             parser.error('the following argument is required when using --init: file_path')
         init(args.file_path)
     else:
-        broker = PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
+        broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
         categories_endpoint = os.getenv('CATEGORIES_ENDPOINT')
         if not categories_endpoint:
             logging.error("Categories endpoint URL was not provided")
