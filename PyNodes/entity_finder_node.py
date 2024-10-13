@@ -3,11 +3,10 @@ import logging
 import threading
 import os
 import sys
-import json
 import pytesseract
 import time
 import random
-from API.schemas import EntityBase
+from API.schemas import EntityBase, EntityCreate
 from PyLib import typed_messaging, receipt_tools, request_tools
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
@@ -102,7 +101,7 @@ class EntityFinderNode:
         except TimeoutException:
             print("El boton 'Ver' no se cargó en el tiempo esperado")
 
-    def get_datos_efiscal(self, cuit):
+    def get_datos_efiscal(self, cuit) -> dict:
         page_source = self.get_page_source(str(cuit))
         soup = BeautifulSoup(page_source, 'html.parser')
         result = {}
@@ -135,7 +134,7 @@ class EntityFinderNode:
         else:
             result['domicilio'] = None
 
-        return json.dumps(result, indent=4, ensure_ascii=False)
+        return result
 
     def callback(self, message: EntityBase):
         received_identification =  message.identification
@@ -179,7 +178,27 @@ class EntityFinderNode:
             retry_count += 1
 
         logging.info(f"Processing an entity identification: {received_identification}")        
-        print(self.get_datos_efiscal(received_identification))
+        search_result = self.get_datos_efiscal(received_identification)
+        if not search_result["nombre_fantasia"]:
+            logging.error("Could not recover entity's name")
+            return
+        
+        new_entity = EntityCreate(
+            identification=received_identification,
+            name=search_result["nombre_fantasia"],
+            email=search_result["email"],
+            address=search_result["domicilio"],
+            phone=search_result["telefono"],
+        )
+        
+        response = request_tools.send_request_with_retries("post", f"{self.entities_endpoint}", new_entity.model_dump(mode='json'), stop_event=self.stop_event)
+        if response is None:
+            raise Exception("No response")
+        if response.status_code == 200:
+            logging.info(f"Entity with cuit {message.identification} created successfully")
+        else:
+            logging.error(f"Failed to create entity. Status code: {response.status_code}. Server response: {response.text}")
+            return
         
         logging.info("Complying with crawler delay")
         time.sleep(TASK_DELAY + random.uniform(0, 5))
