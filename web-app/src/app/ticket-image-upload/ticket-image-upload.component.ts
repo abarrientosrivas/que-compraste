@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { TicketUploadService } from '../ticket-upload.service';
 import { CommonModule } from '@angular/common';
-import { ToastrService } from 'ngx-toastr';
+import { ActiveToast, Toast, ToastRef, ToastrService } from 'ngx-toastr';
+import { HttpEvent, HttpEventType } from '@angular/common/http';
 
 @Component({
   selector: 'app-ticket-image-upload',
@@ -14,11 +15,25 @@ export class TicketImageUploadComponent {
   selectedFiles: FileList | null = null;
   hasInvalidFiles = false;
   allowedFileTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  percentDone: number | null = null;
+  postSubscription: any;
+  isUploading = false;
+  @ViewChild('fileInput') fileInput: ElementRef | undefined;
 
   constructor(
     private ticketUploadService: TicketUploadService,
     private toastr: ToastrService
   ) {}
+
+  updateProgress(value: number) {
+    this.percentDone = value;
+  }
+
+  onCancel() {
+    this.percentDone = null;
+    this.postSubscription.unsubscribe();
+    this.isUploading = false;
+  }
 
   get selectedFilesNames() {
     if (!this.selectedFiles) return [];
@@ -50,17 +65,33 @@ export class TicketImageUploadComponent {
       return;
     }
 
-    this.ticketUploadService.uploadFile(this.selectedFiles).subscribe({
-      next: (data) => {
-        this.toastr.success('Archivos subidos correctamente');
-        console.log('Respuesta del servidor:', data);
-      },
-      error: (error) => {
-        console.error('Error al hacer la petición:', error);
-      },
-      complete: () => {
-        console.log('Petición completada');
-      },
-    });
+    this.isUploading = true;
+
+    this.postSubscription = this.ticketUploadService
+      .uploadFile(this.selectedFiles)
+      .subscribe({
+        next: (event: HttpEvent<any>) => {
+          if (event.type === HttpEventType.Response) {
+            this.toastr.success('Recibos cargados correctamente');
+          } else if (event.type === HttpEventType.UploadProgress) {
+            const percentDone = Math.round(
+              (100 * (event as any).loaded) / (event as any).total
+            );
+            this.updateProgress(percentDone);
+          }
+        },
+        error: (error) => {
+          console.error('Error al hacer la petición:', error);
+        },
+        complete: () => {
+          console.log('Petición completada');
+          this.isUploading = false;
+          this.percentDone = null;
+          this.selectedFiles = null;
+          if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+          }
+        },
+      });
   }
 }
