@@ -54,6 +54,7 @@ class PurchaseBase(BaseModel):
 
 
 class PurchaseCreate(PurchaseBase):
+    receipt: Optional['Receipt'] = None
     date: Optional[datetime] = None
     total: Optional[float] = None
     items: List[PurchaseItemCreate] = Field(default_factory=list)

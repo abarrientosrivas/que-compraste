@@ -6,7 +6,7 @@ import argparse
 import logging
 import json
 import torch
-from API.schemas import ReceiptImageLocation
+from API.schemas import Receipt, PurchaseCreate
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from PyLib import typed_messaging, request_tools
@@ -48,16 +48,13 @@ class ImageToCompraNode:
         if not os.path.exists(self.chango_receipt_path):
             raise FileNotFoundError("Image receipt for Chango Mas does not exist")
     
-    def callback(self, message: ReceiptImageLocation):
-        if message.path.strip():
-            logging.info(f"Processing image with path: {message.path}")
-            receipt_path = message.path
-        elif message.url.strip():
-            logging.info(f"Processing image with url: {message.url}")
+    def callback(self, message: Receipt):
+        if message.image_url.strip():
+            logging.info(f"Processing image with url: {message.image_url}")
             headers = {
                 "Authorization": f"Bearer {self.node_token}"
             }
-            response = request_tools.send_request_with_retries('get', message.url, headers= headers)
+            response = request_tools.send_request_with_retries('get', message.image_url, headers= headers)
             if response.status_code != 200:
                 raise Exception(f"Failed to load image from URL: {response.status_code}")
             
@@ -66,8 +63,7 @@ class ImageToCompraNode:
             with open(receipt_path, 'wb') as f:
                 f.write(response.content)
         else:
-            logging.warning("Received an empty message. Skipping...")
-            return
+            raise ValueError("Message had no image url.")
         
         messages = [
             {
@@ -373,13 +369,11 @@ class ImageToCompraNode:
             generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )
         json_str = output_text[0].removeprefix("```json").removesuffix("```").strip()
-        try:
-            json_data = json.loads(json_str)
-        except json.JSONDecodeError as e:
-            logging.error(f"Error decoding JSON: {e}")
-            return
+        
+        json_data = json.loads(json_str)
 
         purchase = convert_data_to_purchase(json_data)
+        purchase.receipt = message
         purchase_data = purchase.model_dump(mode='json')
 
         response =  request_tools.send_request_with_retries("post", self.output_endpoint, purchase_data, stop_event= self.stop_event)
@@ -388,18 +382,27 @@ class ImageToCompraNode:
         else:
             logging.error(f"Failed to create purchase. Status code: {response.status_code}. Server response: {response.text}")
         
-    def error_callback(self, error: Exception):        
+    def error_callback(self, error: Exception, message: Receipt | None):        
         if isinstance(error, JSONDecodeError):
-            logging.error(f"Could not decode message: {error}")
+            error_message = f"Could not decode json: {error}"
         elif isinstance(error, ValidationError):
-            logging.error(f"Received message was not of type ReceiptImageLocation: {error}")
+            error_message = f"Received message was not of type Receipt: {error}"
         elif isinstance(error, FileNotFoundError):
-            logging.error(f"Indicated file was not found: {error}")
+            error_message = f"Indicated file was not found: {error}"
         else:
-            logging.error(f"An unexpected error ({error.__class__.__name__}) occurred: {error}")
+            error_message = f"An unexpected error ({error.__class__.__name__}) occurred: {error}"
+        logging.error(error_message)
+        if message:
+            try:
+                purchase = PurchaseCreate(
+                    receipt = message
+                )
+                request_tools.send_request_with_retries("post", self.output_endpoint, purchase.model_dump(mode='json'), stop_event= self.stop_event)
+            except:
+                pass
         
     def start(self):
-        self.consumer.start(self.input_queue, self.callback, ReceiptImageLocation, self.error_callback)
+        self.consumer.start(self.input_queue, self.callback, Receipt, self.error_callback)
 
     def stop(self):
         self.stop_event.set()
