@@ -86,8 +86,8 @@ def get_next_sequence(directory: Path, timestamp: str) -> int:
         sequence += 1
     return sequence
 
-@app.post("/upload/")
-async def receive_receipt_files(request: Request, files: List[UploadFile] = File(...), client_ip: str = Depends(get_client_ip)):
+@app.post("/upload/", response_model=List[schemas.Receipt])
+async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session = Depends(get_db), client_ip: str = Depends(get_client_ip)):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
 
@@ -101,56 +101,99 @@ async def receive_receipt_files(request: Request, files: List[UploadFile] = File
     folder_path.mkdir(parents=True, exist_ok=True)
 
     starting_sequence = get_next_sequence(folder_path, timestamp)
-    saved_files = []
+    db_receipts = []
     allowed_extensions = {"jpg", "jpeg", "png", "pdf"}
 
-    with conn.get_publisher() as publisher:
-        for idx, file in enumerate(files):
-            if '.' in file.filename:
-                file_extension = file.filename.split(".")[-1]
+    for idx, file in enumerate(files):
+        sequence = starting_sequence + idx
+        filename = f"{timestamp}-{sequence}.jpg"
+        file_path = folder_path / filename
+        relative_path = file_path.relative_to(pt(IMAGE_UPLOADS_BASE_PATH)).as_posix()
+        image_url = f"{SERVER_URL}receipts/{relative_path}"
+
+        db_receipt = models.Receipt(
+            reference_name = file.filename,
+            image_url = image_url
+        )
+        try:
+            db.add(db_receipt)
+            db.commit()
+            db.refresh(db_receipt)  
+        except IntegrityError:
+            db.rollback()
+            logging.error(f"Couldn't store file '{file.filename}'. Could not create receipt due to model constraints.")
+            continue
+
+        if '.' in file.filename:
+            file_extension = file.filename.split(".")[-1]
+        else:
+            file_extension = "bin"
+
+        if file_extension.lower() not in allowed_extensions:
+            db_receipt.error_message = f"Unsupported file type: {file_extension}"
+            db_receipt.status = schemas.ReceiptStatus.FAILED
+            db.commit()
+            db.refresh(db_receipt)
+            db_receipts.append(db_receipt)
+            continue
+
+        try:
+            file_content = await file.read()
+        except Exception as e:
+            db_receipt.error_message = f"Failed to read {file.filename}: {str(e)}"
+            db_receipt.status = schemas.ReceiptStatus.FAILED
+            db.commit()
+            db.refresh(db_receipt)
+            db_receipts.append(db_receipt)
+            continue
+        finally:
+            await file.close()
+
+        try:
+            if file_extension.lower() in {'jpg', 'jpeg', 'png'}:
+                image = await asyncio.to_thread(Image.open, io.BytesIO(file_content))
+                image = image.convert('RGB')
+                image.save(file_path, format='JPEG')
+            elif file_extension.lower() == 'pdf':
+                images = convert_from_bytes(file_content)
+                image = images[0]
+                image.save(file_path, format='JPEG')
             else:
-                file_extension = "bin"
+                db_receipt.error_message = f"Unsupported file type: {file_extension}"
+                db_receipt.status = schemas.ReceiptStatus.FAILED
+                db.commit()
+                db.refresh(db_receipt)
+                db_receipts.append(db_receipt)
+                continue
 
-            if file_extension.lower() not in allowed_extensions:
-                raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
+        except Exception as e:
+            db_receipt.error_message = f"Failed to upload {file.filename}: {str(e)}"
+            db_receipt.status = schemas.ReceiptStatus.FAILED
+            db.commit()
+            db.refresh(db_receipt)
+            db_receipts.append(db_receipt)
+            continue
 
+        db_receipts.append(db_receipt)
+    
+    with conn.get_publisher() as publisher:
+        for db_receipt in db_receipts:
+            if db_receipt.status == schemas.ReceiptStatus.FAILED:
+                continue
+            db_receipt.status = schemas.ReceiptStatus.WAITING
+            db.commit()
+            db.refresh(db_receipt)
             try:
-                file_content = await file.read()
+                receipt = schemas.Receipt.model_validate(db_receipt)
+                publisher.publish(IMAGE_TO_COMPRA_EXCHANGE, IMAGE_TO_COMPRA_INPUT_KEY, receipt)
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to read {file.filename}: {str(e)}")
-            finally:
-                await file.close()
+                db_receipt.error_message = f"Failed to publish '{db_receipt.reference_name}': {str(e)}"
+                db_receipt.status = schemas.ReceiptStatus.FAILED
+                db.commit()
+                db.refresh(db_receipt)
+                continue
 
-            sequence = starting_sequence + idx
-            filename = f"{timestamp}-{sequence}.jpg"
-            file_path = folder_path / filename
-
-            try:
-                if file_extension.lower() in {'jpg', 'jpeg', 'png'}:
-                    image = await asyncio.to_thread(Image.open, io.BytesIO(file_content))
-                    image = image.convert('RGB')
-                    image.save(file_path, format='JPEG')
-                elif file_extension.lower() == 'pdf':
-                    images = convert_from_bytes(file_content)
-                    image = images[0]
-                    image.save(file_path, format='JPEG')
-                else:
-                    raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
-
-                saved_files.append({
-                    "filename": filename
-                })
-
-                relative_path = file_path.relative_to(pt(IMAGE_UPLOADS_BASE_PATH)).as_posix()
-                image_url = f"{SERVER_URL}receipts/{relative_path}"
-                publisher.publish(IMAGE_TO_COMPRA_EXCHANGE, IMAGE_TO_COMPRA_INPUT_KEY,schemas.ReceiptImageLocation(url=image_url))
-
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
-            finally:
-                await file.close()
-
-    return JSONResponse(content={"uploaded_files": saved_files})
+    return db_receipts
 
 @app.get("/reportes/total-by-category", response_model=List[Dict[str, Union[str, int]]])
 async def get_total_by_category(start_date: str, end_date: str):

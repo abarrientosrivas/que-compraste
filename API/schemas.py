@@ -208,14 +208,6 @@ class ProductCode(ProductCodeBase):
 
 
 # --------------------
-# ReceiptImageLocation Schema
-# --------------------
-class ReceiptImageLocation(BaseModel):
-    path: str = ""
-    url: str = ""
-
-
-# --------------------
 # CrawlCounter Schema
 # --------------------
 class CrawlCounterBase(BaseModel):
@@ -256,6 +248,7 @@ class NodeToken(NodeTokenBase):
 # Receipt Schemas
 # --------------------
 class ReceiptStatus(str, Enum):
+    CREATED = "CREATED"
     WAITING = "WAITING"
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
@@ -266,6 +259,8 @@ class ReceiptStatus(str, Enum):
 class ReceiptBase(BaseModel):
     status: ReceiptStatus = ReceiptStatus.WAITING
     image_url: str
+    reference_name: Optional[str] = None
+    error_message: Optional[str] = None
 
     class Config:
         from_attributes = True

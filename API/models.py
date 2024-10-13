@@ -149,9 +149,11 @@ class CrawlCounter(Base):
 class Receipt(Base):
     __tablename__ = "receipts"
     id = Column(Integer, primary_key=True, index=True)
-    status = Column(Enum(ReceiptStatus), default=ReceiptStatus.WAITING, nullable=False)
+    status = Column(Enum(ReceiptStatus), default=ReceiptStatus.CREATED, nullable=False)
     purchase_id = Column(Integer, ForeignKey('purchases.id'), nullable=True)
     image_url = Column(String, unique=True, nullable=False)
+    reference_name = Column(String, default='image', nullable=True)
+    error_message = Column(String, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
