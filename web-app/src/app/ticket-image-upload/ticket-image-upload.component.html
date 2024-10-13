@@ -1,6 +1,6 @@
-<h2>Subir Archivos</h2>
+<h2>Subir Recibos</h2>
 <h6 class="file-types pb-3">
-  Tipos de archivo permitidos: .jpg, .jpeg, .png, .pdf
+  Tipos de archivos permitidos: .jpg, .jpeg, .png, .pdf
 </h6>
 
 <ol *ngIf="selectedFiles">
@@ -13,8 +13,9 @@
 
 <form>
   <div class="mb-3">
-    <label for="fileInput" class="form-label">Seleccionar Archivos:</label>
+    <label for="fileInput" class="form-label">Seleccionar:</label>
     <input
+      #fileInput
       type="file"
       class="form-control"
       id="fileInput"
@@ -23,12 +24,39 @@
       accept=".jpg,.jpeg,.png,.pdf"
     />
   </div>
-  <button
-    type="button"
-    (click)="onSubmit()"
-    [disabled]="!selectedFiles || hasInvalidFiles"
-    class="btn btn-primary"
-  >
-    Subir Imagen
-  </button>
+  <div class="d-flex align-items-center">
+    <button
+      *ngIf="!isUploading"
+      type="button"
+      (click)="onSubmit()"
+      [disabled]="!selectedFiles || hasInvalidFiles || isUploading"
+      class="btn btn-primary ms-2"
+    >
+      Subir Recibos
+    </button>
+    <button
+      *ngIf="isUploading"
+      type="button"
+      (click)="onCancel()"
+      class="btn btn-danger ms-2"
+    >
+      Cancelar
+    </button>
+    <div
+      *ngIf="percentDone"
+      class="progress ms-3 flex-grow-1"
+      style="height: 25px"
+    >
+      <div
+        class="progress-bar progress-bar-striped progress-bar-animated"
+        role="progressbar"
+        [style.width.%]="percentDone"
+        [attr.aria-valuenow]="percentDone"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        {{ percentDone }}%
+      </div>
+    </div>
+  </div>
 </form>
