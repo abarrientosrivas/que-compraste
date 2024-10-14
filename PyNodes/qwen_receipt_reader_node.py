@@ -6,7 +6,7 @@ import argparse
 import logging
 import json
 import torch
-from API.schemas import Receipt, PurchaseCreate
+from API.schemas import Receipt, Purchase
 from pydantic import ValidationError
 from json.decoder import JSONDecodeError
 from PyLib import typed_messaging, request_tools
@@ -385,6 +385,8 @@ class ImageToCompraNode:
         response =  request_tools.send_request_with_retries("post", self.purchases_endpoint, purchase_data, stop_event= self.stop_event)
         if response.status_code == 200:
             logging.info("Purchase created successfully")
+            created_purchase = Purchase(**response.json())
+            logging.info(f"Id for the new purchase is {created_purchase.id}")
         else:
             logging.error(f"Failed to create purchase. Status code: {response.status_code}. Server response: {response.text}")
         

@@ -339,8 +339,9 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             db.add(db_item)
 
         db.commit()
-        db.refresh(db_entity)
-    return db_entity
+        
+    db_purchase = db.query(models.Purchase).filter(models.Purchase.id == db_entity.id).first()
+    return db_purchase
 
 @app.put("/purchases/{purchase_id}", response_model=schemas.Purchase)
 def update_purchase(
