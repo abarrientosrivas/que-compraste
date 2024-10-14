@@ -86,6 +86,25 @@ def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)} - {str(e.__class__.__name__)}")
 
+@app.post("/receipts/{receipt_id}/cancel", response_model=schemas.Receipt)
+def cancel_receipt(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
+    try:
+        machine = ReceiptStateMachine(receipt)
+        machine.cancel()
+        receipt.status = machine.state
+        db.commit()
+        db.refresh(receipt)
+        return receipt
+    except MachineError as e:
+        raise HTTPException(status_code=409, detail=f"Cannot cancel receipt: {e}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)} - {str(e.__class__.__name__)}")
+
 @app.post("/receipts/{receipt_id}/fail", response_model=schemas.Receipt)
 def fail_receipt(receipt_id: int, db: Session = Depends(get_db)):
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
