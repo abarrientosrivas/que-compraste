@@ -63,7 +63,7 @@ class ImageToCompraNode:
             }
             response = request_tools.send_request_with_retries('get', message.image_url, headers= headers)
             if response.status_code != 200:
-                raise Exception(f"Failed to load image from URL: {response.status_code}")
+                raise Exception(f"Failed to load image from URL. Status code: {response.status_code}. Server response: {response.text}")
             
             receipt_path = self.receipt_output_path
 
@@ -388,7 +388,7 @@ class ImageToCompraNode:
             created_purchase = Purchase(**response.json())
             logging.info(f"Id for the new purchase is {created_purchase.id}")
         else:
-            logging.error(f"Failed to create purchase. Status code: {response.status_code}. Server response: {response.text}")
+            raise Exception(f"Failed to create purchase. Status code: {response.status_code}. Server response: {response.text}")
         
     def error_callback(self, error: Exception, message: Receipt | None):        
         if isinstance(error, JSONDecodeError):
@@ -400,6 +400,11 @@ class ImageToCompraNode:
         else:
             error_message = f"An unexpected error ({error.__class__.__name__}) occurred: {error}"
         logging.error(error_message)
+        if message:
+            try:
+                request_tools.send_request_with_retries("post", f"{self.receipts_endpoint}{message.id}/fail", stop_event= self.stop_event)
+            except:
+                pass
         
     def start(self):
         self.consumer.start(self.input_queue, self.callback, Receipt, self.error_callback)

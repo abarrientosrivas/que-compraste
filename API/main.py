@@ -81,7 +81,26 @@ def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
         db.refresh(receipt)
         return receipt
     except MachineError as e:
-        raise HTTPException(status_code=409, detail=f"Failed to select receipt: {e}")
+        raise HTTPException(status_code=409, detail=f"Cannot select receipt: {e}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)} - {str(e.__class__.__name__)}")
+
+@app.post("/receipts/{receipt_id}/fail", response_model=schemas.Receipt)
+def fail_receipt(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
+    try:
+        machine = ReceiptStateMachine(receipt)
+        machine.fail()
+        receipt.status = machine.state
+        db.commit()
+        db.refresh(receipt)
+        return receipt
+    except MachineError as e:
+        raise HTTPException(status_code=409, detail=f"Cannot fail receipt: {e}")
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)} - {str(e.__class__.__name__)}")
@@ -281,7 +300,19 @@ def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
     return purchase
 
 @app.post("/purchases/", response_model=schemas.Purchase)
-def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):
+def create_purchase(purchase: schemas.PurchaseCreate, receipt_id: Optional[int] = None, db: Session = Depends(get_db)):
+    receipt = None
+    if receipt_id:
+        receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+        if not receipt:
+            raise HTTPException(status_code=404, detail="Receipt not found")
+        try:
+            machine = ReceiptStateMachine(receipt)
+            machine.complete()
+            receipt.status = machine.state
+        except MachineError as e:
+            raise HTTPException(status_code=409, detail=f"Cannot complete receipt: {e}")
+        
     purchase.items = [
         item for item in purchase.items
         if not all(
@@ -358,7 +389,10 @@ def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_
             db.add(db_item)
 
         db.commit()
-        
+    
+    if receipt:
+        receipt.purchase_id = db_entity.id
+        db.commit()
     db_purchase = db.query(models.Purchase).filter(models.Purchase.id == db_entity.id).first()
     return db_purchase
 
