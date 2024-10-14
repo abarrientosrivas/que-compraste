@@ -14,6 +14,7 @@ from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
 from PIL import Image
 from pdf2image import convert_from_bytes
+from .state_machine import ReceiptStateMachine
 import logging
 import os
 import hashlib
@@ -241,6 +242,16 @@ async def get_total_by_category(start_date: str, end_date: str):
     ]
     return categories
 
+@app.post("/receipts/{receipt_id}/select", response_model=schemas.Receipt)
+def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    machine = ReceiptStateMachine(receipt)
+    machine.select()
+    receipt.status = machine.state
+    db.commit()
+    db.refresh(receipt)
+    return receipt
+
 @app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
 def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
     purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
@@ -249,7 +260,6 @@ def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Purchase not found")
 
     return purchase
-
 
 @app.post("/purchases/", response_model=schemas.Purchase)
 def create_purchase(purchase: schemas.PurchaseCreate, db: Session = Depends(get_db)):

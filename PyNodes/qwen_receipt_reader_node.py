@@ -18,11 +18,12 @@ from PyLib.donut_model import convert_data_to_purchase
 load_dotenv()
 
 class ImageToCompraNode:
-    def __init__(self, node_token: str, receipt_output_path: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str, output_endpoint: str):
+    def __init__(self, node_token: str, receipt_output_path: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str, purchases_endpoint: str, receipts_endpoint: str):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.consumer = consumer
         self.input_queue = input_queue
-        self.output_endpoint = output_endpoint
+        self.purchases_endpoint = purchases_endpoint
+        self.receipts_endpoint = receipts_endpoint
         self.node_token = node_token
         self.receipt_output_path = receipt_output_path
         self.stop_event = threading.Event()
@@ -49,6 +50,12 @@ class ImageToCompraNode:
             raise FileNotFoundError("Image receipt for Chango Mas does not exist")
     
     def callback(self, message: Receipt):
+        response =  request_tools.send_request_with_retries("post", f"{self.receipts_endpoint}{message.id}/select", stop_event= self.stop_event)
+        if response.status_code == 200:
+            logging.info("Receipt command sent successfully")
+        else:
+            raise Exception(f"Failed to send receipt command. Status code: {response.status_code}. Server response: {response.text}")
+        
         if message.image_url.strip():
             logging.info(f"Processing image with url: {message.image_url}")
             headers = {
@@ -373,10 +380,9 @@ class ImageToCompraNode:
         json_data = json.loads(json_str)
 
         purchase = convert_data_to_purchase(json_data)
-        purchase.receipt = message
         purchase_data = purchase.model_dump(mode='json')
 
-        response =  request_tools.send_request_with_retries("post", self.output_endpoint, purchase_data, stop_event= self.stop_event)
+        response =  request_tools.send_request_with_retries("post", self.purchases_endpoint, purchase_data, stop_event= self.stop_event)
         if response.status_code == 200:
             logging.info("Purchase created successfully")
         else:
@@ -392,14 +398,6 @@ class ImageToCompraNode:
         else:
             error_message = f"An unexpected error ({error.__class__.__name__}) occurred: {error}"
         logging.error(error_message)
-        if message:
-            try:
-                purchase = PurchaseCreate(
-                    receipt = message
-                )
-                request_tools.send_request_with_retries("post", self.output_endpoint, purchase.model_dump(mode='json'), stop_event= self.stop_event)
-            except:
-                pass
         
     def start(self):
         self.consumer.start(self.input_queue, self.callback, Receipt, self.error_callback)
@@ -418,9 +416,14 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=args.logging.upper())
     
-    endpoint_url = os.getenv('PURCHASES_ENDPOINT')
-    if not endpoint_url:
-        logging.error("Endpoint URL was not provided")
+    purchases_endpoint = os.getenv('PURCHASES_ENDPOINT')
+    if not purchases_endpoint:
+        logging.error("Purchases endpoint was not provided")
+        sys.exit(1)
+    
+    receipts_endpoint = os.getenv('RECEIPTS_ENDPOINT')
+    if not receipts_endpoint:
+        logging.error("Receipts endpoint was not provided")
         sys.exit(1)
     
     node_token = os.getenv('IMAGE_TO_COMPRA_TOKEN')
@@ -438,7 +441,8 @@ if __name__ == '__main__':
         receipt_path,
         broker.get_consumer(), 
         broker.ensure_queue(os.getenv('IMAGE_TO_COMPRA_INPUT_QUEUE', '')), 
-        endpoint_url)
+        purchases_endpoint,
+        receipts_endpoint)
 
     try:
         logging.info("Node succesfully initialized")
