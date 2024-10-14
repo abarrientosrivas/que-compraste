@@ -54,7 +54,7 @@ class ImageToCompraNode:
         if response.status_code == 200:
             logging.info("Receipt command sent successfully")
         else:
-            raise Exception(f"Failed to send receipt command. Status code: {response.status_code}. Server response: {response.text}")
+            raise Exception(f"Failed to select receipt for processing. Status code: {response.status_code}. Server response: {response.text}")
         
         if message.image_url.strip():
             logging.info(f"Processing image with url: {message.image_url}")

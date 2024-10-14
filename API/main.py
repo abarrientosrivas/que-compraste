@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from PIL import Image
 from pdf2image import convert_from_bytes
 from .state_machine import ReceiptStateMachine
+from transitions import MachineError
 import logging
 import os
 import hashlib
@@ -66,7 +67,35 @@ conn.ensure_exchange(IMAGE_TO_COMPRA_EXCHANGE)
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/receipts/{file_path:path}")
+@app.post("/receipts/{receipt_id}/select", response_model=schemas.Receipt)
+def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
+    try:
+        machine = ReceiptStateMachine(receipt)
+        machine.select()
+        receipt.status = machine.state
+        db.commit()
+        db.refresh(receipt)
+        return receipt
+    except MachineError as e:
+        raise HTTPException(status_code=409, detail=f"Failed to select receipt: {e}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)} - {str(e.__class__.__name__)}")
+
+@app.get("/receipts/{receipt_id}", response_model=schemas.Receipt)
+def get_receipt(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
+    return receipt
+
+@app.get("/receipts/images/{file_path:path}")
 async def serve_image_file(file_path: str, node_token: schemas.NodeToken = Depends(get_node_token)):
     if not node_token.can_view_receipt_images:
         raise HTTPException(status_code=401, detail="Current node is not authorized to view receipt images")
@@ -110,7 +139,7 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
         filename = f"{timestamp}-{sequence}.jpg"
         file_path = folder_path / filename
         relative_path = file_path.relative_to(pt(IMAGE_UPLOADS_BASE_PATH)).as_posix()
-        image_url = f"{SERVER_URL}receipts/{relative_path}"
+        image_url = f"{SERVER_URL}receipts/images/{relative_path}"
 
         db_receipt = models.Receipt(
             reference_name = file.filename,
@@ -241,16 +270,6 @@ async def get_total_by_category(start_date: str, end_date: str):
         }
     ]
     return categories
-
-@app.post("/receipts/{receipt_id}/select", response_model=schemas.Receipt)
-def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
-    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
-    machine = ReceiptStateMachine(receipt)
-    machine.select()
-    receipt.status = machine.state
-    db.commit()
-    db.refresh(receipt)
-    return receipt
 
 @app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
 def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):

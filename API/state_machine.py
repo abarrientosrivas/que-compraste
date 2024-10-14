@@ -10,6 +10,7 @@ class ReceiptStateMachine:
 
         self.machine.add_transition(trigger='queue', source='CREATED', dest='WAITING')
         self.machine.add_transition(trigger='select', source='WAITING', dest='PROCESSING')
+        self.machine.add_transition(trigger='select', source='PROCESSING', dest='PROCESSING')
         self.machine.add_transition(trigger='complete', source='PROCESSING', dest='COMPLETED')
         self.machine.add_transition(trigger='fail', source='PROCESSING', dest='FAILED')
         self.machine.add_transition(trigger='cancel', source='WAITING', dest='CANCELED')
