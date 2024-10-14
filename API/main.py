@@ -1,9 +1,9 @@
 from . import schemas
 from . import models
 from pathlib import Path as pt
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Request
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError
@@ -16,16 +16,84 @@ from PIL import Image
 from pdf2image import convert_from_bytes
 from .state_machine import ReceiptStateMachine
 from transitions import MachineError
+from contextlib import asynccontextmanager
 import logging
 import os
 import hashlib
 import asyncio
 import io
+import select
+import psycopg2
 
 load_dotenv()
 logging.basicConfig(level=os.getenv("API_LOGGING_LEVEL",'ERROR'))
 
-app = FastAPI()
+db_params = os.getenv("NOTIFICATIONS_DATABASE_URL")
+
+class ReceiptEventConnection:
+    def __init__(self, queue: asyncio.Queue, subscribed_id: int):
+        self.queue = queue
+        self.subscribed_id = subscribed_id
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[ReceiptEventConnection] = []
+
+    async def connect(self, subscribed_id: int) -> ReceiptEventConnection:
+        q = asyncio.Queue()
+        sub_obj = ReceiptEventConnection(q, subscribed_id)
+        self.active_connections.append(sub_obj)
+        return sub_obj
+
+    async def disconnect(self, sub_obj: ReceiptEventConnection):
+        self.active_connections.remove(sub_obj)
+        await sub_obj.queue.put(None)
+
+    async def notify_all(self, id: int):
+        for connection in self.active_connections:
+            if connection.subscribed_id == id:
+                await connection.queue.put(id)
+    
+    async def close(self):
+        while self.active_connections:
+            await self.disconnect(self.active_connections[0])
+
+manager = ConnectionManager()
+
+db_listen_conn = psycopg2.connect(db_params)
+db_listen_conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+curs = db_listen_conn.cursor()
+curs.execute("LISTEN receipt_status_changed;")
+
+def get_notification():
+    if select.select([db_listen_conn], [], [], 5) == ([], [], []):
+        return []
+    db_listen_conn.poll()
+    if db_listen_conn.notifies:
+        return db_listen_conn.notifies
+    return []
+
+async def db_listener():
+    try:
+        while True:
+            notifications = await asyncio.get_running_loop().run_in_executor(None, get_notification)
+            for notify in notifications:
+                await manager.notify_all(int(notify.payload))
+            notifications.clear()
+    except Exception as ex:
+        print(f"Notification service failed: {ex} - {ex.__class__.__name__}")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    listener_task = asyncio.create_task(db_listener())
+    yield
+    await manager.close()
+    listener_task.cancel()
+    curs.close()
+    db_listen_conn.close()
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:4200",
@@ -66,6 +134,21 @@ conn.ensure_exchange(IMAGE_TO_COMPRA_EXCHANGE)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/receipts/{receipt_id}/status_changes")
+async def sse_endpoint(receipt_id: int):
+    async def event_generator():
+        sub_obj = await manager.connect(receipt_id)
+        try:
+            while True:
+                data = await sub_obj.queue.get()
+                if data is None:
+                    break
+                yield f"data: {data}\n\n"
+        finally:
+            await manager.disconnect(sub_obj)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.post("/receipts/{receipt_id}/select", response_model=schemas.Receipt)
 def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
