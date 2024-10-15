@@ -520,14 +520,14 @@ def update_purchase(
     if db_purchase.read_entity_identification and not db_purchase.entity_id:
         try:
             cuit = receipt_tools.normalize_entity_id(db_purchase.read_entity_identification)
+            db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
+            if not db_entity:
+                with conn.get_publisher() as publisher:
+                    publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=db_purchase.read_entity_name or "", identification=cuit))
+            else:
+                db_purchase.entity_id = db_entity.id
         except:
-            raise HTTPException(status_code=400, detail="Invalid entity identification.")
-        db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
-        if not db_entity:
-            with conn.get_publisher() as publisher:
-                publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=db_purchase.read_entity_name or "", identification=cuit))
-        else:
-            db_purchase.entity_id = db_entity.id
+            pass
     
     for item in purchase.items:
         db_item: models.PurchaseItem = next((db_item for db_item in db_purchase.items if db_item.id == item.id), None)
