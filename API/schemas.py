@@ -62,6 +62,7 @@ class PurchaseCreate(PurchaseBase):
 class PurchaseUpdate(PurchaseBase):
     date: Optional[datetime] = None
     total: Optional[float] = None
+    entity_id: Optional[int] = None
 
 
 class Purchase(PurchaseBase):

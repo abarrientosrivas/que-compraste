@@ -517,9 +517,23 @@ def update_purchase(
     for key, value in purchase_data.items():
         setattr(db_purchase, key, value)
 
-    db.commit()
-    db.refresh(db_purchase)
-    return db_purchase
+    if db_purchase.read_entity_identification and not db_purchase.entity_id:
+        cuit = receipt_tools.normalize_entity_id(db_purchase.read_entity_identification)
+        db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
+        if not db_entity:
+            with conn.get_publisher() as publisher:
+                publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=db_purchase.read_entity_name or "", identification=cuit))
+        else:
+            db_purchase.entity_id = db_entity.id
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not update purchase due to model constraints.")
+    
+    db_return = db.query(models.Purchase).filter(models.Purchase.id == db_purchase.id).first()
+    return db_return
 
 @app.get("/purchases/", response_model=List[schemas.Purchase])
 def get_purchases(db: Session = Depends(get_db)):
@@ -561,7 +575,7 @@ def update_purchase_item(
         return db_purchase_item
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
+        raise HTTPException(status_code=400, detail="Could not update purchase item due to model constraints.")
 
 def category_from_string(category_str: str) -> models.Category | None:
     category_str = category_str.strip()
