@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timezone, date
@@ -270,7 +270,7 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
             db.add(db_receipt)
             db.commit()
             db.refresh(db_receipt)  
-        except IntegrityError:
+        except (IntegrityError, SQLAlchemyError):
             db.rollback()
             logging.error(f"Couldn't store file '{file.filename}'. Could not create receipt due to model constraints.")
             continue
@@ -508,7 +508,7 @@ def update_purchase(
     if not db_purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
 
-    purchase_data = purchase.model_dump(exclude_unset=True)
+    purchase_data = purchase.model_dump(exclude_unset=True, exclude={'items'})
     if "total" in purchase_data and purchase_data["total"] is None:
         purchase_data["total"] = purchases_tools.calculate_purchase_total(purchase, db_purchase.items)
         if purchase_data["total"] is None:
@@ -518,17 +518,44 @@ def update_purchase(
         setattr(db_purchase, key, value)
 
     if db_purchase.read_entity_identification and not db_purchase.entity_id:
-        cuit = receipt_tools.normalize_entity_id(db_purchase.read_entity_identification)
+        try:
+            cuit = receipt_tools.normalize_entity_id(db_purchase.read_entity_identification)
+        except:
+            raise HTTPException(status_code=400, detail="Invalid entity identification.")
         db_entity = db.query(models.Entity).filter(models.Entity.identification == cuit).first()
         if not db_entity:
             with conn.get_publisher() as publisher:
                 publisher.publish(ENTITY_EXCHANGE, ENTITY_NEW_KEY, schemas.EntityBase(name=db_purchase.read_entity_name or "", identification=cuit))
         else:
             db_purchase.entity_id = db_entity.id
+    
+    for item in purchase.items:
+        db_item: models.PurchaseItem = next((db_item for db_item in db_purchase.items if db_item.id == item.id), None)
+        if not db_item:
+            continue
+
+        purchase_item_data = item.model_dump(exclude_unset=True)
+
+        for key, value in purchase_item_data.items():
+            setattr(db_item, key, value)
+
+        if db_item.read_product_key and not db_item.product_id:
+            try:
+                product_code = purchases_tools.detect_product_code(db_item.read_product_key)
+            except:
+                raise HTTPException(status_code=400, detail="Could not form product code.")
+            if not product_code:
+                continue
+            db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+            if not db_product_code:
+                with conn.get_publisher() as publisher:
+                    publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+            else:
+                db_item.product_id = db_product_code.product_id
 
     try:
         db.commit()
-    except IntegrityError:
+    except (IntegrityError, SQLAlchemyError):
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update purchase due to model constraints.")
     
@@ -544,38 +571,6 @@ def get_purchases(db: Session = Depends(get_db)):
         )
     ).all()
     return purchases
-
-@app.put("/purchase_items/{purchase_item_id}", response_model=schemas.PurchaseItem)
-def update_purchase_item(
-    purchase_item: schemas.PurchaseItemUpdate,
-    db: Session = Depends(get_db),
-    purchase_item_id: int = Path(..., description="The ID of the purchase item to update")
-):
-    db_purchase_item = db.query(models.PurchaseItem).filter(models.PurchaseItem.id == purchase_item_id).first()
-    if not db_purchase_item:
-        raise HTTPException(status_code=404, detail="Purchase item not found")
-
-    purchase_item_data = purchase_item.model_dump(exclude_unset=True)
-
-    for key, value in purchase_item_data.items():
-        setattr(db_purchase_item, key, value)
-
-    if db_purchase_item.read_product_key and not db_purchase_item.product_id:
-        product_code = purchases_tools.detect_product_code(db_purchase_item.read_product_key)
-        db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
-        if not db_product_code:
-            with conn.get_publisher() as publisher:
-                publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
-        else:
-            db_purchase_item.product_id = db_product_code.product_id
-
-    try:
-        db.commit()
-        db.refresh(db_purchase_item)
-        return db_purchase_item
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Could not update purchase item due to model constraints.")
 
 def category_from_string(category_str: str) -> models.Category | None:
     category_str = category_str.strip()
@@ -613,7 +608,7 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
         db.add(db_entity)
         db.commit()
         db.refresh(db_entity)
-    except IntegrityError:
+    except (IntegrityError, SQLAlchemyError):
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
 
@@ -679,7 +674,7 @@ def update_product(
     try:
         db.commit()
         db.refresh(db_product)
-    except IntegrityError:
+    except (IntegrityError, SQLAlchemyError):
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update product due to model constraints.")
     return db_product
@@ -752,7 +747,7 @@ def create_establishment(establishment: schemas.EstablishmentCreate, db: Session
         db.add(db_entity)
         db.commit()
         db.refresh(db_entity)
-    except IntegrityError:
+    except (IntegrityError, SQLAlchemyError):
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
     return db_entity
@@ -770,7 +765,7 @@ def create_entity(entity: schemas.EntityCreate, db: Session = Depends(get_db)):
         db.add(db_entity)
         db.commit()
         db.refresh(db_entity)
-    except IntegrityError:
+    except (IntegrityError, SQLAlchemyError):
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
 

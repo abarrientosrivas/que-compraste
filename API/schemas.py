@@ -22,6 +22,7 @@ class PurchaseItemCreate(PurchaseItemBase):
 
 
 class PurchaseItemUpdate(PurchaseItemBase):
+    id: int
     product_id: Optional[int] = None
 
 
@@ -63,6 +64,7 @@ class PurchaseUpdate(PurchaseBase):
     date: Optional[datetime] = None
     total: Optional[float] = None
     entity_id: Optional[int] = None
+    items: List[PurchaseItemUpdate] = Field(default_factory=list)
 
 
 class Purchase(PurchaseBase):
