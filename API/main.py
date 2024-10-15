@@ -546,9 +546,22 @@ def update_purchase_item(
     for key, value in purchase_item_data.items():
         setattr(db_purchase_item, key, value)
 
-    db.commit()
-    db.refresh(db_purchase_item)
-    return db_purchase_item
+    if db_purchase_item.read_product_key and not db_purchase_item.product_id:
+        product_code = purchases_tools.detect_product_code(db_purchase_item.read_product_key)
+        db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+        if not db_product_code:
+            with conn.get_publisher() as publisher:
+                publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+        else:
+            db_purchase_item.product_id = db_product_code.product_id
+
+    try:
+        db.commit()
+        db.refresh(db_purchase_item)
+        return db_purchase_item
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not create establishment due to model constraints.")
 
 def category_from_string(category_str: str) -> models.Category | None:
     category_str = category_str.strip()
@@ -644,7 +657,7 @@ def update_product(
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    product_data = product.model_dump(exclude_unset=True, exclude_none=True)
+    product_data = product.model_dump(exclude_unset=True)
 
     for key, value in product_data.items():
         setattr(db_product, key, value)

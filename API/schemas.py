@@ -22,7 +22,7 @@ class PurchaseItemCreate(PurchaseItemBase):
 
 
 class PurchaseItemUpdate(PurchaseItemBase):
-    pass
+    product_id: Optional[int] = None
 
 
 class PurchaseItem(PurchaseItemBase):

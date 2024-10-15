@@ -122,7 +122,7 @@ class ProductClassifierNode:
         logging.info(f"Assigned category: {categories[0].original_text}")
         
         update_product = schemas.ProductUpdate(category_id=categories[0].id)
-        update_product_data = update_product.model_dump(mode='json')
+        update_product_data = update_product.model_dump(mode='json', exclude_none=True)
         response = request_tools.send_request_with_retries("put", f"{self.products_endpoint}{message.id}", update_product_data, stop_event=self.stop_event)
         if response is None:
             raise Exception("No response")
