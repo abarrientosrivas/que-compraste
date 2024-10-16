@@ -67,6 +67,13 @@ class Category(Base):
 
     parent = relationship('Category', remote_side=[id], back_populates='children', lazy='noload')
     children = relationship('Category', back_populates='parent', lazy='noload') 
+    
+    loaded_children = relationship(
+        'Category',
+        back_populates='parent',
+        lazy='selectin',
+        viewonly=True
+    )
 
 class Entity(Base):
     __tablename__ = 'entities'

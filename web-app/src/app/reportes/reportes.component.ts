@@ -47,7 +47,7 @@ export class ReportesComponent {
         left: 'center',
       },
       legend: {
-        data: data.map((value) => value.name),
+        data: data.map((tuple: any) => tuple[0].name),
         show: true,
         type: 'scroll',
       },
@@ -56,7 +56,10 @@ export class ReportesComponent {
         {
           name: 'Total',
           type: 'pie',
-          data: data,
+          data: data.map((tuple: any) => ({
+            name: tuple[0].name,
+            value: tuple[1],
+          })),
           emphasis: {
             itemStyle: {
               shadowBlur: 10,

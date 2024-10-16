@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Tuple
 from datetime import datetime, timezone, date
 from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
@@ -22,7 +22,7 @@ import os
 import hashlib
 import asyncio
 import io
-import select
+import select as st
 import psycopg2
 
 load_dotenv()
@@ -67,7 +67,7 @@ curs = db_listen_conn.cursor()
 curs.execute("LISTEN receipt_status_changed;")
 
 def get_notification():
-    if select.select([db_listen_conn], [], [], 5) == ([], [], []):
+    if st.select([db_listen_conn], [], [], 5) == ([], [], []):
         return []
     db_listen_conn.poll()
     if db_listen_conn.notifies:
@@ -346,52 +346,6 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
 
     return db_receipts
 
-@app.get("/reportes/total-by-category", response_model=List[Dict[str, Union[str, int]]])
-async def get_total_by_category(start_date: str, end_date: str):
-    categories = [
-        {
-            "name": "Electrónica",
-            "value": 5459
-        },
-        {
-            "name": "Redes",
-            "value": 3425
-        },
-        {
-            "name": "Dispositivos portátiles",
-            "value": 298
-        },
-        {
-            "name": "Vídeo",
-            "value": 4570
-        },
-        {
-            "name": "Sistemas de navegación GPS",
-            "value": 339
-        },
-        {
-            "name": "Deportes y aire libre",
-            "value": 278
-        },
-        {
-            "name": "Hogar y jardín",
-            "value": 3539
-        },
-        {
-            "name": "Ropa y accesorios",
-            "value": 5256
-        },
-        {
-            "name": "Suministros de oficina",
-            "value": 2027
-        },
-        {
-            "name": "Videoconsolas",
-            "value": 1294
-        }
-    ]
-    return categories
-
 @app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
 def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
     purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
@@ -572,20 +526,6 @@ def get_purchases(db: Session = Depends(get_db)):
     ).all()
     return purchases
 
-def category_from_string(category_str: str) -> models.Category | None:
-    category_str = category_str.strip()
-    if not category_str:
-        return None
-    code_str = category_str.split('-')[0].strip()
-    if '>' in category_str:
-        name = category_str.split('>').pop().strip()
-    else:
-        name = category_str.split('-')[1].strip()
-    if code_str and name and code_str.isdigit():
-        code = int(code_str)
-        return models.Category(code=code, name=name, original_text=category_str)
-    return None
-
 @app.post("/product_codes/", response_model=schemas.ProductCode)
 def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = Depends(get_db)):
     with conn.get_publisher() as publisher:
@@ -678,6 +618,32 @@ def update_product(
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update product due to model constraints.")
     return db_product
+    
+def category_from_string(category_str: str) -> models.Category | None:
+    category_str = category_str.strip()
+    if not category_str:
+        return None
+    code_str = category_str.split('-')[0].strip()
+    if '>' in category_str:
+        name = category_str.split('>').pop().strip()
+    else:
+        name = category_str.split('-')[1].strip()
+    if code_str and name and code_str.isdigit():
+        code = int(code_str)
+        return models.Category(code=code, name=name, original_text=category_str)
+    return None
+
+def get_category_family_ids(db: Session, category_id: int):
+    category = (
+        db.query(models.Category)
+        .options(selectinload(models.Category.loaded_children))
+        .filter(models.Category.id == category_id)
+        .first()
+    )
+    ids = [category_id]
+    for child in category.loaded_children:
+        ids.extend(get_category_family_ids(db, child.id))
+    return ids
 
 @app.post("/categories/")
 def set_categories(categories: List[str], db: Session = Depends(get_db)):
@@ -729,6 +695,41 @@ def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
         query = query.filter(models.Category.code == code)
     entities = query.all()
     return entities
+
+@app.post("/expenses/all-purchases/", response_model=List[Tuple[schemas.Category, int]])
+def get_categories_expenses(
+    query: List[int] = [], 
+    start: Optional[datetime] = None, 
+    end: Optional[datetime] = None, 
+    db: Session = Depends(get_db)
+):
+    if not query:
+        return []
+    
+    categories = db.query(models.Category).filter(models.Category.code.in_(query)).all()
+    found_codes = [category.code for category in categories]
+    
+    missing_codes = set(query) - set(found_codes)
+    if missing_codes:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Category codes not found: {missing_codes}"
+        )
+
+    categories_with_expenses = []
+    for category in categories:
+        family_ids = get_category_family_ids(db, category.id)
+
+        purchase_items = (
+            db.query(models.PurchaseItem)
+            .join(models.Product, models.PurchaseItem.product_id == models.Product.id)
+            .join(models.Category, models.Product.category_id == models.Category.id)
+            .filter(models.Category.id.in_(family_ids))
+            .all()
+        )
+        categories_with_expenses.append((category,purchases_tools.calculate_purchase_total(schemas.PurchaseCreate(),purchase_items) or 0))
+
+    return categories_with_expenses
 
 @app.get("/establishments/", response_model=List[schemas.Establishment])
 def get_establishments(db: Session = Depends(get_db)):
