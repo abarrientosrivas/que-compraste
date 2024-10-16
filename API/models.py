@@ -74,6 +74,13 @@ class Category(Base):
         lazy='selectin',
         viewonly=True
     )
+    loaded_parent = relationship(
+        'Category',
+        remote_side=[id],
+        back_populates='children',
+        lazy='selectin',
+        viewonly=True
+    )
 
 class Entity(Base):
     __tablename__ = 'entities'

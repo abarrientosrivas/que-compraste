@@ -633,7 +633,7 @@ def category_from_string(category_str: str) -> models.Category | None:
         return models.Category(code=code, name=name, original_text=category_str)
     return None
 
-def get_category_family_ids(db: Session, category_id: int):
+def get_category_descendants_ids(db: Session, category_id: int):
     category = (
         db.query(models.Category)
         .options(selectinload(models.Category.loaded_children))
@@ -642,7 +642,19 @@ def get_category_family_ids(db: Session, category_id: int):
     )
     ids = [category_id]
     for child in category.loaded_children:
-        ids.extend(get_category_family_ids(db, child.id))
+        ids.extend(get_category_descendants_ids(db, child.id))
+    return ids
+
+def get_category_ancestors_ids(db: Session, category_id: int):
+    category = (
+        db.query(models.Category)
+        .options(selectinload(models.Category.loaded_parent))
+        .filter(models.Category.id == category_id)
+        .first()
+    )
+    ids = [category_id]
+    if category.loaded_parent:
+        ids.extend(get_category_ancestors_ids(db, category.loaded_parent.id))
     return ids
 
 @app.post("/categories/")
@@ -696,8 +708,8 @@ def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
     entities = query.all()
     return entities
 
-@app.post("/expenses/all-purchases/", response_model=List[Tuple[schemas.Category, int]])
-def get_categories_expenses(
+@app.post("/expenses/all-purchases/", response_model=List[Tuple[schemas.Category, float]])
+def get_all_expenses_by_category(
     query: List[int] = [], 
     start: Optional[datetime] = None, 
     end: Optional[datetime] = None, 
@@ -718,7 +730,7 @@ def get_categories_expenses(
 
     categories_with_expenses = []
     for category in categories:
-        family_ids = get_category_family_ids(db, category.id)
+        family_ids = get_category_descendants_ids(db, category.id)
 
         purchase_items = (
             db.query(models.PurchaseItem)
@@ -730,6 +742,47 @@ def get_categories_expenses(
         categories_with_expenses.append((category,purchases_tools.calculate_purchase_total(schemas.PurchaseCreate(),purchase_items) or 0))
 
     return categories_with_expenses
+
+@app.get("/expenses/purchase/{purchase_id}", response_model=List[Tuple[schemas.Category, float]])
+def get_expenses_by_category(
+    purchase_id: int,
+    start: Optional[datetime] = None, 
+    end: Optional[datetime] = None, 
+    db: Session = Depends(get_db)
+):    
+    purchase_categories = (
+        db.query(models.Category)
+        .join(models.Product, models.Category.id == models.Product.category_id)
+        .join(models.PurchaseItem, models.Product.id == models.PurchaseItem.product_id)
+        .filter(models.PurchaseItem.purchase_id == purchase_id)
+        .all()
+    )
+
+    family_of = {}
+    present_ids = set()
+    for category in purchase_categories:
+        family_ids = get_category_ancestors_ids(db, category.id)
+        family_of[category.id] = family_ids
+        present_ids.update(family_ids)
+        
+    present_categories = db.query(models.Category).filter(models.Category.id.in_(present_ids)).all()
+    categories_expenses_map = {}
+    for category in present_categories:
+        categories_expenses_map[category.id] = (category, 0)
+
+    for category in purchase_categories:
+        purchase_items = (
+            db.query(models.PurchaseItem)
+            .filter(models.PurchaseItem.purchase_id == purchase_id)
+            .join(models.Product, models.PurchaseItem.product_id == models.Product.id)
+            .join(models.Category, models.Product.category_id == models.Category.id)
+            .filter(models.Category.id == category.id)
+            .all()
+        )
+        for affected_id in family_of[category.id]:
+            categories_expenses_map[affected_id] = (categories_expenses_map[affected_id][0], categories_expenses_map[affected_id][1] + (purchases_tools.calculate_purchase_total(schemas.PurchaseCreate(),purchase_items) or 0))
+
+    return categories_expenses_map.values()
 
 @app.get("/establishments/", response_model=List[schemas.Establishment])
 def get_establishments(db: Session = Depends(get_db)):
