@@ -20,7 +20,10 @@ def get_product_details(page_source) -> dict:
     product_name_h4 = soup.find('h4')
     if product_name_h4:
         product_name = product_name_h4.get_text(strip=True)
-        result['product_name'] = product_name
+        if product_name.strip() == 'Log in to Your API Account':
+            result['product_name'] = None
+        else:
+            result['product_name'] = product_name
     else:
         result['product_name'] = None
 
@@ -48,6 +51,9 @@ def get_product_details(page_source) -> dict:
 
 class BarcodeLookupProducts:
     def __init__(self):
+        self.set_driver()
+
+    def set_driver(self):
         self.driver = create_driver()
 
     def get_page_html(self, product_code: str):
@@ -59,6 +65,8 @@ class BarcodeLookupProducts:
             print(f"error {ex} - {ex.__class__.__name__}")
 
     def get_product(self, product_code: str) -> dict:
+        if not product_code or not product_code.strip():
+            return {'product_name': None, 'product_description': None, 'product_category': None}
         return get_product_details(self.get_page_html(product_code))
 
     def close(self):

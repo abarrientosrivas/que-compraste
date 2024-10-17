@@ -4,7 +4,7 @@ from datetime import datetime
 from dateutil import tz
 import unittest
 
-class TestPurchaseFunctions(unittest.TestCase):
+class TestProductClassificationFunctions(unittest.TestCase):
     def test_product_description_valid(self):
         self.assertEqual(product_classification.describe_product(
             Product(
