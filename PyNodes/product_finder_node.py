@@ -46,7 +46,7 @@ class ProductFinderNode:
             logging.error(f"Error while fetching page source: {e}")
             raise
     
-    def get_product_defails(self, product_code):
+    def get_product_details(self, product_code):
         page_source = self.get_page_source(product_code)
         soup = BeautifulSoup(page_source, 'html.parser')
         result = {}
@@ -119,7 +119,7 @@ class ProductFinderNode:
 
         logging.info(f"Processing a code: {received_code}")
 
-        search_result = self.get_product_defails(received_code)
+        search_result = self.get_product_details(received_code)
         if not search_result["product_name"]:
             logging.error("Could not recover product's title")
             return

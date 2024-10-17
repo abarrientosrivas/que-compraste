@@ -1,19 +1,8 @@
-from selenium import webdriver 
+import sys
+import json
 from bs4 import BeautifulSoup
 
-BASE_URL = "https://www.barcodelookup.com/"
-
-def create_driver():
-    chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    #chrome_options.add_argument('--enable-logging')
-    #chrome_options.add_argument('--v=1') 
-    driver = webdriver.Chrome(options=chrome_options)
-    return driver
-
-def get_product_details(page_source) -> dict:
+def get_product_details(page_source):
     soup = BeautifulSoup(page_source, 'html.parser')
     result = {}
 
@@ -44,22 +33,21 @@ def get_product_details(page_source) -> dict:
                 product_category = product_category_span.get_text(strip=True)
                 result['product_category'] = product_category
     
-    return result
+    return json.dumps(result, indent=4, ensure_ascii=False)
 
-class BarcodeLookupProducts:
-    def __init__(self):
-        self.driver = create_driver()
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Uso: python3 -m 'scrapper_prototype.scrapper_go_upc' <html_path>")
+        sys.exit(1)
 
-    def get_page_html(self, product_code: str):
-        try:
-            search_url = f'{BASE_URL}{product_code}'
-            self.driver.get(search_url)
-            return self.driver.page_source
-        except Exception as ex:
-            print(f"error {ex} - {ex.__class__.__name__}")
-
-    def get_product(self, product_code: str) -> dict:
-        return get_product_details(self.get_page_html(product_code))
-
-    def close(self):
-        self.driver.close()
+    html_path = sys.argv[1]
+    try:
+        with open(html_path, 'r', encoding='utf-8') as file:
+            page_source = file.read()
+        
+        product_details = get_product_details(page_source)
+        print(product_details)
+    
+    except FileNotFoundError:
+        print(f"File '{html_path}' not found.")
+        sys.exit(1)
