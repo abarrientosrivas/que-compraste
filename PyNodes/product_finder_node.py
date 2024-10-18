@@ -78,9 +78,15 @@ class ProductFinderNode:
         received_code =  message.code.strip()
         if not received_code:
             logging.info(f"Ignoring message with no code")
+            return
         received_format =  message.format.strip()
         if not received_format:
             logging.info(f"Ignoring message with no format")
+            return
+
+        if not received_code.isdigit() or len(received_code) < 12 or len(received_code) > 13:
+            logging.info(f"Ignoring message with invalid code length")
+            return
 
         logging.info(f"Checking if product exists")
         response = request_tools.send_request_with_retries('get',f"{self.product_codes_endpoint}?format={received_format}&code={received_code}")

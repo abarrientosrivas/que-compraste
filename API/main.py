@@ -136,7 +136,11 @@ async def root():
     return {"message": "Hello World"}
 
 @app.get("/receipts/{receipt_id}/status_changes")
-async def sse_endpoint(receipt_id: int):
+async def sse_endpoint(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+
     async def event_generator():
         sub_obj = await manager.connect(receipt_id)
         try:
