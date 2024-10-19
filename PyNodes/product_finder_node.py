@@ -83,9 +83,8 @@ class ProductFinderNode:
         if not received_format:
             logging.info(f"Ignoring message with no format")
             return
-
         if not received_code.isdigit() or len(received_code) < 12 or len(received_code) > 13:
-            logging.info(f"Ignoring message with invalid code length")
+            logging.info(f"Ignoring message with invalid code")
             return
 
         logging.info(f"Checking if product exists")
@@ -128,6 +127,9 @@ class ProductFinderNode:
         search_result = self.get_product_details(received_code)
         if not search_result["product_name"]:
             logging.error("Could not recover product's title")
+            logging.info("Complying with crawler delay")
+            time.sleep(TASK_DELAY + random.uniform(0, 5))
+            logging.info("Ready for next message") 
             return
         
         new_product = ProductCreate(
@@ -144,12 +146,11 @@ class ProductFinderNode:
         
         response = request_tools.send_request_with_retries("post", f"{self.product_codes_endpoint}", new_product_code.model_dump(mode='json'), stop_event=self.stop_event)
         if response is None:
-            raise Exception("No response")
+            logging.error(f"There was no response from server")
         if response.status_code == 200:
             logging.info(f"Product with code {received_code} created successfully")
         else:
             logging.error(f"Failed to create product code. Status code: {response.status_code}. Server response: {response.text}")
-            return
         
         logging.info("Complying with crawler delay")
         time.sleep(TASK_DELAY + random.uniform(0, 5))

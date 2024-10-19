@@ -181,6 +181,9 @@ class EntityFinderNode:
         search_result = self.get_datos_efiscal(received_identification)
         if not search_result["nombre_fantasia"]:
             logging.error("Could not recover entity's name")
+            logging.info("Complying with crawler delay")
+            time.sleep(TASK_DELAY + random.uniform(0, 5))
+            logging.info("Ready for next message") 
             return
         
         new_entity = EntityCreate(
@@ -193,12 +196,11 @@ class EntityFinderNode:
         
         response = request_tools.send_request_with_retries("post", f"{self.entities_endpoint}", new_entity.model_dump(mode='json'), stop_event=self.stop_event)
         if response is None:
-            raise Exception("No response")
+            logging.error(f"There was no response from server")
         if response.status_code == 200:
             logging.info(f"Entity with cuit {message.identification} created successfully")
         else:
             logging.error(f"Failed to create entity. Status code: {response.status_code}. Server response: {response.text}")
-            return
         
         logging.info("Complying with crawler delay")
         time.sleep(TASK_DELAY + random.uniform(0, 5))
