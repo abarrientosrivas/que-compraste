@@ -382,7 +382,7 @@ class ImageToCompraNode:
         purchase = convert_data_to_purchase(json_data)
         purchase_data = purchase.model_dump(mode='json')
 
-        response =  request_tools.send_request_with_retries("post", self.purchases_endpoint, purchase_data, stop_event= self.stop_event)
+        response =  request_tools.send_request_with_retries("post", f"{self.purchases_endpoint}?receipt_id={message.id}", purchase_data, stop_event= self.stop_event)
         if response.status_code == 200:
             logging.info("Purchase created successfully")
             created_purchase = Purchase(**response.json())
