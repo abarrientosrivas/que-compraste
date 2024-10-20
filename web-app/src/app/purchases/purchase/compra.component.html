@@ -1,13 +1,34 @@
+<ng-template #popContent><strong>Direccion: </strong>{{ compra.entity.address }}<br><strong>Email: </strong>{{
+  compra.entity.email }}
+  <br> <strong>Telefono: </strong>
+  {{compra.entity.phone }}<br><br><small class="text-muted">
+    Información obtenida de
+    <a href="https://argentina.gob.ar" target="_blank">
+      https://argentina.gob.ar
+    </a>
+  </small>
+</ng-template>
+
 <div *ngIf="compra" class="purchase-details container">
   <div class="header-section row align-items-center mb-4">
-    <h1 class="store-name display-5">{{ compra.read_entity_name }}</h1>
+    <h2 class="store-name display-5">{{ compra.read_entity_name }}</h2>
 
     <div class="col-md-6">
-      <p class="store-address text-muted">{{ compra.read_entity_address }}</p>
-      <p class="store-address text-muted">{{ compra.read_entity_location }}</p>
+      <p class="text-muted"> CUIT: {{ compra.read_entity_identification }}
+        <button *ngIf="compra.entity" type="button" class="btn" style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%;"
+          placement="bottom" data-bs-html="true" [ngbPopover]="popContent" popoverTitle="{{compra.entity.name}}">
+          <i class="bi bi-info-circle"></i>
+        </button>
+        <button *ngIf="!compra.entity" type="button" class="btn" style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%;"
+          placement="end" ngbTooltip="La informacion de la entidad fiscal no se encuentra cargada en el sistema.">
+          <i class="bi bi-info-circle"></i>
+        </button>
+      </p>
       <p class="purchase-info text-muted">
         Fecha: {{ fechaFormateada }} | Hora: {{ horaFormateada }}
       </p>
+      <p class="store-address text-muted">Direccion: {{ compra.read_entity_address }}</p>
+      <p class="store-address text-muted">{{ compra.read_entity_location }}</p>
     </div>
     <div class="col-md-6 text-md-right">
       <h2 class="total-amount display-5 text-success">

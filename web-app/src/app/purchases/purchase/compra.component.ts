@@ -4,11 +4,12 @@ import { ComprasService } from '../shared/compras.service';
 import { CommonModule } from '@angular/common';
 import { ProductSearchComponent } from '../../product-search/product-search.component';
 import { FormsModule } from '@angular/forms';
+import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-ver-compra',
   standalone: true,
-  imports: [CommonModule, ProductSearchComponent, FormsModule],
+  imports: [CommonModule, ProductSearchComponent, FormsModule, NgbPopoverModule, NgbTooltipModule],
   templateUrl: './compra.component.html',
   styleUrl: './compra.component.css',
 })
