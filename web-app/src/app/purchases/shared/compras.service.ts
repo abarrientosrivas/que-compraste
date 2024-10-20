@@ -20,7 +20,7 @@ export class ComprasService {
     return this.http.get(url);
   }
 
-  updateCompra(id: number, data: any) {
+  updatePurchase(id: number, data: any) {
     const url = `${this.baseUrl}/purchases/${id}`;
     return this.http.put(url, {
       ...data,
