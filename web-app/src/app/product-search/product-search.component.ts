@@ -16,7 +16,6 @@ export class ProductSearchComponent {
   searchControl = new FormControl();
   selectedItem = new FormControl('');
   results: any;
-  searchTerm: string = '';
 
   constructor(private productsService: ProductsService) {
     this.searchControl.valueChanges
@@ -40,6 +39,15 @@ export class ProductSearchComponent {
     this.productsService.search(this.query).subscribe((data) => {
       this.results = data;
       console.log('Respuesta del servidor:', data);
+    },
+    (error) => {
+      console.error('Error fetching products', error);
+      this.results = [];
     });
+  }
+
+  resetForm() {
+    this.query = '';
+    this.results = [];
   }
 }
