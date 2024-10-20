@@ -16,7 +16,7 @@
     <div class="col-md-6">
       <p class="text-muted"> CUIT: {{ compra.read_entity_identification }}
         <button *ngIf="compra.entity" type="button" class="btn" style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%;"
-          placement="bottom" data-bs-html="true" [ngbPopover]="popContent" popoverTitle="{{compra.entity.name}}">
+          placement="bottom" [ngbPopover]="popContent" popoverTitle="{{compra.entity.name}}">
           <i class="bi bi-info-circle"></i>
         </button>
         <button *ngIf="!compra.entity" type="button" class="btn" style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%;"
@@ -54,7 +54,21 @@
     </thead>
     <tbody>
       <tr *ngFor="let item of compra.items; let i = index">
-        <td>{{ item.read_product_text }}</td>
+        <ng-template #popTemplate let-i="i">
+          <div>
+            <p>
+              <strong>Descripcion: </strong>{{item.product.description}}
+            </p>
+            <p *ngIf="item.product.read_category"><strong>Categoria: </strong>{{item.product.read_category}}</p>
+          </div>
+        </ng-template>
+        <td>
+          <button *ngIf="item.product; else noProduct" class="invisible-button" placement="right"
+            [ngbPopover]="popTemplate" popoverTitle="{{item.product.title}}" [popoverContext]="{ index: i }"
+            [disabled]="!item.product">{{ item.read_product_text }}
+          </button>
+          <ng-template #noProduct>{{item.read_product_text}}</ng-template>
+        </td>
         <td> {{ item.value | currency : "USD" }}</td>
         <td class="text-center">{{ item.quantity }}</td>
         <td>{{ item.total | currency : "USD" }}</td>

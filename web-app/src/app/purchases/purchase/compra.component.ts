@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { ProductSearchComponent } from '../../product-search/product-search.component';
 import { FormsModule } from '@angular/forms';
 import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-ver-compra',
@@ -14,7 +15,7 @@ import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
   styleUrl: './compra.component.css',
 })
 export class CompraComponent {
-  constructor(private comprasService: ComprasService) {}
+  constructor(private comprasService: ComprasService, private sanitizer: DomSanitizer) {}
 
   private activatedRoute = inject(ActivatedRoute);
   compraId = this.activatedRoute.snapshot.params['compraId'];
@@ -57,5 +58,10 @@ export class CompraComponent {
       hour: 'numeric',
       minute: 'numeric',
     });
+  }
+
+  getPopoverContent(item: any): string {
+    const content = `Descripcion: ${item.product.description}<br>Categoria: ${item.product.category}`;
+    return content
   }
 }
