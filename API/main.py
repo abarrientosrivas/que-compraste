@@ -1,9 +1,9 @@
 from . import schemas
 from . import models
 from pathlib import Path as pt
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -134,6 +134,34 @@ conn.ensure_exchange(IMAGE_TO_COMPRA_EXCHANGE)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/receipts/{receipt_id}/visual_changes")
+async def connect_sse(receipt_id: int):
+    return HTMLResponse(f'''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt Status</title>
+    <!-- Include htmx library -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Include htmx SSE extension -->
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
+</head>
+<body>
+    <div hx-ext="sse" sse-connect="/receipts/{receipt_id}/status_changes">
+        <div 
+            id="receipt-data" 
+            hx-get="/receipts/{receipt_id}" 
+            hx-trigger="sse:message, load"
+            hx-target="#receipt-data"
+            hx-swap="innerHTML">
+        ...
+        </div>
+    </div>
+</body>
+</html>
+''')
 
 @app.get("/receipts/{receipt_id}/status_changes")
 async def sse_endpoint(receipt_id: int, db: Session = Depends(get_db)):
