@@ -83,7 +83,7 @@ class ProductFinderNode:
         if not received_format:
             logging.info(f"Ignoring message with no format")
             return
-        if not received_code.isdigit() or len(received_code) < 12 or len(received_code) > 13:
+        if not received_code.isdigit() or len(received_code) < 12 or len(received_code) > 13 or received_code.startswith('0000000'):
             logging.info(f"Ignoring message with invalid code")
             return
 
