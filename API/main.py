@@ -136,7 +136,11 @@ async def root():
     return {"message": "Hello World"}
 
 @app.get("/receipts/{receipt_id}/visual_changes")
-async def connect_sse(receipt_id: int):
+async def connect_sse(receipt_id: int, db: Session = Depends(get_db)):
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
     return HTMLResponse(f'''
 <!DOCTYPE html>
 <html lang="en">
