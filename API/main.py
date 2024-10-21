@@ -153,10 +153,10 @@ async def connect_sse(receipt_id: int, db: Session = Depends(get_db)):
     <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
 </head>
 <body>
-    <div hx-ext="sse" sse-connect="/receipts/{receipt_id}/status_changes">
+    <div hx-ext="sse" sse-connect="/api/receipts/{receipt_id}/status_changes">
         <div 
             id="receipt-data" 
-            hx-get="/receipts/{receipt_id}" 
+            hx-get="/api/receipts/{receipt_id}" 
             hx-trigger="sse:message, load"
             hx-target="#receipt-data"
             hx-swap="innerHTML">
