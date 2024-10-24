@@ -26,4 +26,9 @@ export class ComprasService {
       ...data,
     });
   }
+
+  updateProductCode(productId: number, itemId: number, productCode: any) {
+    const url = `${this.baseUrl}/purchases/${productId}`;
+    return this.http.put(url, { "items": [{"id": itemId, "read_product_key": productCode, "product_id": null}]})
+  };
 }
