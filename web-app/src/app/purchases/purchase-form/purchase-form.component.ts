@@ -19,6 +19,8 @@ export class PurchaseFormComponent implements OnInit {
   replacementItem: any;
   errorMessage: any;
   @ViewChild(ProductSearchComponent) productSearchComponent!: ProductSearchComponent;
+  noResults: any;
+  productCode: any;
 
 
   constructor(
@@ -95,8 +97,8 @@ export class PurchaseFormComponent implements OnInit {
   }
 
   seleccionarItem(item: any) {
-    console.log(item)
-    this.itemToChange = item;
+    console.log(item.value)
+    this.itemToChange = item.value;
   }
 
   onProductSelected(event: any) {
@@ -110,8 +112,9 @@ export class PurchaseFormComponent implements OnInit {
 
   changeItem() {
     const itemsArray = this.purchaseForm.get('items') as FormArray;
-    const index = itemsArray.controls.findIndex(control => control.value === this.itemToChange.value);
+    const index = itemsArray.controls.findIndex(control => control.value === this.itemToChange);
     if (index !== -1) {
+      this.noResults = false;
       itemsArray.at(index).patchValue({
         read_product_key: this.replacementItem.code,
         read_product_text: this.replacementItem.product.title,
@@ -144,6 +147,34 @@ export class PurchaseFormComponent implements OnInit {
       },
     });
 
+  }
+
+  onNoResults(event: any) {
+    this.noResults = event;
+  }
+
+  createProductCode() {
+
+    const itemsArray = this.purchaseForm.get('items') as FormArray;
+    const index = itemsArray.controls.findIndex(control => control.value === this.itemToChange);
+    if (index !== -1) {
+      this.itemToChange.read_product_key = this.productCode
+      this.itemToChange.product_id = null
+    }
+    this.resetProductSearchForm()
+    console.log(this.itemToChange)
+    /*this.comprasService.updateProductCode(this.compraId, this.itemToChange.id, this.productCode).subscribe({
+      next: (data) => {
+        console.log('Product code created:', data);
+      },
+      error: (error) => {
+        console.error('Error creating product code:', error);
+      }
+    });*/
+  }
+
+  onProductCode(query: any) {
+    this.productCode = query.toString()
   }
 
 }

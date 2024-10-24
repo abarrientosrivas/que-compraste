@@ -76,7 +76,7 @@
             <input id="producto-{{ i }}" type="number" min="0" formControlName="total" class="form-control" />
           </td>
           <td>
-            <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)">Eliminar</button>
+            <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)" disabled>Eliminar</button>
           </td>
         </tr>
       </tbody>
@@ -96,12 +96,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="cancel()"></button>
       </div>
       <div class="modal-body">
-        <app-product-search (productSelected)="onProductSelected($event)"></app-product-search>
+        <app-product-search (productSelected)="onProductSelected($event)" (noResults)="onNoResults($event)" (productCode)="onProductCode($event)"></app-product-search>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="cancel()">Cancelar</button>
         <button type="button" class="btn btn-primary" (click)="changeItem()" data-bs-dismiss="modal"
           [disabled]="!replacementItem">Seleccionar</button>
+        <button *ngIf="noResults" type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="createProductCode()">Cargar</button>
       </div>
     </div>
   </div>
