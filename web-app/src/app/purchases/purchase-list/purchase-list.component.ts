@@ -36,4 +36,17 @@ export class PurchaseListComponent implements OnInit {
   deletePurchase(id: number) {
     console.log('Test: Eliminando compra con id:', id);
   }
+
+  fechaFormateada(date: any) {
+    const fecha: any = new Date(date);
+    return fecha.toLocaleDateString("es-AR");
+  }
+
+  horaFormateada(date: any) {
+    const hora = new Date(date);
+    return hora.toLocaleTimeString('es-ES', {
+      hour: 'numeric',
+      minute: 'numeric',
+    });
+  }
 }
