@@ -1,15 +1,16 @@
 <div class="form-group">
   <input
-    type="text"
+    type="number"
     id="search-input"
     [(ngModel)]="query"
     (input)="search()"
     class="form-control"
     placeholder="Codigo de Producto"
+    minlength="8"
   />
 </div>
 
-<ul class="list-group mt-4">
+<ul *ngIf="results" class="list-group mt-4">
   <li *ngFor="let item of results" class="list-group-item">
     <label class="form-check">
       <input
@@ -24,4 +25,5 @@
   </li>
 </ul>
 
-<div *ngIf="query.length >= 3 && results.length === 0">No se encontraron resultados.</div>
+<div *ngIf="query && query.toString().length >= 3 && results.length === 0">No se encontraron resultados.
+<br>Puede cargarlo al sistema ingresando el codigo completo del producto.</div>
