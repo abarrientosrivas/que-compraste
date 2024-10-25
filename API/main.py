@@ -1,10 +1,10 @@
 from . import schemas
 from . import models
 from pathlib import Path as pt
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Form
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
@@ -617,12 +617,29 @@ def get_product_codes(lookahead: Optional[str] = None, format: Optional[str] = N
             noload(models.Category.parent)
         )
     )
+
     if lookahead is not None:
-        query = query.filter(models.ProductCode.code.like(f"{lookahead}%"))
+        product_ids = db.query(models.Product).with_entities(models.Product.id).filter(
+            or_(
+                models.Product.title.ilike(f"%{lookahead}%"),
+                models.Product.description.ilike(f"%{lookahead}%")
+            )
+        ).all()
+        product_ids = [id[0] for id in product_ids]
+        
+        query = query.filter(
+            or_(
+                models.ProductCode.code.ilike(f"%{lookahead}%"),
+                models.ProductCode.product_id.in_(product_ids)
+            )
+        )
+
     if format is not None:
         query = query.filter(models.ProductCode.format == format)
+
     if code is not None:
         query = query.filter(models.ProductCode.code == code)
+
     entities = query.all()
     return entities
 
