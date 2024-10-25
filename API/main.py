@@ -53,7 +53,7 @@ class ConnectionManager:
         for connection in self.active_connections:
             if connection.subscribed_id == id:
                 await connection.queue.put(id)
-    
+
     async def close(self):
         while self.active_connections:
             await self.disconnect(self.active_connections[0])
@@ -140,7 +140,7 @@ async def connect_sse(receipt_id: int, db: Session = Depends(get_db)):
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    
+
     return HTMLResponse(f'''
 <!DOCTYPE html>
 <html lang="en">
@@ -154,9 +154,9 @@ async def connect_sse(receipt_id: int, db: Session = Depends(get_db)):
 </head>
 <body>
     <div hx-ext="sse" sse-connect="/api/receipts/{receipt_id}/status_changes">
-        <div 
-            id="receipt-data" 
-            hx-get="/api/receipts/{receipt_id}" 
+        <div
+            id="receipt-data"
+            hx-get="/api/receipts/{receipt_id}"
             hx-trigger="sse:message, load"
             hx-target="#receipt-data"
             hx-swap="innerHTML">
@@ -191,7 +191,7 @@ def select_receipt(receipt_id: int, db: Session = Depends(get_db)):
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    
+
     try:
         machine = ReceiptStateMachine(receipt)
         machine.select()
@@ -210,7 +210,7 @@ def cancel_receipt(receipt_id: int, db: Session = Depends(get_db)):
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    
+
     try:
         machine = ReceiptStateMachine(receipt)
         machine.cancel()
@@ -229,7 +229,7 @@ def fail_receipt(receipt_id: int, db: Session = Depends(get_db)):
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    
+
     try:
         machine = ReceiptStateMachine(receipt)
         machine.fail()
@@ -249,7 +249,7 @@ def get_receipt(receipt_id: int, db: Session = Depends(get_db)):
 
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    
+
     return receipt
 
 @app.get("/receipts/images/{file_path:path}")
@@ -305,7 +305,7 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
         try:
             db.add(db_receipt)
             db.commit()
-            db.refresh(db_receipt)  
+            db.refresh(db_receipt)
         except (IntegrityError, SQLAlchemyError):
             db.rollback()
             logging.error(f"Couldn't store file '{file.filename}'. Could not create receipt due to model constraints.")
@@ -362,7 +362,7 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
             continue
 
         db_receipts.append(db_receipt)
-    
+
     with conn.get_publisher() as publisher:
         for db_receipt in db_receipts:
             if db_receipt.status == schemas.ReceiptStatus.FAILED:
@@ -382,12 +382,15 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
 
     return db_receipts
 
-@app.get("/purchases/{purchase_id}", response_model=schemas.Purchase)
+@app.get("/purchases/{purchase_id}", response_model=schemas.PurchaseWithReceipt)
 def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
     purchase = db.query(models.Purchase).filter(models.Purchase.id == purchase_id).first()
 
     if not purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
+
+    receipt = db.query(models.Receipt).filter(models.Receipt.purchase_id == purchase.id).first()
+    purchase.receipt = receipt
 
     return purchase
 
@@ -401,10 +404,9 @@ def create_purchase(purchase: schemas.PurchaseCreate, receipt_id: Optional[int] 
         try:
             machine = ReceiptStateMachine(receipt)
             machine.complete()
-            receipt.status = machine.state
         except MachineError as e:
             raise HTTPException(status_code=409, detail=f"Cannot complete receipt: {e}")
-        
+
     purchase.items = [
         item for item in purchase.items
         if not all(
@@ -481,8 +483,9 @@ def create_purchase(purchase: schemas.PurchaseCreate, receipt_id: Optional[int] 
             db.add(db_item)
 
         db.commit()
-    
+
     if receipt:
+        receipt.status = machine.state
         receipt.purchase_id = db_entity.id
         db.commit()
     db_purchase = db.query(models.Purchase).filter(models.Purchase.id == db_entity.id).first()
@@ -518,7 +521,7 @@ def update_purchase(
                 db_purchase.entity_id = db_entity.id
         except:
             pass
-    
+
     for item in purchase.items:
         db_item: models.PurchaseItem = next((db_item for db_item in db_purchase.items if db_item.id == item.id), None)
         if not db_item:
@@ -548,7 +551,7 @@ def update_purchase(
     except (IntegrityError, SQLAlchemyError):
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update purchase due to model constraints.")
-    
+
     db_return = db.query(models.Purchase).filter(models.Purchase.id == db_purchase.id).first()
     return db_return
 
@@ -654,7 +657,7 @@ def update_product(
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update product due to model constraints.")
     return db_product
-    
+
 def category_from_string(category_str: str) -> models.Category | None:
     category_str = category_str.strip()
     if not category_str:
@@ -746,17 +749,17 @@ def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
 
 @app.post("/expenses/all-purchases/", response_model=List[Tuple[schemas.Category, float]])
 def get_all_expenses_by_category(
-    query: List[int] = [], 
-    start: Optional[datetime] = None, 
-    end: Optional[datetime] = None, 
+    query: List[int] = [],
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
     db: Session = Depends(get_db)
 ):
     if not query:
         return []
-    
+
     categories = db.query(models.Category).filter(models.Category.code.in_(query)).all()
     found_codes = [category.code for category in categories]
-    
+
     missing_codes = set(query) - set(found_codes)
     if missing_codes:
         raise HTTPException(
@@ -782,10 +785,10 @@ def get_all_expenses_by_category(
 @app.get("/expenses/purchase/{purchase_id}", response_model=List[Tuple[schemas.Category, float]])
 def get_expenses_by_category(
     purchase_id: int,
-    start: Optional[datetime] = None, 
-    end: Optional[datetime] = None, 
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
     db: Session = Depends(get_db)
-):    
+):
     purchase_categories = (
         db.query(models.Category)
         .join(models.Product, models.Category.id == models.Product.category_id)
@@ -800,7 +803,7 @@ def get_expenses_by_category(
         family_ids = get_category_ancestors_ids(db, category.id)
         family_of[category.id] = family_ids
         present_ids.update(family_ids)
-        
+
     present_categories = db.query(models.Category).filter(models.Category.id.in_(present_ids)).all()
     categories_expenses_map = {}
     for category in present_categories:

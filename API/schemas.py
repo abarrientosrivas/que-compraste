@@ -76,6 +76,9 @@ class Purchase(PurchaseBase):
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
 
+class PurchaseWithReceipt(Purchase):
+    receipt: Optional['Receipt'] = None
+
 
 # --------------------
 # Category Schemas
