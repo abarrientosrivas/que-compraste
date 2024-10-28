@@ -23,10 +23,10 @@ forecast = model.predict(future)
 
 # Plotting 
 plt.figure(figsize=(10, 5))
-plt.plot(df['ds'], df['y'], 'k.', alpha=0.5, label='Historical Data')
-plt.plot(forecast['ds'], forecast['yhat1'], 'r-', label='Forecast')  # Ensure 'yhat1' is the correct column name
-plt.title('Forecast of the Synthetic Data with Training Data Points')
-plt.xlabel('Date')
-plt.ylabel('Values')
+plt.plot(df['ds'], df['y'], 'k.', alpha=0.5, label='Datos históricos')
+plt.plot(forecast['ds'], forecast['yhat1'], 'r-', label='Predicción')  # Ensure 'yhat1' is the correct column name
+plt.title('Predicción de datos sínteticos')
+plt.xlabel('Fechas')
+plt.ylabel('Valores')
 plt.legend()
 plt.show()
