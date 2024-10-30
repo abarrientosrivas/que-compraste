@@ -31,4 +31,15 @@ export class ComprasService {
     const url = `${this.baseUrl}/purchases/${productId}`;
     return this.http.put(url, { "items": [{"id": itemId, "read_product_key": productCode, "product_id": null}]})
   };
+
+  getReceiptImage(imagePath: string) {
+    const url = `${this.baseUrl}/receipts/images/${imagePath}`;
+    const token = 'a9063f0da4047d45f9511e6496653829ddf3c3a3b8041f79d0ca997605f2c4b2'
+    return this.http.get(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      responseType: 'blob'
+    });
+  }
 }
