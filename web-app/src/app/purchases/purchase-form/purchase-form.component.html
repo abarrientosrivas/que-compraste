@@ -43,44 +43,51 @@
     <input id="total" type="number" min="0" formControlName="total" class="form-control" required />
     <div class="invalid-feedback">Por favor ingrese un total.</div>
   </div>
-  <div formArrayName="items">
-    <h4 class="mb-4 mt-4">Lista de productos</h4>
-    <table class="table table-striped table-bordered">
-      <thead>
-        <tr>
-          <th scope="col">Codigo</th>
-          <th scope="col">Producto</th>
-          <th scope="col">Cantidad</th>
-          <th scope="col">Precio</th>
-          <th scope="col">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let producto of items.controls; let i=index" [formGroupName]="i">
-          <td>
-            <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-toggle="modal"
-              data-bs-target="#buscarProductoModal" (click)="seleccionarItem(producto)">
-              {{ producto.value.read_product_key }}
-            </button>
-          </td>
-          <td>
-            <span>{{ producto.value.read_product_text }}</span>
-          </td>
-          <td>
-            <input id="producto-{{ i }}" type="number" min="0" formControlName="quantity" class="form-control" />
-          </td>
-          <td>
-            <input id="producto-{{ i }}" type="number" min="0" formControlName="value" class="form-control" />
-          </td>
-          <td>
-            <input id="producto-{{ i }}" type="number" min="0" formControlName="total" class="form-control" />
-          </td>
-          <td>
-            <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)" disabled>Eliminar</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="row pb-5">
+    <div class="col-md-9" formArrayName="items">
+      <h4 class="mb-4 mt-4">Lista de productos</h4>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">Codigo</th>
+            <th scope="col">Producto</th>
+            <th scope="col">Cantidad</th>
+            <th scope="col">Precio</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let producto of items.controls; let i=index" [formGroupName]="i">
+            <td>
+              <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-toggle="modal"
+                data-bs-target="#buscarProductoModal" (click)="seleccionarItem(producto)">
+                {{ producto.value.read_product_key }}
+              </button>
+            </td>
+            <td>
+              <span>{{ producto.value.read_product_text }}</span>
+            </td>
+            <td>
+              <input id="producto-{{ i }}" type="number" min="0" formControlName="quantity" class="form-control" />
+            </td>
+            <td>
+              <input id="producto-{{ i }}" type="number" min="0" formControlName="value" class="form-control" />
+            </td>
+            <td>
+              <input id="producto-{{ i }}" type="number" min="0" formControlName="total" class="form-control" />
+            </td>
+            <td>
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeItem(i)" disabled>Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-3" style="height: 400px;">
+      <h4 class="mt-4 mb-4 text-center" style="color: black;">Recibo</h4>
+      <ngx-image-viewer [config]="{btnClass: 'rounded-circle opacity-75 border-0'}" [src]=images >
+      </ngx-image-viewer>
+    </div>
   </div>
   <div class="d-flex justify-content-end mt-3">
     <button type="button" class="btn btn-danger m-2" [routerLink]="['/compras']">Cancelar</button>

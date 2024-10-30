@@ -4,11 +4,13 @@ import { ComprasService } from '../shared/compras.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ProductSearchComponent } from '../../product-search/product-search.component';
+import { ImageViewerModule } from "ngx-image-viewer-3";
+
 
 @Component({
   selector: 'app-purchase-form',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, ProductSearchComponent, RouterLink],
+  imports: [ReactiveFormsModule, CommonModule, ProductSearchComponent, RouterLink, ImageViewerModule],
   templateUrl: './purchase-form.component.html',
   styleUrl: './purchase-form.component.css',
 })
@@ -21,6 +23,7 @@ export class PurchaseFormComponent implements OnInit {
   @ViewChild(ProductSearchComponent) productSearchComponent!: ProductSearchComponent;
   noResults: any;
   productCode: any;
+  images: string[] = []
 
 
   constructor(
@@ -48,6 +51,20 @@ export class PurchaseFormComponent implements OnInit {
     this.comprasService.getCompraById(this.compraId).subscribe({
       next: (data: any) => {
         this.setFormValues(data)
+        this.images = []
+        this.comprasService.getReceiptImage('2024/10/12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0/20241030182154-1.jpg').subscribe({
+          next: (blob: Blob) => {
+            const imageUrl = URL.createObjectURL(blob);
+            this.images.push(imageUrl);
+            console.log('Respuesta del servidor:', blob);
+          },
+          error: (error) => {
+            console.error('Error al hacer la petición:', error);
+          },
+          complete: () => {
+            console.log('Petición completada');
+          },
+        });
         console.log('Respuesta del servidor:', data);
       },
       error: (error) => {
