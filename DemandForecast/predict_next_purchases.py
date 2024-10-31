@@ -27,58 +27,68 @@ def predict_next_purchase_dates(historic_data: List[Tuple[datetime, float]], day
 
     features = []
     labels = []
+
+    last_purchase_date = None
     for date in all_dates:
+        days_since_last_purchase = (date - last_purchase_date).days if last_purchase_date else np.nan
+
         feature_vector = [
-            np.sin(2 * np.pi * date.day / 31),
+            np.sin(2 * np.pi * date.day / 31),     # day
             np.cos(2 * np.pi * date.day / 31),
-            np.sin(2 * np.pi * date.month / 12),
+            np.sin(2 * np.pi * date.month / 12),   # month
             np.cos(2 * np.pi * date.month / 12),
-            (date.weekday() == 0),
+            (date.weekday() == 0),                 # day of the week
             (date.weekday() == 1),
             (date.weekday() == 2),
             (date.weekday() == 3),
             (date.weekday() == 4),
             (date.weekday() == 5),
             (date.weekday() == 6),
-            (get_season(date) == 'summer'),
+            (get_season(date) == 'summer'),        # season
             (get_season(date) == 'fall'),
             (get_season(date) == 'winter'),
             (get_season(date) == 'spring'),
+            days_since_last_purchase,              # days since last purchase
         ]
         features.append(feature_vector)
         labels.append(int(date in historic_dates))
+        if date in historic_dates:
+            last_purchase_date = date
     
     model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
     model.fit(features, labels)
-    xgb.plot_importance(model, importance_type='weight')
-    plt.show()
+    # xgb.plot_importance(model, importance_type='weight')
+    # plt.show()
     
     last_date = max_date
     future_dates = [last_date + timedelta(days=i) for i in range(1, days_into_the_future + 1)]
-    future_features = []
+    predicted_purchase_dates = []
 
     for date in future_dates:
+        days_since_last_purchase = (date - last_purchase_date).days if last_purchase_date else np.nan
+
         feature_vector = [
-            np.sin(2 * np.pi * date.day / 31),
+            np.sin(2 * np.pi * date.day / 31),     # day
             np.cos(2 * np.pi * date.day / 31),
-            np.sin(2 * np.pi * date.month / 12),
+            np.sin(2 * np.pi * date.month / 12),   # month
             np.cos(2 * np.pi * date.month / 12),
-            (date.weekday() == 0),
+            (date.weekday() == 0),                 # day of the week
             (date.weekday() == 1),
             (date.weekday() == 2),
             (date.weekday() == 3),
             (date.weekday() == 4),
             (date.weekday() == 5),
             (date.weekday() == 6),
-            (get_season(date) == 'summer'),
+            (get_season(date) == 'summer'),        # season
             (get_season(date) == 'fall'),
             (get_season(date) == 'winter'),
             (get_season(date) == 'spring'),
+            days_since_last_purchase,              # days since last purchase
         ]
-        future_features.append(feature_vector)
-
-    predictions = model.predict(future_features)
-    predicted_purchase_dates = [date for date, pred in zip(future_dates, predictions) if pred == 1]
+        prediction = model.predict([feature_vector])[0]
+        if prediction == 1:
+            predicted_purchase_dates.append(date)
+            last_purchase_date = date
 
     return predicted_purchase_dates
 
@@ -102,7 +112,7 @@ def generate_purchase_data(start_date: datetime, end_date: datetime) -> list:
 
     return current_data
 
-start_date = datetime(2009, 12, 1)
+start_date = datetime(2001, 12, 1)
 end_date = datetime(2010, 12, 31)
 current_data = generate_purchase_data(start_date, end_date)
 
