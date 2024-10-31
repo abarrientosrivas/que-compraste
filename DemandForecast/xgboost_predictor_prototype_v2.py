@@ -80,9 +80,7 @@ def predict_next_purchase_dates(historic_data: List[Tuple[datetime, float]], day
     model.fit(features, labels)
     print(features[1])
     print(features[-2])
-    plt.figure(figsize=(10, 6))
     xgb.plot_importance(model, importance_type='weight')
-    plt.title("Feature Importance")
     plt.show()
 
     last_date = max_date
