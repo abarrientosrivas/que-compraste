@@ -42,4 +42,10 @@ export class ComprasService {
       responseType: 'blob'
     });
   }
+
+  getExpensesByCategory(purchaseId: number): Observable<any[]> {
+    const url = `${this.baseUrl}/expenses/purchase/${purchaseId}`;
+    return this.http.get<any[]>(url);
+  }
+
 }

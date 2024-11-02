@@ -7,11 +7,12 @@ import { FormsModule } from '@angular/forms';
 import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ImageViewerModule } from "ngx-image-viewer-3";
+import { ChartModule } from 'primeng/chart';
 
 @Component({
   selector: 'app-ver-compra',
   standalone: true,
-  imports: [CommonModule, ProductSearchComponent, FormsModule, NgbPopoverModule, NgbTooltipModule, ImageViewerModule],
+  imports: [CommonModule, ProductSearchComponent, FormsModule, NgbPopoverModule, NgbTooltipModule, ImageViewerModule, ChartModule],
   templateUrl: './compra.component.html',
   styleUrl: './compra.component.css',
 })
@@ -21,10 +22,28 @@ export class CompraComponent {
   private activatedRoute = inject(ActivatedRoute);
   compraId = this.activatedRoute.snapshot.params['compraId'];
   compra: any;
+  data: any
+  data1: any = {labels: [], datasets: [{data:[]}]}
+  options: any;
 
   images: string[] = []
 
   ngOnInit() {
+
+    this.options = {
+      responsive: true,
+      radius: '75%',
+      maintainAspectRatio:false,
+      plugins: {
+        legend: {
+          labels: {
+              usePointStyle: true,
+              color: '#000000'
+          }
+        }
+      }
+    };
+
     this.comprasService.getCompraById(this.compraId).subscribe({
       next: (data: any) => {
         data.items.sort((a: any, b: any) => a.id - b.id);
@@ -53,8 +72,29 @@ export class CompraComponent {
       },
       complete: () => {
         console.log('Petición completada');
+        this.comprasService
+        .getExpensesByCategory(this.compra.id)
+        .subscribe({
+          next: (data: any[]) => {
+            const filteredData = data.filter((element) => {
+              return element[0].parent_id == null;
+            });
+            console.log('Respuesta del servidor:', filteredData);
+            this.data1.labels = filteredData.map((element) => { return element[0].name})
+            this.data1.datasets[0].data = filteredData.map((element) => { return element[1]})
+            this.data = {...this.data1}
+            console.log(this.data1)
+          },
+          error: (error) => {
+            console.error('Error al hacer la petición:', error);
+          },
+          complete: () => {
+            console.log('Petición completada');
+          },
+        });
       },
     });
+
   }
 
   convertToInt(value: string): number {
