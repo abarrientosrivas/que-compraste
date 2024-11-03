@@ -37,7 +37,7 @@ def get_product_details(page_source):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Uso: python3 -m 'scrapper_prototype.scrapper_go_upc' <html_path>")
+        print("Uso: python3 -m 'scrapper_prototype.scrapper_barcode_lookup' <html_path>")
         sys.exit(1)
 
     html_path = sys.argv[1]
