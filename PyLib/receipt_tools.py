@@ -101,21 +101,38 @@ def normalize_product_key(product_key_string: str) -> int:
     if not product_key_string:
         raise ValueError("Product key was empty")
     if product_key_string.isdigit() and len(product_key_string) == 12:
-        return f"{product_key_string}{calculate_ean13_check_digit(product_key_string)}"
+        return f"{product_key_string}{calculate_mod_10_check_digit(product_key_string)}"
     return product_key_string
 
-def calculate_ean13_check_digit(ean_code: str) -> int:
-    if len(ean_code) != 12 or not ean_code.isdigit():
-        raise ValueError("EAN code must be 12 digits long without the check digit")
-
-    odd_sum = sum(int(ean_code[i]) for i in range(0, 12, 2))
-    even_sum = sum(int(ean_code[i]) for i in range(1, 12, 2))
+def calculate_mod_10_check_digit(code: str) -> int:
+    if not code or not code.isdigit():
+        raise ValueError("Expected digits string")
     
+    odd_sum = sum(int(code[i]) for i in range(0, len(code), 2))
+    even_sum = sum(int(code[i]) for i in range(1, len(code), 2))
     total_sum = odd_sum + (even_sum * 3)
-    
     check_digit = (10 - (total_sum % 10)) % 10
     
     return check_digit
+
+def normalize_to_ean_13(code: str) -> str:
+    if not code or not isinstance(code, str) or not code.isdigit() or len(code) not in {11, 12, 13}:
+        return None
+    if len(code) == 13:
+        if int(code[-1]) == calculate_mod_10_check_digit(code[:-1]):
+            return code
+        else:
+            return None
+    if len(code) == 11:
+        return f"0{code}{calculate_mod_10_check_digit(code)}"
+    
+    if len(code) == 12:
+        if int(code[-1]) == calculate_mod_10_check_digit(code[:-1]):
+            if int(code[:3]) in range(0, 20) or int(code[:3]) in range(30, 40) or int(code[:3]) in range(60, 140):
+                return f"0{code}"
+        return f"{code}{calculate_mod_10_check_digit(code)}"
+    
+    return None
 
 def validate_cuit(cuit: str) -> bool:
     if len(cuit) != 11 or cuit[:2] not in ['20', '27', '30', '33', '34']:

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, time
 from dateutil import tz
-from PyLib.receipt_tools import get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
+from PyLib.receipt_tools import normalize_to_ean_13, get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -366,6 +366,24 @@ class TestPurchaseFunctions(unittest.TestCase):
             normalize_time("notatime")
             normalize_time("")
             normalize_time(None)
+
+    # ean 13 normalization
+    def test_normalize_to_ean_13_valid(self):
+        self.assertEqual(normalize_to_ean_13("03800013843"), "0038000138430") # Base UPC-A
+        self.assertEqual(normalize_to_ean_13("7790360026576"), "7790360026576") # Full EAN-13
+        self.assertEqual(normalize_to_ean_13("0038000138430"), "0038000138430") # Full UPC-A with EAN-13 format
+        self.assertEqual(normalize_to_ean_13("779036002657"), "7790360026576") # Base EAN-13
+        self.assertEqual(normalize_to_ean_13("038000138430"), "0038000138430") # Full UPC-A
+
+    def test_normalize_to_ean_13_invalid(self):
+        self.assertEqual(normalize_to_ean_13(""), None)
+        self.assertEqual(normalize_to_ean_13("aoe123"), None)
+        self.assertEqual(normalize_to_ean_13("123"), None)
+        self.assertEqual(normalize_to_ean_13("123587102382312"), None)
+        self.assertEqual(normalize_to_ean_13("1111111111111"), None)
+        self.assertEqual(normalize_to_ean_13(None), None)
+        self.assertEqual(normalize_to_ean_13(True), None)
+        self.assertEqual(normalize_to_ean_13(1), None)
 
 if __name__ == '__main__':
     unittest.main()
