@@ -1,11 +1,11 @@
-from PyLib.scrapers.barcode_lookup_products import BarcodeLookupProducts
+from PyLib.scrapers import BarcodeLookupProductScrapper
 import time
 import unittest
 
 class TestScraperFunctions(unittest.TestCase):
 
     def setUp(self):
-        self.scraper = BarcodeLookupProducts()
+        self.scraper = BarcodeLookupProductScrapper()
 
     def test_all_in_sequence(self):
         self._test_scraper_valid()
