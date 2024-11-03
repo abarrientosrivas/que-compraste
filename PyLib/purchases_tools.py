@@ -22,7 +22,3 @@ def calculate_purchase_total(purchase: schemas.PurchaseBase, items: List[schemas
         if not empty_flag:
             return total_from_items
     return None
-
-def detect_product_code(code_str: str) -> schemas.ProductCodeBase:
-    # TODO: detect format of given code
-    return schemas.ProductCodeBase(format="ean13", code=code_str)

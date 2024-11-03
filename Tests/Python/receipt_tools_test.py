@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, time
 from dateutil import tz
-from PyLib.receipt_tools import normalize_to_plu, normalize_to_ean_13, get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
+from PyLib.receipt_tools import detect_product_code, normalize_to_plu, normalize_to_ean_13, get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -401,6 +401,25 @@ class TestPurchaseFunctions(unittest.TestCase):
         self.assertEqual(normalize_to_plu(None), None)
         self.assertEqual(normalize_to_plu(True), None)
         self.assertEqual(normalize_to_plu(1), None)
+
+    # detect product code
+    def test_detect_product_code_valid(self):
+        self.assertEqual(detect_product_code("03800013843").format, "ean13")
+        self.assertEqual(detect_product_code("7790360026576").format, "ean13")
+        self.assertEqual(detect_product_code("0038000138430").format, "ean13")
+        self.assertEqual(detect_product_code("779036002657").format, "ean13")
+        self.assertEqual(detect_product_code("038000138430").format, "ean13")
+        self.assertEqual(detect_product_code("4050").format, "plu") 
+        self.assertEqual(detect_product_code("0000000040501").format, "plu")
+        self.assertEqual(detect_product_code("9450").format, "plu")
+        self.assertEqual(detect_product_code("0000000009450").format, "plu") 
+        self.assertEqual(detect_product_code("aoe123").format, "other")
+        self.assertEqual(detect_product_code("123").format, "other")
+
+    def test_detect_product_code_invalid(self):
+        self.assertEqual(detect_product_code(""), None)
+        self.assertEqual(detect_product_code(True), None)
+        self.assertEqual(detect_product_code(1), None)
 
 if __name__ == '__main__':
     unittest.main()

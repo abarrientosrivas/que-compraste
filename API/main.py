@@ -464,12 +464,13 @@ def create_purchase(purchase: schemas.PurchaseCreate, receipt_id: Optional[int] 
             product_id = None
 
             if item.read_product_key:
-                product_code = purchases_tools.detect_product_code(item.read_product_key)
-                db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
-                if not db_product_code:
-                    publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
-                else:
-                    product_id = db_product_code.product_id
+                product_code = receipt_tools.detect_product_code(item.read_product_key)
+                if product_code:
+                    db_product_code = db.query(models.ProductCode).filter(models.ProductCode.code == product_code.code, models.ProductCode.format == product_code.format).first()
+                    if not db_product_code:
+                        publisher.publish(PRODUCT_CODE_EXCHANGE, PRODUCT_CODE_NEW_KEY, product_code)
+                    else:
+                        product_id = db_product_code.product_id
 
             db_item = models.PurchaseItem(
                 purchase_id=db_entity.id,
@@ -534,7 +535,7 @@ def update_purchase(
 
         if db_item.read_product_key and not db_item.product_id:
             try:
-                product_code = purchases_tools.detect_product_code(db_item.read_product_key)
+                product_code = receipt_tools.detect_product_code(db_item.read_product_key)
             except:
                 raise HTTPException(status_code=400, detail="Could not form product code.")
             if not product_code:

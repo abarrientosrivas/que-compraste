@@ -2,6 +2,7 @@ import re
 from datetime import datetime, time
 from dateutil import parser, tz
 from typing import List
+from API.schemas import ProductCodeBase
 
 def get_field_value(json_data: dict, field: str):
     if field not in json_data:
@@ -158,6 +159,17 @@ def normalize_to_plu(code: str) -> bool:
         return code
     
     return None
+
+def detect_product_code(code_str: str) -> ProductCodeBase:
+    if not isinstance(code_str, str) or not code_str.strip():
+        return None
+    code = normalize_to_plu(code_str)
+    if code:
+        return ProductCodeBase(format="plu", code=code_str)
+    code = normalize_to_ean_13(code_str)
+    if code:
+        return ProductCodeBase(format="ean13", code=code_str)
+    return ProductCodeBase(format="other", code=code_str)
 
 def validate_cuit(cuit: str) -> bool:
     if len(cuit) != 11 or cuit[:2] not in ['20', '27', '30', '33', '34']:
