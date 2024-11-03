@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
 from typing import List, Optional, Tuple
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
 from PIL import Image
@@ -908,6 +908,38 @@ def get_categories(identification: Optional[int] = None, db: Session = Depends(g
         query = query.filter(models.Entity.identification == identification)
     entities = query.all()
     return entities
+
+@app.get("/restockables/product-codes", response_model=List[str], response_model_exclude_none=True)
+def get_restockables_product_codes(db: Session = Depends(get_db)):
+    two_years_ago = datetime.now() - timedelta(days=2 * 365)
+
+    query = (
+        db.query(models.PurchaseItem.read_product_key)
+        .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+        .filter(models.Purchase.date >= two_years_ago)
+        .group_by(models.PurchaseItem.read_product_key)
+        .having(func.count(models.PurchaseItem.read_product_key) > 2)
+    )
+
+    product_codes = [key[0] for key in query.all()]
+
+    return product_codes
+
+@app.get("/restockables/product-ids", response_model=List[int], response_model_exclude_none=True)
+def get_restockables_product_ids(db: Session = Depends(get_db)):
+    two_years_ago = datetime.now() - timedelta(days=2 * 365)
+
+    query = (
+        db.query(models.PurchaseItem.product_id)
+        .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+        .filter(models.Purchase.date >= two_years_ago)
+        .group_by(models.PurchaseItem.product_id)
+        .having(func.count(models.PurchaseItem.product_id) > 2)
+    )
+
+    product_ids = [key[0] for key in query.all()]
+
+    return product_ids
 
 @app.post("/node_tokens/authorize_crawl")
 def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_token), db: Session = Depends(get_db)):
