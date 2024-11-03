@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, time
 from dateutil import tz
-from PyLib.receipt_tools import normalize_to_ean_13, get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
+from PyLib.receipt_tools import normalize_to_plu, normalize_to_ean_13, get_string_field_value, get_list_field_value, normalize_date, normalize_quantity, normalize_entity_id, normalize_product_key, normalize_value, normalize_time
 
 class TestPurchaseFunctions(unittest.TestCase):
     #date
@@ -384,6 +384,23 @@ class TestPurchaseFunctions(unittest.TestCase):
         self.assertEqual(normalize_to_ean_13(None), None)
         self.assertEqual(normalize_to_ean_13(True), None)
         self.assertEqual(normalize_to_ean_13(1), None)
+
+    # plu normalization
+    def test_normalize_to_plu_valid(self):
+        self.assertEqual(normalize_to_plu("4050"), "4050") 
+        self.assertEqual(normalize_to_plu("0000000040501"), "4050")
+        self.assertEqual(normalize_to_plu("9450"), "9450")
+        self.assertEqual(normalize_to_plu("0000000009450"), "9450") 
+
+    def test_normalize_to_plu_invalid(self):
+        self.assertEqual(normalize_to_plu(""), None)
+        self.assertEqual(normalize_to_plu("aoe123"), None)
+        self.assertEqual(normalize_to_plu("123"), None)
+        self.assertEqual(normalize_to_plu("123587102382312"), None)
+        self.assertEqual(normalize_to_plu("1111111111111"), None)
+        self.assertEqual(normalize_to_plu(None), None)
+        self.assertEqual(normalize_to_plu(True), None)
+        self.assertEqual(normalize_to_plu(1), None)
 
 if __name__ == '__main__':
     unittest.main()

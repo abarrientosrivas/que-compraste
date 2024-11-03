@@ -116,8 +116,13 @@ def calculate_mod_10_check_digit(code: str) -> int:
     return check_digit
 
 def normalize_to_ean_13(code: str) -> str:
-    if not code or not isinstance(code, str) or not code.isdigit() or len(code) not in {11, 12, 13}:
+    if not code or not isinstance(code, str):
         return None
+    code = code.strip()
+
+    if not code.isdigit() or len(code) not in {11, 12, 13}:
+        return None
+    
     if len(code) == 13:
         if int(code[-1]) == calculate_mod_10_check_digit(code[:-1]):
             return code
@@ -131,6 +136,26 @@ def normalize_to_ean_13(code: str) -> str:
             if int(code[:3]) in range(0, 20) or int(code[:3]) in range(30, 40) or int(code[:3]) in range(60, 140):
                 return f"0{code}"
         return f"{code}{calculate_mod_10_check_digit(code)}"
+    
+    return None
+
+def normalize_to_plu(code: str) -> bool:
+    if not code or not isinstance(code, str):
+        return None
+    code = code.strip()
+    
+    if not code.isdigit():
+        return None
+    
+    if len(code) == 13 and int(code[-1]) == calculate_mod_10_check_digit(code[:-1]):
+        code = code[:-1]
+
+    code = code.lstrip('0')
+    
+    if len(code) == 4:
+        return code
+    elif len(code) == 5 and code[0] == '9':
+        return code
     
     return None
 
