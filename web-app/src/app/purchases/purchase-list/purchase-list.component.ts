@@ -1,18 +1,21 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ComprasService } from '../shared/compras.service';
 import { RouterLink } from '@angular/router';
+import { TableModule } from 'primeng/table';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'purchase-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [TableModule, CommonModule, RouterLink],
   templateUrl: './purchase-list.component.html',
+  providers:[ComprasService]
 })
 export class PurchaseListComponent implements OnInit {
   constructor(private comprasService: ComprasService) {}
 
-  purchases: any[] = [];
+  purchases!: any[];
 
   ngOnInit(): void {
     this.comprasService.getAll().subscribe({

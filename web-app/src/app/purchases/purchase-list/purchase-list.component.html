@@ -1,6 +1,68 @@
-<h2 class="text-center">Historial de compras</h2>
+<h2 class="text-center mb-4">Historial de Compras</h2>
 
-<div *ngIf="purchases" class="pt-3">
+<p-table
+  [value]="purchases"
+  [tableStyle]="{'min-width': '60rem'}"
+  sortField="date"
+  [sortOrder]="-1"
+  styleClass="p-datatable-striped"
+>
+    <ng-template pTemplate="header">
+        <tr>
+            <th pSortableColumn="date" style="width:20%">
+                Fecha y Hora <p-sortIcon field="date" />
+            </th>
+            <th style="width:20%">
+                Comercio
+            </th>
+            <th pSortableColumn="items.length" style="width:20%">
+                Nro. Productos <p-sortIcon field="items.length" />
+            </th>
+            <th pSortableColumn="total" style="width:20%">
+                Total <p-sortIcon field="total" />
+            </th>
+            <th style="width:20%">
+                Acciones
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-purchase>
+        <tr>
+            <td>{{ fechaFormateada(purchase.date)}} - {{ horaFormateada(purchase.date) }}</td>
+            <td>{{purchase.read_entity_name }}</td>
+            <td class="text-center">{{purchase.items.length }}</td>
+            <td>{{purchase.total | currency: 'USD' }}</td>
+            <td>
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              [routerLink]="['/compras', purchase.id]"
+            >
+              <i class="bi bi-eye"></i>
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              [routerLink]="['/compras', purchase.id, 'edit']"
+            >
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button
+              type="button"
+              (click)="deletePurchase(purchase.id)"
+              class="btn btn-sm btn-outline-secondary"
+              disabled
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<!--div *ngIf="purchases" class="pt-3">
   <table class="table table-responsive table-striped table-hover">
     <thead>
       <tr>
@@ -46,4 +108,4 @@
       </tr>
     </tbody>
   </table>
-</div>
+</-div-->
