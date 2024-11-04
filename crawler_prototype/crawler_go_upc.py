@@ -31,4 +31,5 @@ if __name__ == "__main__":
     product_code = sys.argv[1]
 
     html_content = get_page_source(product_code)
-    print(html_content)
+    with open("output2.html", 'w', encoding='utf-8') as file:
+        file.write(html_content)

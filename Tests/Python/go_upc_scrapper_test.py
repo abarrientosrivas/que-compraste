@@ -1,11 +1,11 @@
-from PyLib.scrapers import BarcodeLookupProductScrapper
+from PyLib.scrapers import GoUpcProductScrapper
 import time
 import unittest
 
 class TestScraperFunctions(unittest.TestCase):
 
     def setUp(self):
-        self.scraper = BarcodeLookupProductScrapper()
+        self.scraper = GoUpcProductScrapper()
 
     def test_all_in_sequence(self):
         self._test_scraper_valid()
@@ -14,11 +14,17 @@ class TestScraperFunctions(unittest.TestCase):
         self._test_scraper_null()
 
     def _test_scraper_valid(self):
-        result = self.scraper.get_product("7790790120325")
-        self.assertEqual(result['product_name'], "Inca Garbanzos")
-        self.assertEqual(result['product_description'], "Inca garbanzos. Country of origin: Spain.")
-        self.assertEqual(result['product_category'], "Food, Beverages & Tobacco")
-        self.assertEqual(result['product_images'], ["https://images.barcodelookup.com/81595/815952451-1.jpg"])
+        result = self.scraper.get_product("7796885059013")
+        self.assertEqual(result['product_name'], "BGH Termotanque Eléctrico 40 Litros Bte-040ec15md")
+        self.assertEqual(result['product_description'], "La confianza, seguridad y ahorro que su hogar necesita. Los termotanques eléctricos BGH brindan un adecuado servicio de agua caliente, son de fácil.")
+        self.assertEqual(result['product_category'], None)
+        self.assertEqual(result['product_images'], ["https://go-upc.s3.amazonaws.com/images/59209162.jpeg"])
+        time.sleep(11)
+        result = self.scraper.get_product("7792200000128")
+        self.assertEqual(result['product_name'], "9 de Oro Bizcochos Agridulces 200 G")
+        self.assertEqual(result['product_description'], "Encontrá increíbles ofertas y descuentos en Supermercados DIA. Comprá en nuestra tienda online productos de Almacén, Bebidas, Perfumería, Limpieza y mucho más.")
+        self.assertEqual(result['product_category'], "Taco Shells & Tostadas")
+        self.assertEqual(result['product_images'], ["https://go-upc.s3.amazonaws.com/images/37292219.png"])
         time.sleep(11)
 
     def _test_scraper_invalid(self):

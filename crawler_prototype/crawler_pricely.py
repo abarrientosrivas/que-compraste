@@ -10,4 +10,5 @@ def get_page_source(product_code: str):
     except requests.RequestException as e:
         return None
     
-print(get_page_source("7790310985465"))
+with open("output2.html", 'w', encoding='utf-8') as file:
+    file.write(get_page_source("7790790120325"))

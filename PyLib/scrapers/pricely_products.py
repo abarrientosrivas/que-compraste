@@ -7,8 +7,8 @@ def get_product_details(page_source) -> dict:
     soup = BeautifulSoup(page_source, 'html.parser')
     result = {}
 
-    title_tag = soup.find('title')
-    result['product_name'] = title_tag.get_text(strip=True) if title_tag else None
+    product_name_tag = soup.find("h1", class_="text-2xl md:text-3xl font-extralight font-display text-zinc-700")
+    result['product_name'] = product_name_tag.get_text(strip=True) if product_name_tag else None
     if result['product_name'] == "Producto no encontrado":
         result['product_name'] = None
 
@@ -22,6 +22,13 @@ def get_product_details(page_source) -> dict:
     result['product_category'] = ', '.join(categories) if categories else None
     if result['product_category']:
         result['product_category'] = ' '.join(result['product_category'].split())
+        
+    image_tag = soup.select_one('img.image')
+    product_image = image_tag['src'] if image_tag else None
+
+    result['product_images'] = []
+    if product_image:
+        result['product_images'].append(product_image)
 
     return result
 

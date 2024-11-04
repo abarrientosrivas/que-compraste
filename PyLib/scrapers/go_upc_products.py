@@ -28,6 +28,8 @@ def get_product_details(page_source) -> dict:
     if product_description_span:
         product_description = product_description_span.get_text(strip=True)
         result['product_description'] = product_description
+        if not product_description or not product_description.strip():
+            result['product_description'] = None
     else:
         result['product_description'] = None
 
@@ -37,6 +39,18 @@ def get_product_details(page_source) -> dict:
         category_value_field = category_row.find_next_sibling('td')
         if category_value_field:
             result['product_category'] = category_value_field.get_text(strip=True)
+            if not result['product_category'] or not result['product_category'].strip():
+                result['product_category'] = None
+            
+    product_image = None
+    container = soup.find("figure", class_="product-image")
+    if container:
+        product_image_tag = container.find("img")
+        product_image = product_image_tag["src"] if product_image_tag else None
+
+    result['product_images'] = []
+    if product_image:
+        result['product_images'].append(product_image)
     
     return result
 

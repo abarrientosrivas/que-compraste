@@ -46,6 +46,15 @@ def get_product_details(page_source) -> dict:
             if product_category_span:
                 product_category = product_category_span.get_text(strip=True)
                 result['product_category'] = product_category
+                
+    result['product_images'] = []
+    image_div = soup.find('div', id='productImageThumbs')
+    if image_div:
+        image_tags = image_div.find_all('img')
+        for img in image_tags:
+            image_url = img.get('src')
+            if image_url:
+                result['product_images'].append(image_url)
     
     return result
 
