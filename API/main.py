@@ -714,6 +714,19 @@ def get_category_ancestors_ids(db: Session, category_id: int):
         ids.extend(get_category_ancestors_ids(db, category.loaded_parent.id))
     return ids
 
+@app.put("/categories/es_es")
+def add_categories_es_es(categories_with_es_es: List[Tuple[str, str]], db: Session = Depends(get_db)):
+    for category_code, name_es_es in categories_with_es_es:
+        category = db.query(models.Category).filter(models.Category.code == category_code).first()
+        
+        if not category:
+            raise HTTPException(status_code=404, detail=f"Category with code {category_code} not found")
+        
+        category.name_es_es = name_es_es
+        
+    db.commit()
+    return {"status": "success", "message": "Categories updated successfully"}
+
 @app.post("/categories/")
 def set_categories(categories: List[str], db: Session = Depends(get_db)):
     try:

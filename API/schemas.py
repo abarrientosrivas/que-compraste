@@ -86,6 +86,7 @@ class PurchaseWithReceipt(Purchase):
 class CategoryBase(BaseModel):
     code: int
     name: str
+    name_es_es: Optional[str] = None
     description: Optional[str] = None
     original_text: str
 

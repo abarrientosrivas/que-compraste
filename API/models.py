@@ -59,6 +59,7 @@ class Category(Base):
     parent_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     code = Column(Integer, nullable=False, unique=True)
     name = Column(String(255), nullable=False)
+    name_es_es = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     original_text = Column(Text, nullable=False, unique=True)
     created_at = Column(DateTime, default=func.now())
