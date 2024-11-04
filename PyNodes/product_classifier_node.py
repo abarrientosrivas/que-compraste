@@ -25,6 +25,23 @@ def get_vectorizable_text(category: schemas.Category) -> str:
     text = ' '.join(text.split())
     return text
 
+def add_es_es(file_path: str):
+    category_strs: List[str] = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            category_strs.append(line.strip())
+
+    es_es_str = [(line.split("-")[0].strip(), line.split("-")[1].split(">")[-1].strip()) for line in category_strs[1:]]
+
+    logging.info("Sending names as ES_es")
+    taxonomy_categories_endpoint = os.getenv("CATEGORIES_ENDPOINT")
+    response = requests.put(f"{taxonomy_categories_endpoint}es_es", json=es_es_str)
+    if response.status_code == 200:
+        logging.info("Categories ES_es added successfully")
+    else:
+        logging.error(f"Failed to add ES_es. Status code: {response.status_code}. Server response: {response.text}")
+        sys.exit(1)
+
 def init(file_path: str):
     category_strs: List[str] = []
     with open(file_path, 'r') as file:
@@ -154,6 +171,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Product classifier service.")
     parser.add_argument('--init', action='store_true', help='Initialize taxonomy synchronization')
+    parser.add_argument('--add-es-es', action='store_true', help='Initialize taxonomy synchronization')
     parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
     parser.add_argument('file_path', type=str, nargs='?', help='The path to the product taxonomy text file (required if --init is used)')
     parser.add_argument('product_description', type=str, nargs='?', help='Description of the product to classify (used if --init is not present)')
@@ -165,6 +183,10 @@ if __name__ == '__main__':
         if not args.file_path:
             parser.error('the following argument is required when using --init: file_path')
         init(args.file_path)
+    elif args.add_es_es:
+        if not args.file_path:
+            parser.error('the following argument is required when using --init: file_path')
+        add_es_es(args.file_path)
     else:
         broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
         categories_endpoint = os.getenv('CATEGORIES_ENDPOINT')
