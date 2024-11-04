@@ -58,4 +58,5 @@ class GoUpcProductScrapper:
         return get_product_details(self.get_page_html(product_code))
 
     def close(self):
-        self.driver.close()
+        if self.driver:
+            self.driver.quit()
