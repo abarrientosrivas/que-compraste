@@ -33,7 +33,7 @@ export class ComprasService {
   };
 
   getReceiptImage(imagePath: string) {
-    const url = `${this.baseUrl}/receipts/images/${imagePath}`;
+    const url = `${imagePath}`;
     const token = 'a9063f0da4047d45f9511e6496653829ddf3c3a3b8041f79d0ca997605f2c4b2'
     return this.http.get(url, {
       headers: {
