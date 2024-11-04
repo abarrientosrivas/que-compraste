@@ -25,6 +25,21 @@ def get_vectorizable_text(category: schemas.Category) -> str:
     text = ' '.join(text.split())
     return text
 
+def sync_categories(file_path: str):
+    category_strs: List[str] = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            category_strs.append(line.strip())
+
+    logging.info("Requesting taxonomy synchronization")
+    taxonomy_categories_endpoint = os.getenv("CATEGORIES_ENDPOINT")
+    response = requests.post(taxonomy_categories_endpoint, json=category_strs)
+    if response.status_code == 200:
+        logging.info("Categories synchronized successfully")
+    else:
+        logging.error(f"Failed to synchronize categories. Status code: {response.status_code}. Server response: {response.text}")
+        sys.exit(1)
+
 def add_es_es(file_path: str):
     category_strs: List[str] = []
     with open(file_path, 'r') as file:
@@ -42,21 +57,8 @@ def add_es_es(file_path: str):
         logging.error(f"Failed to add ES_es. Status code: {response.status_code}. Server response: {response.text}")
         sys.exit(1)
 
-def init(file_path: str):
-    category_strs: List[str] = []
-    with open(file_path, 'r') as file:
-        for line in file:
-            category_strs.append(line.strip())
-
-    logging.info("Requesting taxonomy synchronization")
+def init():
     taxonomy_categories_endpoint = os.getenv("CATEGORIES_ENDPOINT")
-    response = requests.post(taxonomy_categories_endpoint, json=category_strs)
-    if response.status_code == 200:
-        logging.info("Categories synchronized successfully")
-    else:
-        logging.error(f"Failed to synchronize categories. Status code: {response.status_code}. Server response: {response.text}")
-        sys.exit(1)
-
     categories = []
     response = requests.get(taxonomy_categories_endpoint)
     if response.status_code == 200:
@@ -67,7 +69,7 @@ def init(file_path: str):
         logging.error(f"Failed to retrieve categories. Status code: {response.status_code}. Server response: {response.text}")
         sys.exit(1)
         
-    ids = [str(category.code) for category in categories]
+    ids = [str(index) for index, _ in enumerate(categories, start=1)]
     documents = [get_vectorizable_text(category) for category in categories]
     metadatas = [category.model_dump(exclude_none=True, include={"code","name","original_text"}) for category in categories]
 
@@ -79,6 +81,16 @@ def init(file_path: str):
     except:
         pass
     collection = client.create_collection(name=collection_name)
+
+    collection.add(
+        ids= ids,
+        documents= documents,
+        metadatas= metadatas
+    )
+
+    ids = [str(index) for index, _ in enumerate(categories, start=len(ids) + 1)]
+    documents = [category.name for category in categories]
+    metadatas = [category.model_dump(exclude_none=True, include={"code","name","original_text"}) for category in categories]
 
     collection.add(
         ids= ids,
@@ -110,6 +122,7 @@ class ProductClassifierNode:
             query_texts=[product_description],
             n_results=1
         )
+
         return results['metadatas'][0][0]['code'] 
 
     def callback(self, message: schemas.Product):
@@ -170,8 +183,9 @@ if __name__ == '__main__':
     LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
 
     parser = argparse.ArgumentParser(description="Product classifier service.")
-    parser.add_argument('--init', action='store_true', help='Initialize taxonomy synchronization')
-    parser.add_argument('--add-es-es', action='store_true', help='Initialize taxonomy synchronization')
+    parser.add_argument('--init', action='store_true', help='Initialize ChromaDB')
+    parser.add_argument('--sync', action='store_true', help='Synchronize API with categories file')
+    parser.add_argument('--add-es-es', action='store_true', help='Add Spanish names to API categories')
     parser.add_argument('--logging', default='ERROR', choices=[level.lower() for level in LOG_LEVELS], help='Set logging level')
     parser.add_argument('file_path', type=str, nargs='?', help='The path to the product taxonomy text file (required if --init is used)')
     parser.add_argument('product_description', type=str, nargs='?', help='Description of the product to classify (used if --init is not present)')
@@ -180,13 +194,15 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.logging.upper())
 
     if args.init:
-        if not args.file_path:
-            parser.error('the following argument is required when using --init: file_path')
-        init(args.file_path)
+        init()
     elif args.add_es_es:
         if not args.file_path:
-            parser.error('the following argument is required when using --init: file_path')
+            parser.error('the following argument is required when using --add-es-es: file_path')
         add_es_es(args.file_path)
+    elif args.sync:
+        if not args.file_path:
+            parser.error('the following argument is required when using --sync: file_path')
+        sync_categories(args.file_path)
     else:
         broker = typed_messaging.PydanticMessageBroker(os.getenv('RABBITMQ_CONNECTION_STRING', 'amqp://guest:guest@localhost:5672/'))
         categories_endpoint = os.getenv('CATEGORIES_ENDPOINT')
