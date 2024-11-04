@@ -605,6 +605,61 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
 
     return db_entity
 
+@app.post("/product_codes/bulk", response_model=List[schemas.ProductCode])
+def create_product_codes(product_codes: List[schemas.ProductCodeCreate], db: Session = Depends(get_db)):
+    created_product_codes = []
+    
+    for product_code in product_codes:
+        try:
+            existing_code = db.query(models.ProductCode).filter_by(
+                format=product_code.format,
+                code=product_code.code
+            ).first()
+            
+            if existing_code:
+                logging.info(f"Product code {product_code.code} with format {product_code.format} already exists. Skipping.")
+                continue
+            
+            db_product = models.Product(
+                title=product_code.product.title,
+                description=product_code.product.description,
+                read_category=product_code.product.read_category,
+            )
+            db.add(db_product)
+            db.commit()
+            db.refresh(db_product)
+            
+            with conn.get_publisher() as publisher:
+                publisher.publish(PRODUCT_EXCHANGE, PRODUCT_CLASSIFY_KEY, schemas.Product.model_validate(db_product))
+
+            db_entity = models.ProductCode(
+                product_id=db_product.id,
+                format=product_code.format,
+                code=product_code.code,
+            )
+            db.add(db_entity)
+            db.commit()
+            db.refresh(db_entity)
+            
+            created_product_codes.append(db_entity)
+
+            purchase_items_to_update = db.query(models.PurchaseItem).filter(
+                models.PurchaseItem.product_id.is_(None),
+                models.PurchaseItem.read_product_key == db_entity.code
+            ).all()
+
+            for item in purchase_items_to_update:
+                item.product_id = db_entity.product_id
+                db.add(item)
+
+        except (IntegrityError, SQLAlchemyError) as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Database error occurred: {str(e)}")
+
+    db.commit()
+
+    return created_product_codes
+
 @app.get("/product_codes/", response_model=List[schemas.ProductCode], response_model_exclude_none=True)
 def get_product_codes(lookahead: Optional[str] = None, format: Optional[str] = None, code: Optional[str] = None, db: Session = Depends(get_db)):
     if lookahead is not None and len(lookahead) < 3:
