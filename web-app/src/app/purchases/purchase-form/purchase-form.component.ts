@@ -52,19 +52,21 @@ export class PurchaseFormComponent implements OnInit {
       next: (data: any) => {
         this.setFormValues(data)
         this.images = []
-        this.comprasService.getReceiptImage('2024/10/12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0/20241030182154-1.jpg').subscribe({
-          next: (blob: Blob) => {
-            const imageUrl = URL.createObjectURL(blob);
-            this.images.push(imageUrl);
-            console.log('Respuesta del servidor:', blob);
-          },
-          error: (error) => {
-            console.error('Error al hacer la petición:', error);
-          },
-          complete: () => {
-            console.log('Petición completada');
-          },
-        });
+        if (data.receipt && data.receipt.image_url) {
+          this.comprasService.getReceiptImage(data.receipt.image_url).subscribe({
+            next: (blob: Blob) => {
+              const imageUrl = URL.createObjectURL(blob);
+              this.images.push(imageUrl);
+              console.log('Respuesta del servidor:', blob);
+            },
+            error: (error) => {
+              console.error('Error al hacer la petición:', error);
+            },
+            complete: () => {
+              console.log('Petición completada');
+            },
+          });
+        }
         console.log('Respuesta del servidor:', data);
       },
       error: (error) => {

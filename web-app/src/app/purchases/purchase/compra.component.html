@@ -70,19 +70,21 @@
         </tbody>
       </table>
     </div>
-    <div *ngIf="compra.receipt && compra.receipt.image_url" class="col-md-3" style="height: 400px;">
+    <div *ngIf="compra.receipt && compra.receipt.image_url" class="col-md-3">
       <h2 class="fw-bold mt-2 text-center" style="font-size: 1rem; color: black;">Recibo</h2>
       <ngx-image-viewer [config]="{btnClass: 'rounded-circle opacity-75 border-0'}" [src]=images >
       </ngx-image-viewer>
     </div>
   </div>
-  <p class="subtotal">
-    Subtotal: {{ compra.subtotal | currency : "USD" }}
-  </p>
-  <p class="discount text-danger">
-    Descuento: {{ compra.discount | currency : "USD" }}
-  </p>
-  <h3 class="text-success mb-4">
-    Total: {{ compra.total | currency : "USD" }}
-  </h3>
+  <div class="mt-5">
+    <p class="subtotal">
+      Subtotal: {{ compra.subtotal | currency : "USD" }}
+    </p>
+    <p class="discount text-danger">
+      Descuento: {{ compra.discount | currency : "USD" }}
+    </p>
+    <h3 class="text-success mb-4">
+      Total: {{ compra.total | currency : "USD" }}
+    </h3>
+  </div>
 </div>

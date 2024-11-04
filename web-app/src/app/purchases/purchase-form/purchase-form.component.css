@@ -1,0 +1,4 @@
+::ng-deep ngx-image-viewer .img-container {
+  border-radius: 15px;
+  overflow: hidden;
+}
