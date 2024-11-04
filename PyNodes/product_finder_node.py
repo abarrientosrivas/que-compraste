@@ -115,7 +115,8 @@ class ProductFinderNode:
         new_product = ProductCreate(
             title=search_result['product_name'],
             description=search_result['product_description'],
-            read_category=search_result['product_category']
+            read_category=search_result['product_category'],
+            img_urls=search_result['product_images'],
         )
 
         new_product_code = ProductCodeCreate(

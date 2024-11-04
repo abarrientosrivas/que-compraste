@@ -165,13 +165,14 @@ class ProductBase(BaseModel):
     title: str
     description: Optional[str] = None
     read_category: Optional[str] = None
+    img_url: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
 class ProductCreate(ProductBase):
-    pass
+    img_urls: List[str] = Field(default_factory=list)
 
 
 class ProductUpdate(ProductBase):

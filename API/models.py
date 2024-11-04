@@ -118,6 +118,7 @@ class Product(Base):
     title = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     read_category = Column(Text, nullable=True)
+    img_url = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)

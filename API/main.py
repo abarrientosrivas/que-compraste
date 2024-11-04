@@ -574,6 +574,8 @@ def create_product_code(product_code: schemas.ProductCodeCreate, db: Session = D
             description=product_code.product.description,
             read_category=product_code.product.read_category,
         )
+        if product_code.product.img_urls:
+            db_product.img_url = product_code.product.img_urls[0]
         db.add(db_product)
         db.commit()
         db.refresh(db_product)
