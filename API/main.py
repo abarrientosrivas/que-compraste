@@ -1,10 +1,10 @@
 from . import schemas
 from . import models
 from pathlib import Path as pt
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
@@ -557,13 +557,25 @@ def update_purchase(
     return db_return
 
 @app.get("/purchases/", response_model=List[schemas.Purchase])
-def get_purchases(db: Session = Depends(get_db)):
-    purchases = db.query(models.Purchase).options(
+def get_purchases(
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.Purchase).options(
         noload(models.Purchase.entity),
         selectinload(models.Purchase.items).options(
             noload(models.PurchaseItem.product)
         )
-    ).all()
+    )
+    
+    if start_date and end_date:
+        query = query.filter(and_(
+            models.Purchase.date >= start_date,
+            models.Purchase.date <= end_date
+        ))
+    
+    purchases = query.all()
     return purchases
 
 @app.post("/product_codes/", response_model=schemas.ProductCode)
