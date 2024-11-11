@@ -1046,7 +1046,7 @@ def get_restockables_product_ids(db: Session = Depends(get_db)):
         .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
         .filter(models.Purchase.date >= two_years_ago)
         .group_by(models.PurchaseItem.product_id)
-        .having(func.count(models.PurchaseItem.product_id) > 2)
+        .having(func.count(models.PurchaseItem.product_id) > 3)
     )
 
     product_ids = [key[0] for key in query.all()]
