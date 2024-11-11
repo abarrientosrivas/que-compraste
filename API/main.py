@@ -4,7 +4,7 @@ from pathlib import Path as pt
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
-from sqlalchemy import func, or_, and_
+from sqlalchemy import func, or_, and_, distinct
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
@@ -1030,7 +1030,7 @@ def get_restockables_product_codes(db: Session = Depends(get_db)):
         .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
         .filter(models.Purchase.date >= two_years_ago)
         .group_by(models.PurchaseItem.read_product_key)
-        .having(func.count(models.PurchaseItem.read_product_key) > 2)
+        .having(func.count(distinct(func.date(models.Purchase.date))) >= 2)
     )
 
     product_codes = [key[0] for key in query.all()]
@@ -1082,3 +1082,20 @@ def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_tok
     db.commit()
 
     return {"status": "Authorized", "uses_today": crawl_counter.uses}
+
+@app.get("/historics/by_product_code/{product_code}", response_model=List[schemas.Historic])
+def get_historic_by_product_code(product_code: str, db: Session = Depends(get_db)):
+    purchase_items = db.query(models.PurchaseItem).options(selectinload(models.PurchaseItem.purchase)).filter(models.PurchaseItem.read_product_key == product_code).all()
+
+    historic_dates = {}
+    for item in purchase_items:
+        if not item.purchase.date or not item.quantity:
+            continue
+        if historic_dates.get(item.purchase.date):
+            historic_dates[item.purchase.date] += item.quantity
+        else:
+            historic_dates[item.purchase.date] = item.quantity
+            
+    historic = [schemas.Historic(date=date, quantity=quantity) for date, quantity in historic_dates.items()]
+
+    return historic

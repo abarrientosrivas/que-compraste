@@ -284,3 +284,15 @@ class Receipt(ReceiptBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+
+
+# --------------------
+# Historic Schemas
+# --------------------
+class HistoricBase(BaseModel):
+    date: datetime
+    quantity: float
+
+
+class Historic(HistoricBase):
+    pass
