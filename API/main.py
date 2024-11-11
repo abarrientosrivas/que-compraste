@@ -837,15 +837,44 @@ def set_categories(categories: List[str], db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Error processing categories: {str(e)}")
 
 @app.get("/categories/", response_model=List[schemas.Category], response_model_exclude_none=True)
-def get_categories(code: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(models.Category).options(
-        noload(models.Category.children),
-        noload(models.Category.parent)
-    )
-    if code is not None:
-        query = query.filter(models.Category.code == code)
-    entities = query.all()
-    return entities
+def get_categories(
+    code: Optional[str] = None, 
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db)
+    ):
+    if start_date and end_date:
+        purchases = db.query(models.Purchase).filter(
+            models.Purchase.date >= start_date,
+            models.Purchase.date <= end_date
+        ).options(
+            selectinload(models.Purchase.items).selectinload(models.PurchaseItem.product).selectinload(models.Product.category)
+        ).all()
+        
+        root_categories = set()
+        for purchase in purchases:
+            for item in purchase.items:
+                product = item.product
+                if not product:
+                    continue
+                category = product.category
+                if not category:
+                    continue
+                while category.loaded_parent is not None:
+                    category = category.loaded_parent
+                root_categories.add(category)
+        
+        categories_list = list(root_categories)
+        return categories_list
+    else:
+        query = db.query(models.Category).options(
+            noload(models.Category.children),
+            noload(models.Category.parent)
+        )
+        if code is not None:
+            query = query.filter(models.Category.code == code)
+        entities = query.all()
+        return entities
 
 @app.post("/expenses/all-purchases/", response_model=List[Tuple[schemas.Category, float]])
 def get_all_expenses_by_category(
