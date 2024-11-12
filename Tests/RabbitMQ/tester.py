@@ -16,11 +16,26 @@ with broker.get_publisher() as publisher:
             exit_flag = True
             while exit_flag:
                 typename = input("Type: ")
-                if typename == "img":
-                    payload = schemas.ReceiptImageLocation(
-                        path=input("path: "),
-                        url=input("url: ")
+                if typename == "pur":
+                    payload = schemas.Purchase(
+                        id = 0,
+                        date = datetime.now(),
+                        total = float(input("Total: ")),
+                        items = [],
+                        created_at = datetime.now(),
                     )
+                    while True:
+                        user_input = input("Product code: ")
+                        if user_input == "exit":
+                            break
+                        payload.items.append(
+                            schemas.PurchaseItem(
+                                id = 0,
+                                purchase = None,
+                                purchase_id = 0,
+                                read_product_key = user_input,
+                            )
+                        )
                 elif typename == "pro":
                     payload = schemas.Product(
                         id=0,

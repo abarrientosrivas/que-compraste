@@ -118,6 +118,9 @@ ENTITY_NEW_KEY = os.getenv("ENTITY_NEW_KEY",'')
 PRODUCT_EXCHANGE = os.getenv("PRODUCT_EXCHANGE",'')
 PRODUCT_CLASSIFY_KEY = os.getenv("PRODUCT_CLASSIFY_KEY",'')
 
+PURCHASE_EXCHANGE = os.getenv("PURCHASE_EXCHANGE",'')
+PURCHASE_PREDICT_KEY = os.getenv("PURCHASE_PREDICT_KEY",'')
+
 IMAGE_TO_COMPRA_EXCHANGE = os.getenv("IMAGE_TO_COMPRA_EXCHANGE",'')
 IMAGE_TO_COMPRA_INPUT_KEY = os.getenv("IMAGE_TO_COMPRA_INPUT_QUEUE",'')
 
@@ -484,12 +487,14 @@ def create_purchase(purchase: schemas.PurchaseCreate, receipt_id: Optional[int] 
             db.add(db_item)
 
         db.commit()
+        db_purchase = db.query(models.Purchase).filter(models.Purchase.id == db_entity.id).first()
+        schema_purchase = schemas.Purchase.model_validate(db_purchase)
+        publisher.publish(PURCHASE_EXCHANGE, PURCHASE_PREDICT_KEY, schema_purchase)
 
     if receipt:
         receipt.status = machine.state
         receipt.purchase_id = db_entity.id
         db.commit()
-    db_purchase = db.query(models.Purchase).filter(models.Purchase.id == db_entity.id).first()
     return db_purchase
 
 @app.put("/purchases/{purchase_id}", response_model=schemas.Purchase)
