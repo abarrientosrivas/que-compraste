@@ -1088,7 +1088,7 @@ def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_tok
 
     return {"status": "Authorized", "uses_today": crawl_counter.uses}
 
-@app.get("/historics/by_product_code/{product_code}", response_model=List[schemas.Historic])
+@app.get("/historics/by-product-code/{product_code}", response_model=List[schemas.Historic])
 def get_historic_by_product_code(product_code: str, db: Session = Depends(get_db)):
     purchase_items = db.query(models.PurchaseItem).options(selectinload(models.PurchaseItem.purchase)).filter(models.PurchaseItem.read_product_key == product_code).all()
 
