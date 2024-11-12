@@ -1132,3 +1132,12 @@ def create_prediction(prediction: schemas.PredictionCreate, db: Session = Depend
         raise HTTPException(status_code=400, detail="Could not create prediction due to model constraints.")
     
     return db_entity
+
+@app.get("/predictions/by-product-code/{product_code}", response_model=schemas.Prediction, response_model_exclude_none=True)
+def get_latest_prediction(product_code: str, db: Session = Depends(get_db)): 
+    entity = db.query(models.Prediction).filter(models.Prediction.product_key == product_code).order_by(models.Prediction.created_at.desc()).first()
+
+    if not entity:
+        raise HTTPException(status_code=404, detail="No prediction found")
+
+    return entity
