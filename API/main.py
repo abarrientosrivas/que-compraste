@@ -1104,3 +1104,31 @@ def get_historic_by_product_code(product_code: str, db: Session = Depends(get_db
     historic = [schemas.Historic(date=date, quantity=quantity) for date, quantity in historic_dates.items()]
 
     return historic
+
+@app.post("/predictions/", response_model=schemas.Prediction)
+def create_prediction(prediction: schemas.PredictionCreate, db: Session = Depends(get_db)):
+    if not prediction.category_code and not prediction.product_key:
+        raise HTTPException(status_code=400, detail="No category code or product key was associated with the prediction.")
+    
+    prediction_items = [
+        models.PredictionItem(
+            date=item.date,
+            quantity=item.quantity
+        ) for item in prediction.items
+    ]
+
+    db_entity = models.Prediction(
+        product_key=prediction.product_key,
+        category_code=prediction.category_code,
+        items=prediction_items
+    )
+
+    try:
+        db.add(db_entity)
+        db.commit()
+        db.refresh(db_entity)
+    except (IntegrityError, SQLAlchemyError):
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not create prediction due to model constraints.")
+    
+    return db_entity

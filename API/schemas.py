@@ -296,3 +296,43 @@ class HistoricBase(BaseModel):
 
 class Historic(HistoricBase):
     pass
+
+# --------------------
+# PredictionItem Schemas
+# --------------------
+class PredictionItemBase(BaseModel):
+    date: datetime
+    quantity: float
+
+    class Config:
+        from_attributes = True
+
+
+class PredictionItemCreate(PredictionItemBase):
+    pass
+
+
+class PredictionItem(PredictionItemBase):
+    id: int
+    prediction_id: int
+
+
+# --------------------
+# Prediction Schemas
+# --------------------
+class PredictionBase(BaseModel):
+    product_key: Optional[str] = None
+    category_code: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PredictionCreate(PredictionBase):
+    items: List[PredictionItemCreate] = Field(default_factory=list)
+
+
+class Prediction(PredictionBase):
+    id: int
+    items: List[PredictionItem] = Field(default_factory=list)
+    created_at: datetime

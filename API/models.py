@@ -178,22 +178,10 @@ class Prediction(Base):
     __tablename__ = 'predictions'
     id = Column(Integer, primary_key=True, index=True)
     product_key = Column(String(255), nullable=True)
-    category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
+    category_code = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=func.now())
 
-    items = relationship('PredictionItem', back_populates='prediction', lazy='selectin')
-    
-    @validates('product_key', 'category_id')
-    def validate_product_or_category(self, key, value):
-        if key == 'product_key' and value and self.category_id:
-            raise ValueError('Only one of product_key or category_id should be provided.')
-        if key == 'category_id' and value and self.product_key:
-            raise ValueError('Only one of product_key or category_id should be provided.')
-        
-        if not self.product_key and not self.category_id:
-            raise ValueError('Either product_key or category_id must be provided.')
-        
-        return value
+    items = relationship('PredictionItem', lazy='selectin')
 
 class PredictionItem(Base):
     __tablename__ = 'prediction_items'
@@ -201,5 +189,3 @@ class PredictionItem(Base):
     prediction_id = Column(Integer, ForeignKey('predictions.id'), nullable=False)
     quantity = Column(Float, nullable=False)
     date = Column(DateTime, nullable=False)
-
-    prediction = relationship('Prediction', back_populates='items', lazy="noload")
