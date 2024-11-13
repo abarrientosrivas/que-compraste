@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -8,7 +9,7 @@ import { Observable } from 'rxjs';
 export class ComprasService {
   constructor(private http: HttpClient) {}
 
-  private baseUrl = 'http://127.0.0.1:8000';
+  private baseUrl = environment.apiUrl;
 
   getAll(): Observable<any[]> {
     const url = `${this.baseUrl}/purchases`;

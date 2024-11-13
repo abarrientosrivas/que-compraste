@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ReportesService {
   constructor(private http: HttpClient) {}
-  private baseUrl = 'http://localhost:8000/expenses';
+  private baseUrl = environment.apiUrl + "/expenses";
 
   getTotalsByCategory(startDate: string, endDate: string) : Observable<any> {    
     // const requestBody = [418,2073,4528];

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,7 @@ export class TicketUploadService {
   uploadFile(files: FileList): Observable<any> {
     const formData = new FormData();
     Array.from(files).forEach((file) => formData.append('files', file));
-    return this.http.post('http://127.0.0.1:8000/upload/', formData, {
+    return this.http.post(environment.apiUrl + '/upload/', formData, {
       reportProgress: true,
       observe: 'events',
     });
