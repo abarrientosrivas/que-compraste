@@ -764,17 +764,26 @@ def category_from_string(category_str: str) -> models.Category | None:
         return models.Category(code=code, name=name, original_text=category_str)
     return None
 
-def get_category_descendants_ids(db: Session, category_id: int):
-    category = (
-        db.query(models.Category)
-        .options(selectinload(models.Category.loaded_children))
-        .filter(models.Category.id == category_id)
-        .first()
-    )
-    ids = [category_id]
+def get_category_descendants_ids(db: Session, category: models.Category):
+    all_ids = [category.id]
+    current_children_ids = [category.id]
     for child in category.loaded_children:
-        ids.extend(get_category_descendants_ids(db, child.id))
-    return ids
+        all_ids.append(child.id)
+        current_children_ids.append(child.id)
+        
+    if len(current_children_ids) <= 0:
+        return all_ids
+    
+    while True:
+        descendants = db.query(models.Category).filter(models.Category.parent_id.in_(current_children_ids)).all()
+        if len(descendants) <= 0:
+            break
+        current_children_ids = []
+        for descendant in descendants:
+            all_ids.append(descendant.id)
+            current_children_ids.append(descendant.id)
+
+    return all_ids
 
 def get_category_ancestors_ids(db: Session, category_id: int):
     category = (
@@ -850,10 +859,11 @@ def get_categories(
     ):
     if start_date and end_date:
         purchases = db.query(models.Purchase).filter(
-            models.Purchase.date >= start_date,
-            models.Purchase.date <= end_date
+            models.Purchase.date.between(start_date, end_date)
         ).options(
-            selectinload(models.Purchase.items).selectinload(models.PurchaseItem.product).selectinload(models.Product.category)
+            selectinload(models.Purchase.items)
+            .selectinload(models.PurchaseItem.product)
+            .selectinload(models.Product.category)
         ).all()
         
         root_categories = set()
@@ -884,8 +894,8 @@ def get_categories(
 @app.post("/expenses/all-purchases/", response_model=List[Tuple[schemas.Category, float]])
 def get_all_expenses_by_category(
     query: List[int] = [],
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     db: Session = Depends(get_db)
 ):
     if not query:
@@ -903,15 +913,21 @@ def get_all_expenses_by_category(
 
     categories_with_expenses = []
     for category in categories:
-        family_ids = get_category_descendants_ids(db, category.id)
+        family_ids = get_category_descendants_ids(db, category)
 
         purchase_items = (
             db.query(models.PurchaseItem)
             .join(models.Product, models.PurchaseItem.product_id == models.Product.id)
             .join(models.Category, models.Product.category_id == models.Category.id)
+            .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)  # Join with Purchase
             .filter(models.Category.id.in_(family_ids))
-            .all()
         )
+        if start_date:
+            purchase_items = purchase_items.filter(models.Purchase.date >= start_date)
+        if end_date:
+            purchase_items = purchase_items.filter(models.Purchase.date <= end_date)
+
+        purchase_items = purchase_items.all()
         categories_with_expenses.append((category,purchases_tools.calculate_purchase_total(schemas.PurchaseCreate(),purchase_items) or 0))
 
     return categories_with_expenses
@@ -919,8 +935,6 @@ def get_all_expenses_by_category(
 @app.get("/expenses/purchase/{purchase_id}", response_model=List[Tuple[schemas.Category, float]])
 def get_expenses_by_category(
     purchase_id: int,
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
     db: Session = Depends(get_db)
 ):
     purchase_categories = (
