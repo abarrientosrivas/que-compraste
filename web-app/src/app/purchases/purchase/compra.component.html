@@ -1,7 +1,10 @@
-<ng-template #popContent><strong>Direccion: </strong>{{ compra.entity.address }}<br><strong>Email: </strong>{{
-  compra.entity.email }}
-  <br> <strong>Telefono: </strong>
-  {{compra.entity.phone }}<br><br><small class="text-muted">
+<ng-template #popContent
+  ><strong>Direccion: </strong>{{ compra.entity.address }}<br /><strong
+    >Email: </strong
+  >{{ compra.entity.email }} <br />
+  <strong>Telefono: </strong> {{ compra.entity.phone }}<br /><br /><small
+    class="text-muted"
+  >
     Información obtenida de
     <a href="https://argentina.gob.ar" target="_blank">
       https://argentina.gob.ar
@@ -14,20 +17,37 @@
     <h3 class="store-name display-5">{{ compra.read_entity_name }}</h3>
 
     <div class="col-md-6">
-      <p> <strong>CUIT:</strong> {{ compra.read_entity_identification }}
-        <button *ngIf="compra.entity" type="button" class="btn" style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%;"
-          placement="bottom" [ngbPopover]="popContent" popoverTitle="{{compra.entity.name}}">
+      <p>
+        <strong>CUIT:</strong> {{ compra.read_entity_identification }}
+        <button
+          *ngIf="compra.entity"
+          type="button"
+          class="btn"
+          style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%"
+          placement="bottom"
+          [ngbPopover]="popContent"
+          popoverTitle="{{ compra.entity.name }}"
+        >
           <i class="bi bi-info-circle"></i>
         </button>
-        <button *ngIf="!compra.entity" type="button" class="btn" style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%;"
-          placement="end" ngbTooltip="La informacion de la entidad fiscal no se encuentra cargada en el sistema.">
+        <button
+          *ngIf="!compra.entity"
+          type="button"
+          class="btn"
+          style="padding: 0% 0% 0% 0%; margin: 0 0 0.5% 1%"
+          placement="end"
+          ngbTooltip="La informacion de la entidad fiscal no se encuentra cargada en el sistema."
+        >
           <i class="bi bi-info-circle"></i>
         </button>
       </p>
       <p class="purchase-info">
-        <strong>Fecha:</strong> {{ fechaFormateada }} | Hora: {{ horaFormateada }}
+        <strong>Fecha:</strong> {{ fechaFormateada }} | Hora:
+        {{ horaFormateada }}
       </p>
-      <p class="store-address"><strong>Direccion:</strong> {{ compra.read_entity_address }}</p>
+      <p class="store-address">
+        <strong>Direccion:</strong> {{ compra.read_entity_address }}
+      </p>
       <p class="store-address">{{ compra.read_entity_location }}</p>
     </div>
     <div class="col-md-6 text-md-right">
@@ -36,7 +56,11 @@
   </div>
 
   <div class="row pb-3">
-    <div [ngClass]="compra.receipt && compra.receipt.image_url ? 'col-md-9': 'col-md-12'">
+    <div
+      [ngClass]="
+        compra.receipt && compra.receipt.image_url ? 'col-md-9' : 'col-md-12'
+      "
+    >
       <table class="table table-striped table-hover table-responsive-md">
         <thead class="thead-dark">
           <tr>
@@ -51,19 +75,43 @@
             <ng-template #popTemplate let-i="i">
               <div>
                 <p>
-                  <strong>Descripcion: </strong>{{item.product.description}}
+                  <strong>Descripcion: </strong>{{ item.product.description }}
                 </p>
-                <p *ngIf="item.product.read_category"><strong>Categoria: </strong>{{item.product.read_category}}</p>
+                <p *ngIf="item.product.read_category">
+                  <strong>Categoria: </strong>{{ item.product.read_category }}
+                </p>
+                <p *ngIf="item.product.img_url">
+                  <strong>Imagen:<br /> </strong>
+                </p>
+                <div
+                  *ngIf="item.product.img_url"
+                  class="d-flex justify-content-center flex-row"
+                >
+                  <img
+                    class="img-thumbnail"
+                    [src]="item.product.img_url"
+                    alt="Imagen del producto"
+                    width="128px"
+                    height="128px"
+                  />
+                </div>
               </div>
             </ng-template>
             <td>
-              <button *ngIf="item.product; else noProduct" class="invisible-button" placement="right"
-                [ngbPopover]="popTemplate" popoverTitle="{{item.product.title}}" [popoverContext]="{ index: i }"
-                [disabled]="!item.product">{{ item.read_product_text }}
+              <button
+                *ngIf="item.product; else noProduct"
+                class="invisible-button"
+                placement="right"
+                [ngbPopover]="popTemplate"
+                popoverTitle="{{ item.product.title }}"
+                [popoverContext]="{ index: i }"
+                [disabled]="!item.product"
+              >
+                {{ item.read_product_text }}
               </button>
-              <ng-template #noProduct>{{item.read_product_text}}</ng-template>
+              <ng-template #noProduct>{{ item.read_product_text }}</ng-template>
             </td>
-            <td> {{ item.value | currency : "USD" }}</td>
+            <td>{{ item.value | currency : "USD" }}</td>
             <td class="text-center">{{ item.quantity }}</td>
             <td>{{ item.total | currency : "USD" }}</td>
           </tr>
@@ -71,15 +119,21 @@
       </table>
     </div>
     <div *ngIf="compra.receipt && compra.receipt.image_url" class="col-md-3">
-      <h2 class="fw-bold mt-2 text-center" style="font-size: 1rem; color: black;">Recibo</h2>
-      <ngx-image-viewer [config]="{btnClass: 'rounded-circle opacity-75 border-0'}" [src]=images >
+      <h2
+        class="fw-bold mt-2 text-center"
+        style="font-size: 1rem; color: black"
+      >
+        Recibo
+      </h2>
+      <ngx-image-viewer
+        [config]="{ btnClass: 'rounded-circle opacity-75 border-0' }"
+        [src]="images"
+      >
       </ngx-image-viewer>
     </div>
   </div>
   <div class="mt-5">
-    <p class="subtotal">
-      Subtotal: {{ compra.subtotal | currency : "USD" }}
-    </p>
+    <p class="subtotal">Subtotal: {{ compra.subtotal | currency : "USD" }}</p>
     <p class="discount text-danger">
       Descuento: {{ compra.discount | currency : "USD" }}
     </p>

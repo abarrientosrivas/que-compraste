@@ -6,42 +6,52 @@ import { ProductSearchComponent } from '../../product-search/product-search.comp
 import { FormsModule } from '@angular/forms';
 import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ImageViewerModule } from "ngx-image-viewer-3";
+import { ImageViewerModule } from 'ngx-image-viewer-3';
 import { ChartModule } from 'primeng/chart';
 
 @Component({
   selector: 'app-ver-compra',
   standalone: true,
-  imports: [CommonModule, ProductSearchComponent, FormsModule, NgbPopoverModule, NgbTooltipModule, ImageViewerModule, ChartModule],
+  imports: [
+    CommonModule,
+    ProductSearchComponent,
+    FormsModule,
+    NgbPopoverModule,
+    NgbTooltipModule,
+    ImageViewerModule,
+    ChartModule,
+  ],
   templateUrl: './compra.component.html',
   styleUrl: './compra.component.css',
 })
 export class CompraComponent {
-  constructor(private comprasService: ComprasService, private sanitizer: DomSanitizer) {}
+  constructor(
+    private comprasService: ComprasService,
+    private sanitizer: DomSanitizer
+  ) {}
 
   private activatedRoute = inject(ActivatedRoute);
   compraId = this.activatedRoute.snapshot.params['compraId'];
   compra: any;
-  data: any
-  data1: any = {labels: [], datasets: [{data:[]}]}
+  data: any;
+  data1: any = { labels: [], datasets: [{ data: [] }] };
   options: any;
 
-  images: string[] = []
+  images: string[] = [];
 
   ngOnInit() {
-
     this.options = {
       responsive: true,
       radius: '75%',
-      maintainAspectRatio:false,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           labels: {
-              usePointStyle: true,
-              color: '#000000'
-          }
-        }
-      }
+            usePointStyle: true,
+            color: '#000000',
+          },
+        },
+      },
     };
 
     this.comprasService.getCompraById(this.compraId).subscribe({
@@ -49,23 +59,23 @@ export class CompraComponent {
         data.items.sort((a: any, b: any) => a.id - b.id);
         this.compra = data;
 
-        // TODO: eliminar hardcode de image_url
-        /*this.compra.receipt = {image_url: '2024/10/12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0/20241030182154-1.jpg'}*/
-        this.images = []
+        this.images = [];
         if (this.compra.receipt && this.compra.receipt.image_url) {
-          this.comprasService.getReceiptImage(this.compra.receipt.image_url).subscribe({
-            next: (blob: Blob) => {
-              const imageUrl = URL.createObjectURL(blob);
-              this.images.push(imageUrl);
-              console.log('Respuesta del servidor:', blob);
-            },
-            error: (error) => {
-              console.error('Error al hacer la petición:', error);
-            },
-            complete: () => {
-              console.log('Petición completada');
-            },
-          });
+          this.comprasService
+            .getReceiptImage(this.compra.receipt.image_url)
+            .subscribe({
+              next: (blob: Blob) => {
+                const imageUrl = URL.createObjectURL(blob);
+                this.images.push(imageUrl);
+                console.log('Respuesta del servidor:', blob);
+              },
+              error: (error) => {
+                console.error('Error al hacer la petición:', error);
+              },
+              complete: () => {
+                console.log('Petición completada');
+              },
+            });
         }
         console.log('Respuesta del servidor:', data);
       },
@@ -74,18 +84,20 @@ export class CompraComponent {
       },
       complete: () => {
         console.log('Petición completada');
-        this.comprasService
-        .getExpensesByCategory(this.compra.id)
-        .subscribe({
+        this.comprasService.getExpensesByCategory(this.compra.id).subscribe({
           next: (data: any[]) => {
             const filteredData = data.filter((element) => {
               return element[0].parent_id == null;
             });
             console.log('Respuesta del servidor:', filteredData);
-            this.data1.labels = filteredData.map((element) => { return element[0].name})
-            this.data1.datasets[0].data = filteredData.map((element) => { return element[1]})
-            this.data = {...this.data1}
-            console.log(this.data1)
+            this.data1.labels = filteredData.map((element) => {
+              return element[0].name;
+            });
+            this.data1.datasets[0].data = filteredData.map((element) => {
+              return element[1];
+            });
+            this.data = { ...this.data1 };
+            console.log(this.data1);
           },
           error: (error) => {
             console.error('Error al hacer la petición:', error);
@@ -96,7 +108,6 @@ export class CompraComponent {
         });
       },
     });
-
   }
 
   convertToInt(value: string): number {
@@ -124,6 +135,6 @@ export class CompraComponent {
 
   getPopoverContent(item: any): string {
     const content = `Descripcion: ${item.product.description}<br>Categoria: ${item.product.category}`;
-    return content
+    return content;
   }
 }
