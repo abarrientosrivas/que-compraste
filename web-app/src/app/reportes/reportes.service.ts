@@ -31,6 +31,9 @@ export class ReportesService {
   }
 
   getTotalsByCategory(startDate: string, endDate: string): Observable<any> {
+    const params = new HttpParams()
+      .set('start_date', startDate)
+      .set('end_date', endDate);
     return new Observable((observer) => {
       this.getRootCategoriesWithPurchases(startDate, endDate).subscribe({
         next: (data: any[]) => {
@@ -38,7 +41,10 @@ export class ReportesService {
           this.http
             .post<any>(
               `${this.baseUrl}/expenses/all-purchases/`,
-              data.map((item) => item.code)
+              data.map((item) => item.code),
+              {
+                params: params,
+              }
             )
             .subscribe({
               next: (response) => {
