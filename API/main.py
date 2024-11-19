@@ -348,6 +348,7 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
                 image.save(file_path, format='JPEG')
             elif file_extension.lower() == 'pdf':
                 if POPPLER_PATH.strip():
+                    print("using ", POPPLER_PATH)
                     images = convert_from_bytes(file_content, poppler_path=POPPLER_PATH)
                 else:
                     images = convert_from_bytes(file_content)
