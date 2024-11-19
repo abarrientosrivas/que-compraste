@@ -28,6 +28,8 @@ import psycopg2
 load_dotenv()
 logging.basicConfig(level=os.getenv("API_LOGGING_LEVEL",'ERROR'))
 
+POPPLER_PATH = os.getenv("POPPLER_PATH","")
+
 db_params = os.getenv("NOTIFICATIONS_DATABASE_URL")
 
 class ReceiptEventConnection:
@@ -345,7 +347,10 @@ async def receive_receipt_files(files: List[UploadFile] = File(...), db: Session
                 image = image.convert('RGB')
                 image.save(file_path, format='JPEG')
             elif file_extension.lower() == 'pdf':
-                images = convert_from_bytes(file_content)
+                if POPPLER_PATH.strip():
+                    images = convert_from_bytes(file_content, poppler_path=POPPLER_PATH)
+                else:
+                    images = convert_from_bytes(file_content)
                 image = images[0]
                 image.save(file_path, format='JPEG')
             else:
