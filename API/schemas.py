@@ -34,6 +34,13 @@ class PurchaseItem(PurchaseItemBase):
     product: Optional['Product'] = None
 
 
+class PurchaseItemOut(PurchaseItemBase):
+    id: int
+    purchase_id: Optional[int]
+    product_id: Optional[int] = None
+    product: Optional['Product'] = None
+
+
 # --------------------
 # Purchase Schemas
 # --------------------
@@ -78,6 +85,16 @@ class Purchase(PurchaseBase):
 
 class PurchaseWithReceipt(Purchase):
     receipt: Optional['Receipt'] = None
+
+
+class PurchaseOut(PurchaseBase):
+    id: int
+    entity_id: Optional[int] = None
+    entity: Optional['Entity'] = None
+    items: List[PurchaseItemOut] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
 
 
 # --------------------

@@ -402,7 +402,7 @@ def get_purchase_by_id(purchase_id: int, db: Session = Depends(get_db)):
 
     return purchase
 
-@app.post("/purchases/", response_model=schemas.Purchase)
+@app.post("/purchases/", response_model=schemas.PurchaseOut)
 def create_purchase(purchase: schemas.PurchaseCreate, receipt_id: Optional[int] = None, db: Session = Depends(get_db)):
     receipt = None
     if receipt_id:
