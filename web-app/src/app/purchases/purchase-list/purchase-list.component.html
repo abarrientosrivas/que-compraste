@@ -1,111 +1,53 @@
-<h2 class="text-center mb-4">Historial de Compras</h2>
-
 <p-table
   [value]="purchases"
-  [tableStyle]="{'min-width': '60rem'}"
+  [tableStyle]="{ 'min-width': '60rem' }"
   sortField="date"
   [sortOrder]="-1"
   styleClass="p-datatable-striped"
+  class="table-responsive"
+  [loading]="loading"
 >
-    <ng-template pTemplate="header">
-        <tr>
-            <th pSortableColumn="date" style="width:20%">
-                Fecha y Hora <p-sortIcon field="date" />
-            </th>
-            <th style="width:20%">
-                Comercio
-            </th>
-            <th pSortableColumn="items.length" style="width:20%">
-                Nro. Productos <p-sortIcon field="items.length" />
-            </th>
-            <th pSortableColumn="total" style="width:20%">
-                Total <p-sortIcon field="total" />
-            </th>
-            <th style="width:20%">
-                Acciones
-            </th>
-        </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-purchase>
-        <tr>
-            <td>{{ fechaFormateada(purchase.date)}} - {{ horaFormateada(purchase.date) }}</td>
-            <td>{{purchase.read_entity_name }}</td>
-            <td class="text-center">{{purchase.items.length }}</td>
-            <td>{{purchase.total | currency: 'USD' }}</td>
-            <td>
-          <div class="btn-group">
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              [routerLink]="['/compras', purchase.id]"
-            >
-              <i class="bi bi-eye"></i>
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              [routerLink]="['/compras', purchase.id, 'edit']"
-            >
-              <i class="bi bi-pencil-square"></i>
-            </button>
-            <button
-              type="button"
-              (click)="deletePurchase(purchase.id)"
-              class="btn btn-sm btn-outline-secondary"
-              disabled
-            >
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>
-        </td>
-        </tr>
-    </ng-template>
+  <ng-template pTemplate="header">
+    <tr>
+      <th pSortableColumn="date" class="date-column">
+        Fecha <p-sortIcon field="date"></p-sortIcon>
+      </th>
+      <th class="d-none d-md-table-cell merchant-column">
+        Comercio
+      </th>
+      <th pSortableColumn="items.length" class="items-count-column">
+        Cant. Items <p-sortIcon field="items.length"></p-sortIcon>
+      </th>
+      <th pSortableColumn="total" class="total-column">
+        Total <p-sortIcon field="total"></p-sortIcon>
+      </th>
+      <th class="action-column">
+        
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-purchase>
+    <tr (click)="navigateToPurchase(purchase.id)" style="cursor: pointer;">
+      <td class="date-column">{{ fechaFormateada(purchase.date) }}</td>
+      <td class="d-none d-md-table-cell merchant-column">
+        {{ purchase.read_entity_name }}
+      </td>
+      <td class="items-count-column">
+        <p-badge [value]="purchase.items.length"></p-badge>
+      </td>
+      <td class="total-column">{{ formatCurrency(purchase.total) }}</td>
+      <td class="action-column">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-pencil"
+          class="p-button-rounded p-button-sm edit-button"
+          [routerLink]="['/compras', purchase.id, 'edit']"
+          (click)="$event.stopPropagation()"
+          pTooltip="Editar Compra"
+          tooltipPosition="top"
+        ></button>
+      </td>
+    </tr>
+  </ng-template>
 </p-table>
-
-<!--div *ngIf="purchases" class="pt-3">
-  <table class="table table-responsive table-striped table-hover">
-    <thead>
-      <tr>
-        <th scope="col">Fecha y Hora</th>
-        <th scope="col">Productos</th>
-        <th scope="col">Descuento</th>
-        <th scope="col">Total</th>
-        <th scope="col"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="" *ngFor="let purchase of purchases; trackBy: identify">
-        <td scope="row">{{ fechaFormateada(purchase.date)}} - {{ horaFormateada(purchase.date) }}</td>
-        <td>{{ purchase.items.length }}</td>
-        <td>{{ purchase.discount }}</td>
-        <td>{{ purchase.total }}</td>
-        <td>
-          <div class="btn-group">
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              [routerLink]="['/compras', purchase.id]"
-            >
-              <i class="bi bi-eye"></i>
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              [routerLink]="['/compras', purchase.id, 'edit']"
-            >
-              <i class="bi bi-pencil-square"></i>
-            </button>
-            <button
-              type="button"
-              (click)="deletePurchase(purchase.id)"
-              class="btn btn-sm btn-outline-secondary"
-              disabled
-            >
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</-div-->

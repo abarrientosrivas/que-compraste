@@ -1,0 +1,114 @@
+/* purchase-list.component.css */
+
+/* Style the table headers */
+:host ::ng-deep .p-datatable table thead th {
+    background-color: #f1f1f1;
+    color: #333;
+    font-weight: bold;
+    text-align: left;
+    padding: 12px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+/* Style the table rows */
+:host ::ng-deep .p-datatable table tbody tr {
+    transition: background-color 0.2s;
+}
+
+:host ::ng-deep .p-datatable table tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+/* Style the table cells */
+:host ::ng-deep .p-datatable table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Style the date column */
+.date-column {
+    width: 15%;
+}
+
+/* Style the merchant column */
+.merchant-column {
+    width: 25%;
+}
+
+/* Style the items count column */
+.items-count-column {
+    width: 15%;
+    text-align: center;
+}
+
+/* Style the total column */
+.total-column {
+    width: 15%;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #28a745;
+}
+
+/* Style the action column */
+.action-column {
+    width: 10%;
+    text-align: center;
+}
+
+/* Style the edit button */
+.edit-button {
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.edit-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Style the badge */
+:host ::ng-deep .p-badge {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+:host ::ng-deep .p-sortable-column .p-sortable-column-icon {
+    color: #007bff;
+    transition: color 0.3s;
+}
+
+:host ::ng-deep .p-sortable-column:hover .p-sortable-column-icon {
+    color: #0056b3;
+}
+
+:host ::ng-deep .p-datatable-striped tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+:host {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:host ::ng-deep .p-datatable {
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+    :host ::ng-deep .p-datatable table {
+        overflow-x: auto;
+        display: block;
+    }
+
+    .d-none.d-md-table-cell {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datatable table tbody td {
+        padding: 8px;
+    }
+}
