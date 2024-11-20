@@ -2,27 +2,31 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ComprasService } from '../shared/compras.service';
 import { CommonModule } from '@angular/common';
-import { ProductSearchComponent } from '../../product-search/product-search.component';
 import { FormsModule } from '@angular/forms';
 import { NgbPopoverModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { ImageViewerModule } from 'ngx-image-viewer-3';
 import { ChartModule } from 'primeng/chart';
+import { BadgeModule } from 'primeng/badge';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-ver-compra',
   standalone: true,
   imports: [
     CommonModule,
-    ProductSearchComponent,
     FormsModule,
     NgbPopoverModule,
     NgbTooltipModule,
     ImageViewerModule,
     ChartModule,
+    BadgeModule,
+    ButtonModule,
+    TooltipModule,
   ],
   templateUrl: './compra.component.html',
-  styleUrl: './compra.component.css',
+  styleUrls: ['./compra.component.css'],
 })
 export class CompraComponent {
   constructor(
@@ -67,29 +71,22 @@ export class CompraComponent {
               next: (blob: Blob) => {
                 const imageUrl = URL.createObjectURL(blob);
                 this.images.push(imageUrl);
-                console.log('Respuesta del servidor:', blob);
               },
               error: (error) => {
                 console.error('Error al hacer la petición:', error);
               },
-              complete: () => {
-                console.log('Petición completada');
-              },
             });
         }
-        console.log('Respuesta del servidor:', data);
       },
       error: (error) => {
         console.error('Error al hacer la petición:', error);
       },
       complete: () => {
-        console.log('Petición completada');
         this.comprasService.getExpensesByCategory(this.compra.id).subscribe({
           next: (data: any[]) => {
             const filteredData = data.filter((element) => {
               return element[0].parent_id == null;
             });
-            console.log('Respuesta del servidor:', filteredData);
             this.data1.labels = filteredData.map((element) => {
               return element[0].name;
             });
@@ -97,44 +94,38 @@ export class CompraComponent {
               return element[1];
             });
             this.data = { ...this.data1 };
-            console.log(this.data1);
           },
           error: (error) => {
             console.error('Error al hacer la petición:', error);
-          },
-          complete: () => {
-            console.log('Petición completada');
           },
         });
       },
     });
   }
 
-  convertToInt(value: string): number {
-    return parseInt(value, 10);
+  formatCurrency(value: number): string {
+    return `$${value.toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   get fechaFormateada() {
-    if (!this.compra && !this.compra.date) {
+    if (!this.compra || !this.compra.date) {
       return null;
     }
     const fecha = new Date(this.compra.date);
-    return fecha.toLocaleDateString();
+    return fecha.toLocaleDateString('es-AR');
   }
 
   get horaFormateada() {
-    if (!this.compra && !this.compra.date) {
-      return;
+    if (!this.compra || !this.compra.date) {
+      return null;
     }
     const hora = new Date(this.compra.date);
     return hora.toLocaleTimeString('es-ES', {
       hour: 'numeric',
       minute: 'numeric',
     });
-  }
-
-  getPopoverContent(item: any): string {
-    const content = `Descripcion: ${item.product.description}<br>Categoria: ${item.product.category}`;
-    return content;
   }
 }

@@ -7,7 +7,7 @@ import { PurchaseListComponent } from './purchases/purchase-list/purchase-list.c
 import { PurchaseFormComponent } from './purchases/purchase-form/purchase-form.component';
 
 export const routes: Routes = [
-  { path: '', component: InicioComponent },
+  { path: '', redirectTo: '/carga', pathMatch: 'full' },
   { path: 'carga', component: TicketImageUploadComponent },
   { path: 'reportes', component: ReportesComponent },
   { path: 'compras/:compraId', component: CompraComponent },

@@ -1,13 +1,128 @@
-.invisible-button {
-  background: none;
-  border: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  padding: 0;
+/* General styles for the component */
+:host {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: block;
+  padding: 16px;
+  background-color: #ffffff;
 }
 
-::ng-deep ngx-image-viewer .img-container {
-  border-radius: 15px;
-  overflow: hidden;
+/* Header section */
+.header-section h3 {
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.header-section p {
+  font-size: 0.95rem;
+  margin: 4px 0;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+}
+
+.header-section button.p-button-text {
+  margin-left: 8px;
+  padding: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.store-address {
+  font-style: normal;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.store-address span {
+  display: block;
+  margin-top: 4px;
+}
+
+.store-address i {
+  vertical-align: top;
+  margin-right: 8px;
+}
+
+/* Table styling */
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.table th {
+  background-color: #f1f1f1;
+  color: #333;
+  font-weight: bold;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.table tbody tr:hover {
+  background-color: #e9ecef;
+  cursor: pointer;
+}
+
+/* Badge styling */
+:host ::ng-deep .p-badge {
+  background-color: #17a2b8;
+  color: #fff;
+}
+
+/* Subtotal, Discount, and Total */
+.subtotal {
+  font-weight: bold;
+  color: #696969;
+}
+
+.discount {
+  color: #696969;
+  font-weight: bold;
+}
+
+.text-success {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #28a745;
+}
+
+/* Pie Chart */
+:host ::ng-deep .p-chart {
+  max-width: 250px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .col-md-6 {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .table td,
+  .table th {
+    padding: 8px;
+  }
 }
