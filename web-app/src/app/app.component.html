@@ -1,19 +1,38 @@
-<nav class="navbar navbar-dark bg-dark">
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
   <div class="container-fluid">
-    <div class="navbar-nav d-flex flex-row">
-      <div class="navbar-brand">QuéCompraste?</div>
-      <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['carga']">
-        <i class="pi pi-upload me-2"></i>Añadir
-      </a>
-      <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['compras']">
-        <i class="pi pi-list me-2"></i>Histórico
-      </a>
-      <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['reportes']">
-        <i class="pi pi-chart-bar me-2"></i>Reportes
-      </a>
+    <!-- Navbar Brand -->
+    <a class="navbar-brand" href="#">QuéCompraste?</a>
+    
+    <!-- Hamburger Button -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Collapsible Menu -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <div class="navbar-nav">
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['carga']">
+          <i class="pi pi-upload me-2"></i>Añadir
+        </a>
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['compras']">
+          <i class="pi pi-list me-2"></i>Histórico
+        </a>
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['reportes']">
+          <i class="pi pi-chart-bar me-2"></i>Reportes
+        </a>
+      </div>
     </div>
   </div>
 </nav>
+
 <div class="container main-container mt-4">
   <router-outlet></router-outlet>
 </div>
