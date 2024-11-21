@@ -152,7 +152,7 @@ export class ReportesComponent {
         .subscribe({
           next: (data: any[]) => {
             this.data1.labels = data.map((element) => {
-              return element[0].name;
+              return element[0].name_es_es;
             });
             this.data1.datasets[0].data = data.map((element) => {
               return element[1];

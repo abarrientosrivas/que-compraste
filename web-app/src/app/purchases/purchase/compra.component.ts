@@ -88,7 +88,7 @@ export class CompraComponent {
               return element[0].parent_id == null;
             });
             this.data1.labels = filteredData.map((element) => {
-              return element[0].name;
+              return element[0].name_es_es;
             });
             this.data1.datasets[0].data = filteredData.map((element) => {
               return element[1];
