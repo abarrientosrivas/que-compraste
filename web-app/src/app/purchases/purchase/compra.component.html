@@ -6,24 +6,18 @@
       <p>
         <i class="pi pi-id-card" style="margin-right: 8px;"></i>
         {{ compra.read_entity_identification }}
-        <button
-          *ngIf="compra.entity"
-          pButton
-          type="button"
-          icon="pi pi-info-circle"
-          class="p-button-text p-button-rounded"
-          [ngbPopover]="popContent"
-          popoverTitle="{{ compra.entity.name }}"
-        ></button>
+        <button *ngIf="compra.entity" pButton type="button" icon="pi pi-info-circle"
+          class="p-button-text p-button-rounded" [ngbPopover]="popContent"
+          popoverTitle="{{ compra.entity.name }}"></button>
       </p>
       <p class="purchase-info">
         <i class="pi pi-calendar" style="margin-right: 8px;"></i>
         {{ fechaFormateada }} {{ horaFormateada }} Hs.
       </p>
       <p class="store-address">
-        <i class="pi pi-map-marker" style="margin-right: 8px;"></i>      
-        <span>{{ compra.read_entity_address }}</span>   
-      </p>      
+        <i class="pi pi-map-marker" style="margin-right: 8px;"></i>
+        <span>{{ compra.read_entity_address }}</span>
+      </p>
     </div>
 
     <!-- Pie Chart Section -->
@@ -52,30 +46,21 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of compra.items; let i = index">
+          <tr *ngFor="let item of compra.items; let i = index" [ngbPopover]="popTemplate"
+            popoverTitle="{{ item.product?.title }}" [popoverContext]="{ index: i }" container="body" placement="top"
+            triggers="hover:mouseleave click" style="cursor: pointer;">
             <!-- Product Pop-up Template -->
-            <ng-template #popTemplate let-i="i">
-              <div>
+            <ng-template #popTemplate>
+              <div *ngIf="item.product">
                 <p>
-                  <strong>Descripción:</strong> {{ item.product.description }}
+                  {{ item.product?.description }}
                 </p>
-                <p *ngIf="item.product.read_category">
-                  <strong>Categoría:</strong> {{ item.product.read_category }}
+                <p *ngIf="item.product?.category">
+                  <i>{{ item.product.category.name_es_es }}</i>
                 </p>
-                <p *ngIf="item.product.img_url">
-                  <strong>Imagen:<br /></strong>
-                </p>
-                <div
-                  *ngIf="item.product.img_url"
-                  class="d-flex justify-content-center flex-row"
-                >
-                  <img
-                    class="img-thumbnail"
-                    [src]="item.product.img_url"
-                    alt="Imagen del producto"
-                    width="128px"
-                    height="128px"
-                  />
+                <div *ngIf="item.product?.img_url" class="d-flex justify-content-center flex-row">
+                  <img class="img-thumbnail" [src]="item.product.img_url" alt="Imagen del producto" width="128px"
+                    height="128px" />
                 </div>
               </div>
             </ng-template>
@@ -85,20 +70,7 @@
             <td class="text-center">
               <p-badge [value]="item.quantity"></p-badge>
             </td>
-            <td>
-              <!-- Product Pop-up Trigger -->
-              <button
-                *ngIf="item.product"
-                class="invisible-button"
-                placement="right"
-                [ngbPopover]="popTemplate"
-                popoverTitle="{{ item.product.title }}"
-                [popoverContext]="{ index: i }"
-              >
-                {{ item.read_product_text }}
-              </button>
-              <div *ngIf="!item.product">{{ item.read_product_text }}</div>
-            </td>
+            <td>{{ item.read_product_text }}</td>
             <td>{{ formatCurrency(item.total) }}</td>
           </tr>
         </tbody>
@@ -107,11 +79,8 @@
 
     <!-- Receipt Image -->
     <div class="col-md-4">
-      <ngx-image-viewer
-        [config]="{ btnClass: 'rounded-circle opacity-75 border-0' }"
-        [src]="images"
-        style="width: 100%; height: auto;"
-      >
+      <ngx-image-viewer [config]="{ btnClass: 'rounded-circle opacity-75 border-0' }" [src]="images"
+        style="width: 100%; height: auto;">
       </ngx-image-viewer>
     </div>
   </div>
