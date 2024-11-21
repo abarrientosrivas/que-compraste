@@ -8,6 +8,7 @@
         {{ compra.read_entity_identification }}
         <button *ngIf="compra.entity" pButton type="button" icon="pi pi-info-circle"
           class="p-button-text p-button-rounded" [ngbPopover]="popContent"
+          container="body" placement="right"
           popoverTitle="{{ compra.entity.name }}"></button>
       </p>
       <p class="purchase-info">
@@ -28,8 +29,8 @@
 
   <!-- Summary Section -->
   <div class="mt-5">
-    <p class="subtotal">Subtotal: {{ formatCurrency(compra.subtotal) }} </p>
-    <p class="discount">Descuento: {{ formatCurrency(compra.discount) }} </p>
+    <p *ngIf="compra.subtotal" class="subtotal">Subtotal: {{ formatCurrency(compra.subtotal) }} </p>
+    <p *ngIf="compra.discount" class="discount">Descuento: {{ formatCurrency(compra.discount) }} </p>
     <h3 class="text-success">Total: {{ formatCurrency(compra.total) }} </h3>
   </div>
 
@@ -66,12 +67,12 @@
             </ng-template>
 
             <!-- Table Data -->
-            <td>{{ formatCurrency(item.value) }}</td>
+            <td><div *ngIf="item.value">{{ formatCurrency(item.value) }}</div></td>
             <td class="text-center">
-              <p-badge [value]="item.quantity"></p-badge>
+              <p-badge *ngIf="item.quantity" [value]="item.quantity"></p-badge>
             </td>
-            <td>{{ item.read_product_text }}</td>
-            <td>{{ formatCurrency(item.total) }}</td>
+            <td> {{ item.read_product_text }}</td>
+            <td><div *ngIf="item.total">{{ formatCurrency(item.total) }}</div></td>
           </tr>
         </tbody>
       </table>
