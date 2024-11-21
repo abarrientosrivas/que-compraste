@@ -52,12 +52,53 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of compra.items">
+          <tr *ngFor="let item of compra.items; let i = index">
+            <!-- Product Pop-up Template -->
+            <ng-template #popTemplate let-i="i">
+              <div>
+                <p>
+                  <strong>Descripción:</strong> {{ item.product.description }}
+                </p>
+                <p *ngIf="item.product.read_category">
+                  <strong>Categoría:</strong> {{ item.product.read_category }}
+                </p>
+                <p *ngIf="item.product.img_url">
+                  <strong>Imagen:<br /></strong>
+                </p>
+                <div
+                  *ngIf="item.product.img_url"
+                  class="d-flex justify-content-center flex-row"
+                >
+                  <img
+                    class="img-thumbnail"
+                    [src]="item.product.img_url"
+                    alt="Imagen del producto"
+                    width="128px"
+                    height="128px"
+                  />
+                </div>
+              </div>
+            </ng-template>
+
+            <!-- Table Data -->
             <td>{{ formatCurrency(item.value) }}</td>
             <td class="text-center">
               <p-badge [value]="item.quantity"></p-badge>
             </td>
-            <td>{{ item.read_product_text }}</td>
+            <td>
+              <!-- Product Pop-up Trigger -->
+              <button
+                *ngIf="item.product"
+                class="invisible-button"
+                placement="right"
+                [ngbPopover]="popTemplate"
+                popoverTitle="{{ item.product.title }}"
+                [popoverContext]="{ index: i }"
+              >
+                {{ item.read_product_text }}
+              </button>
+              <div *ngIf="!item.product">{{ item.read_product_text }}</div>
+            </td>
             <td>{{ formatCurrency(item.total) }}</td>
           </tr>
         </tbody>
