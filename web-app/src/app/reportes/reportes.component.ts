@@ -12,6 +12,11 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+
+// Register the Spanish locale
+registerLocaleData(localeEs, 'es-ES');
 
 @Component({
   selector: 'app-reportes',
@@ -47,7 +52,7 @@ export class ReportesComponent {
         startDate: [
           formatDate(
             new Date(
-              new Date().getTime() - 30 * 24 * 60 * 60 * 1000
+              new Date().getTime() - 365 * 24 * 60 * 60 * 1000
             ).toString(),
             'YYYY-MM-dd',
             'en-US'
@@ -180,24 +185,33 @@ export class ReportesComponent {
         )
         .subscribe({
           next: (data: any[]) => {
-            console.log(data);
-            data = data.sort((a, b) => {
-              return new Date(a.date).getTime() - new Date(b.date).getTime();
-            });
-            this.data3.labels = data.map((element) => {
-              return formatDate(element.date, 'dd-MM-yyyy', 'en-US');
-            });
-            data.reduce((acc, item) => {
+            const groupedData: { [key: string]: number } = data.reduce(
+              (acc, item) => {
+                // Format the date as 'yyyy-MM-dd' for correct sorting
+                const formattedDate = formatDate(item.date, 'yyyy-MM-dd', 'en-US');
+                acc[formattedDate] = (acc[formattedDate] || 0) + item.total;
+                return acc;
+              },
+              {}
+            );
+  
+            const sortedData = Object.entries(groupedData)
+              .map(([date, total]) => ({ date, total }))
+              .sort((a, b) => a.date.localeCompare(b.date)); // Lexical sorting works with 'yyyy-MM-dd'
+  
+            // Format dates back to 'dd-MM-yyyy' for display purposes
+            this.data3.labels = sortedData.map((element) =>
+              formatDate(element.date, 'dd-MM-yyyy', 'en-US')
+            );
+  
+            sortedData.reduce((acc, item) => {
               acc += item.total;
-              console.log(acc);
-
               acc_total.push(acc);
               return acc;
             }, 0);
-            console.log('Acc total: ', acc_total);
-
+  
             this.data3.datasets[0].data = acc_total;
-            this.data3.datasets[0].label = 'acumulativo';
+            this.data3.datasets[0].label = 'Acumulativo';
             this.data2 = { ...this.data3 };
             console.log(this.data3);
           },
@@ -210,6 +224,7 @@ export class ReportesComponent {
         });
     }
   }
+  
 
   onSubmit() {
     console.log(this.dateForm.get('startDate').value.toString());
@@ -221,7 +236,6 @@ export class ReportesComponent {
       const startDateDate = new Date(this.dateForm.get('startDate').value);
       const endDateDate = new Date(this.dateForm.get('endDate').value);
       const dateDiff = endDateDate.getTime() - startDateDate.getTime();
-      const daysDiff = Math.floor(dateDiff / (24 * 60 * 60 * 1000));
       this.response = this.reportesService
         .getPurchases(
           this.dateForm.get('startDate').value,
@@ -232,7 +246,7 @@ export class ReportesComponent {
             const response = {
               total: 0,
               purchases: 0,
-              averagePerDay: 0,
+              averagePerMonth: 0,
               averagePerPurchase: 0,
             };
 
@@ -240,7 +254,7 @@ export class ReportesComponent {
               .reduce((acc, item) => acc + item.total, 0)
               .toFixed(2);
             response.purchases = data.length;
-            response.averagePerDay = +(response.total / daysDiff).toFixed(2);
+            response.averagePerMonth = +(response.total / 12).toFixed(2);
             response.averagePerPurchase = +(
               response.total / data.length
             ).toFixed(2);

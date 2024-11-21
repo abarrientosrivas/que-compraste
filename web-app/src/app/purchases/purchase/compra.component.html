@@ -8,7 +8,7 @@
         {{ compra.read_entity_identification }}
         <button *ngIf="compra.entity" pButton type="button" icon="pi pi-info-circle"
           class="p-button-text p-button-rounded" [ngbPopover]="popContent"
-          container="body" placement="right"
+          container="body" placement="bottom"
           popoverTitle="{{ compra.entity.name }}"></button>
       </p>
       <p class="purchase-info">

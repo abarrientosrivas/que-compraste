@@ -1,4 +1,102 @@
+/* General Styles for the Report Page */
+.text-center {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+h4 {
+  color: #333;
+  margin-top: 20px;
+  font-size: 1.25rem;
+}
+
+/* List Group Styling */
+.list-group-item {
+  font-size: 1rem;
+  padding: 15px;
+  border: 1px solid #ddd;
+  margin-bottom: 5px;
+}
+
+.list-group-item span.fw-bold {
+  color: #007bff;
+}
+
+/* Pie Chart Styling */
 .pie-chart {
   width: auto;
-  height: 500px;
+  height: 400px;
+  margin-top: 10px;
+}
+
+/* Card Styling */
+.card {
+  padding: 20px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: none;
+}
+
+/* Line Chart Styling */
+.line-chart-container {
+  margin-top: 20px;
+}
+
+.line-chart-container p-chart {
+  width: 100%;
+  height: 400px;
+}
+
+/* Styling for Empty State */
+.empty-state {
+  text-align: center;
+  font-size: 1.25rem;
+  color: #888;
+  margin-top: 20px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .list-group-item {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+
+  .pie-chart {
+    height: 300px;
+  }
+
+  .line-chart-container p-chart {
+    height: 300px;
+  }
+}
+
+.pie-chart-container {
+  padding: 15px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-top: 20px;
+  background-color: #fff;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 15px;
+  }
+
+  .pie-chart-container {
+    margin-top: 10px;
+    height: 300px;
+  }
+
+  .line-chart-container {
+    margin-top: 10px;
+    height: 300px;
+  }
+
+  .list-group-item {
+    font-size: 0.9rem;
+  }
 }

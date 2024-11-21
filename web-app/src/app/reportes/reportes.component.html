@@ -1,68 +1,41 @@
-<h2 class="text-center">Reporte Últimos 30 Días</h2>
-<!--form [formGroup]="dateForm" (ngSubmit)="onSubmit()" class="mt-4">
-  <div class="row justify-content-center">
-    <div class="col-md-2 form-group">
-      <label for="startDate">Desde: </label>
-      <input
-        type="date"
-        class="form-control"
-        id="startDate"
-        formControlName="startDate"
-        name="startDate"
-      />
-    </div>
-    <div class="col-md-2 form-group">
-      <label for="endDate">Hasta: </label>
-      <input
-        type="date"
-        class="form-control"
-        id="endDate"
-        formControlName="endDate"
-        name="endDate"
-      />
-    </div>
-    <div class="col-md-2">
-      <button
-        type="submit"
-        [disabled]="!dateForm.valid"
-        class="btn btn-primary mt-4"
-      >
-        Enviar
-      </button>
-    </div>
-  </div>
-</form-->
 <div class="row" *ngIf="response">
   <div class="col-md-6">
-    <h4 class="mt-4">Estadísticas</h4>
-    <ul class="list-group">
-      <li class="list-group-item">
-        <span class="fw-bold">Compras: </span>
-        <span id="purchases">{{ response.purchases }}</span>
-      </li>
-      <li class="list-group-item">
-        <span class="fw-bold">Total: </span>
-        <span id="total"> ${{ response.total }}</span>
-      </li>
-      <li class="list-group-item">
-        <span class="fw-bold">Total promedio por día: </span>
-        <span id="averagePerDay">${{ response.averagePerDay }}</span>
-      </li>
-      <li class="list-group-item">
-        <span class="fw-bold">Total promedio por compra: </span>
-        <span id="averagePerPurchase">${{ response.averagePerPurchase }}</span>
-      </li>
-    </ul>
+    <h4 class="text-center">Tus compras estos últimos 365 días</h4>
+    <div class="card">
+      <ul class="list-group">
+        <li class="list-group-item">
+          <i class="pi pi-shopping-cart me-2 text-primary"></i>
+          <span class="fw-bold">Compras realizadas: </span>
+          <span id="purchases">{{ response.purchases }}</span>
+        </li>
+        <li class="list-group-item">
+          <i class="pi pi-dollar me-2 text-success"></i>
+          <span class="fw-bold">Total gastado: </span>
+          <span id="total"> ${{ response.total }}</span>
+        </li>
+        <li class="list-group-item">
+          <i class="pi pi-calendar me-2 text-warning"></i>
+          <span class="fw-bold">Promedio gastado por mes: </span>
+          <span id="averagePerDay">${{ response.averagePerMonth }}</span>
+        </li>
+        <li class="list-group-item">
+          <i class="pi pi-chart-line me-2 text-info"></i>
+          <span class="fw-bold">Promedio gastado por compra: </span>
+          <span id="averagePerPurchase">${{ response.averagePerPurchase }}</span>
+        </li>
+      </ul>
+    </div>
   </div>
-  <div class="col-md-6 mt-4">
-    <p-chart type="pie" [data]="data" [options]="options" />
-    <!--div echarts [options]="chartOptions" class="pie-chart"></div-->
+  <div class="col-md-6 pie-chart-container mt-4">
+    <p-chart type="pie" [data]="data" [options]="options"></p-chart>
   </div>
 </div>
-<div class="row mt-4 mb-4">
-  <h4 class="text-center">Gasto acumulativo durante el último mes</h4>
+<div class="row mt-4 line-chart-container">
   <div class="card">
-    <p-chart type="line" [data]="data2" [options]="options2" />
+    <h4 class="text-center">Tu gasto acumulativo durante el último año</h4>
+    <p-chart type="line" [data]="data2" [options]="options2"></p-chart>
   </div>
 </div>
-<div *ngIf="!response">No hay registros</div>
+<div *ngIf="!response" class="empty-state">
+  <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para mostrar.
+</div>
