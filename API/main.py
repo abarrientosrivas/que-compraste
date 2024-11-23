@@ -1173,4 +1173,4 @@ async def get_product_codes(db: Session = Depends(get_db)):
         func.count(models.PurchaseItem.read_product_key) >= 2
     ).all()
 
-    return [{"read_product_text": text, "read_product_key": key} for text, key in result]
+    return [{"read_product_text": text or key, "read_product_key": key} for text, key in result]
