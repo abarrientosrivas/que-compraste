@@ -1,0 +1,50 @@
+<div class="row justify-content-center">
+  <div class="col">
+    <h2 class="text-center mb-4">Predicciones</h2>
+    <form [formGroup]="formGroup">
+      <p-dropdown
+        formControlName="selectedProduct"
+        [options]="products"
+        optionLabel="read_product_text"
+        placeholder="Seleccione un producto"
+      />
+    </form>
+  </div>
+</div>
+<div *ngIf="selectedProduct" class="row justify-content-center mt-4 mb-4">
+  <div class="col text-center">
+    <h4>Histórico y prediccion de producto</h4>
+    <div class="d-flex align-items-center" style="display: block">
+      <hr
+        style="
+          color: rgb(75, 192, 192);
+          background-color: rgb(75, 192, 192);
+          opacity: 100%;
+          width: 5%;
+          height: 15px;
+          display: block;
+          margin-left: 1em;
+          margin-right: 1em;
+        "
+      />
+      Histórico
+
+      <hr
+        style="
+          color: rgb(192, 75, 75);
+          background-color: rgb(192, 75, 75);
+          opacity: 100%;
+          width: 5%;
+          height: 15px;
+          display: block;
+          margin-left: 3em;
+          margin-right: 1em;
+        "
+      />
+      Prediccion
+    </div>
+    <div class="card">
+      <div style="width: 800px, auto"><canvas id="ctx"></canvas></div>
+    </div>
+  </div>
+</div>

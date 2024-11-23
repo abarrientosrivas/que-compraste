@@ -8,7 +8,7 @@ from sqlalchemy import func, or_, and_, distinct
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .dependencies import get_db, get_node_token, get_client_ip
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timezone, date, timedelta
 from PyLib import typed_messaging, purchases_tools, receipt_tools
 from dotenv import load_dotenv
@@ -1160,3 +1160,17 @@ def get_latest_prediction(product_code: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No prediction found")
 
     return entity
+
+@app.get("/purchase_items/product_codes/", response_model=List[Dict[str, str]])
+async def get_product_codes(db: Session = Depends(get_db)):
+    result = db.query(
+        models.PurchaseItem.read_product_text,
+        models.PurchaseItem.read_product_key
+    ).group_by(
+        models.PurchaseItem.read_product_key,
+        models.PurchaseItem.read_product_text
+    ).having(
+        func.count(models.PurchaseItem.read_product_key) >= 2
+    ).all()
+
+    return [{"read_product_text": text, "read_product_key": key} for text, key in result]
