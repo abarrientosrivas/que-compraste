@@ -13,7 +13,9 @@
 </div>
 <div *ngIf="selectedProduct" class="row justify-content-center mt-4 mb-4">
   <div class="col text-center">
-    <h4>Histórico y prediccion de producto</h4>
+    <h4>
+      Histórico <span *ngIf="predictionExist">y prediccion</span> de producto
+    </h4>
     <div class="d-flex align-items-center" style="display: block">
       <hr
         style="
@@ -28,8 +30,8 @@
         "
       />
       Histórico
-
       <hr
+        *ngIf="predictionExist"
         style="
           color: rgb(192, 75, 75);
           background-color: rgb(192, 75, 75);
@@ -41,7 +43,7 @@
           margin-right: 1em;
         "
       />
-      Prediccion
+      <span *ngIf="predictionExist">Prediccion</span>
     </div>
     <div class="card">
       <div style="width: 800px, auto"><canvas id="ctx"></canvas></div>
