@@ -16,6 +16,15 @@
     <h4>
       Histórico <span *ngIf="predictionExist">y prediccion</span> de producto
     </h4>
+
+    <div *ngIf="mainPrediction">
+      <p>
+        <strong>Próxima compra: </strong>
+        {{ mainPrediction.date | date : "dd-MM-yyyy" }}, cantidad:
+        {{ mainPrediction.quantity }}
+      </p>
+    </div>
+
     <div class="d-flex align-items-center" style="display: block">
       <hr
         style="

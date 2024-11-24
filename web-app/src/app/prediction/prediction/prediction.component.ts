@@ -22,9 +22,9 @@ export class PredictionComponent implements OnInit {
   myChart: any;
   ctx = document.getElementById('ctx');
   predictionExist = false;
+  mainPrediction: any;
 
   options: any;
-  data: any;
   data1: any = {
     labels: [],
     datasets: [
@@ -37,8 +37,6 @@ export class PredictionComponent implements OnInit {
   constructor(private productsService: ProductsService) {}
 
   prediction = (ctx: any, value: any) => {
-    console.log(this.historicPointsCount);
-
     if (ctx.p0.$context.dataIndex + 1 > this.historicPointsCount) {
       return value;
     }
@@ -52,6 +50,7 @@ export class PredictionComponent implements OnInit {
 
     this.formGroup.get('selectedProduct')?.valueChanges.subscribe((item) => {
       this.predictionExist = false;
+      this.mainPrediction = null;
       console.log(item);
       if (this.myChart) {
         this.myChart.destroy();
@@ -61,24 +60,27 @@ export class PredictionComponent implements OnInit {
         .getHistoricByProductCode(item.read_product_key)
         .subscribe({
           next: (data) => {
-            console.log(data);
+            console.log('Historic: ', data);
             this.historicPointsCount = data.length;
+            if (data.length != 1) {
+              data = data.sort(
+                (a: any, b: any) =>
+                  new Date(a.date).getTime() - new Date(b.date).getTime()
+              );
+            }
             if (data.length == 1) {
               this.data1.labels = [
                 formatDate(data[0].date, 'dd-MM-yyyy', 'en-US'),
                 formatDate(data[0].date, 'dd-MM-yyyy', 'en-US'),
               ];
-            } else {
-              this.data1.labels = data.map((element) => {
-                return formatDate(element.date, 'dd-MM-yyyy', 'en-US');
-              });
-            }
-            if (data.length == 1) {
               this.data1.datasets[0].data = [
                 data[0].quantity,
                 data[0].quantity,
               ];
             } else {
+              this.data1.labels = data.map((element) => {
+                return formatDate(element.date, 'dd-MM-yyyy', 'en-US');
+              });
               this.data1.datasets[0].data = data.map((element) => {
                 return element.quantity;
               });
@@ -94,21 +96,50 @@ export class PredictionComponent implements OnInit {
               .getLastPredictionByProductCode(item.read_product_key)
               .subscribe({
                 next: (data) => {
-                  console.log(data);
+                  console.log('Last predictions: ', data);
+                  let items = data.items;
+                  if (items.length != 1) {
+                    items = items.sort(
+                      (a: any, b: any) =>
+                        new Date(a.date).getTime() - new Date(b.date).getTime()
+                    );
+                  }
+
+                  items = items.filter((element: any) => {
+                    if (
+                      new Date(element.date).getTime() >
+                      new Date(
+                        this.data1.labels[this.data1.labels.length - 1]
+                      ).getTime() +
+                        24 * 60 * 60 * 1000
+                    ) {
+                      return element;
+                    }
+                  });
+
+                  console.log('Items: ', items);
+
+                  this.mainPrediction = items[0];
                   this.predictionExist = true;
+
                   this.data1.labels = [
                     ...this.data1.labels,
-                    ...data.items.map((element: any) => {
+                    ...items.map((element: any) => {
                       return formatDate(element.date, 'dd-MM-yyyy', 'en-US');
                     }),
                   ];
                   this.data1.datasets[0].data = [
                     ...this.data1.datasets[0].data,
-                    ...data.items.map((element: any) => {
+                    ...items.map((element: any) => {
                       return element.quantity;
                     }),
                   ];
-                  console.log(this.data1.labels);
+                  console.log(
+                    'Labels: ',
+                    this.data1.labels,
+                    'data: ',
+                    this.data1.datasets[0].data
+                  );
                 },
                 error: (error) => {
                   console.error('Error al hacer la petición: ', error);
@@ -117,7 +148,6 @@ export class PredictionComponent implements OnInit {
                 complete: () => {
                   console.log('Petición completada');
                   this.data1.datasets[0].label = '';
-                  this.data = { ...this.data1 };
                   this.renderLineChart();
                 },
               });
