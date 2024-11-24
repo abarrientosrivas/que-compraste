@@ -12,17 +12,11 @@
   </div>
 </div>
 <div *ngIf="selectedProduct" class="row justify-content-center mt-4 mb-4">
-  <div class="col text-center">
-    <h4>
-      Histórico <span *ngIf="predictionExist">y prediccion</span> de producto
-    </h4>
-
+  <div class="col text-right">
     <div *ngIf="mainPrediction">
-      <p>
-        <strong>Próxima compra: </strong>
-        {{ mainPrediction.date | date : "dd-MM-yyyy" }}, cantidad:
-        {{ mainPrediction.quantity }}
-      </p>
+      <h4>Próxima compra sugerida:</h4>
+      <p><strong>Fecha: </strong>{{ mainPrediction.date | date : "dd-MM-yyyy" }}</p>
+      <p><strong>Cantidad: </strong>{{ mainPrediction.quantity }}</p>
     </div>
 
     <div class="d-flex align-items-center" style="display: block">

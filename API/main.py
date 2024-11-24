@@ -1054,7 +1054,7 @@ def get_restockables_product_codes(db: Session = Depends(get_db)):
         .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
         .filter(models.Purchase.date >= two_years_ago)
         .group_by(models.PurchaseItem.read_product_key)
-        .having(func.count(distinct(func.date(models.Purchase.date))) >= 2)
+        .having(func.count(distinct(func.date(models.Purchase.date))) >= 3)
     )
 
     product_codes = [key[0] for key in query.all()]
@@ -1070,7 +1070,7 @@ def get_restockables_product_ids(db: Session = Depends(get_db)):
         .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
         .filter(models.Purchase.date >= two_years_ago)
         .group_by(models.PurchaseItem.product_id)
-        .having(func.count(models.PurchaseItem.product_id) > 3)
+        .having(func.count(models.PurchaseItem.product_id) >= 3)
     )
 
     product_ids = [key[0] for key in query.all()]
@@ -1166,11 +1166,13 @@ async def get_product_codes(db: Session = Depends(get_db)):
     result = db.query(
         models.PurchaseItem.read_product_text,
         models.PurchaseItem.read_product_key
+    ).join(
+        models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id
     ).group_by(
         models.PurchaseItem.read_product_key,
         models.PurchaseItem.read_product_text
     ).having(
-        func.count(models.PurchaseItem.read_product_key) >= 2
+        func.count(distinct(func.date(models.Purchase.date))) >= 3
     ).all()
 
     return [{"read_product_text": text or key, "read_product_key": key} for text, key in result]
