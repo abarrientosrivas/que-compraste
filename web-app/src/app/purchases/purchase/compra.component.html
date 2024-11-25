@@ -79,7 +79,7 @@
     </div>
 
     <!-- Receipt Image -->
-    <div class="col-md-4">
+    <div class="col-md-4" *ngIf="images && images.length > 0">
       <ngx-image-viewer [config]="{ btnClass: 'rounded-circle opacity-75 border-0' }" [src]="images"
         style="width: 100%; height: auto;">
       </ngx-image-viewer>
