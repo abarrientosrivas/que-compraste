@@ -17,4 +17,37 @@ export class TicketUploadService {
       observe: 'events',
     });
   }
+
+  getReceiptsStatus(): Observable<any> {
+    return this.http.get(
+      environment.apiUrl + '/receipts/waiting_and_processing/'
+    );
+  }
+
+  getReceipt(receipt_id: number): Observable<any> {
+    return this.http.get(environment.apiUrl + '/receipts/' + receipt_id);
+  }
+
+  getStatusUpdates(receiptId: number): Observable<any> {
+    const url = `${environment.apiUrl}/receipts/${receiptId}/status_changes`;
+    return new Observable((observer) => {
+      const eventSource = new EventSource(url);
+
+      eventSource.onmessage = (event) => {
+        observer.next(event.data);
+      };
+
+      eventSource.onerror = (error) => {
+        observer.error(error);
+      };
+
+      eventSource.onopen = () => {
+        console.log('Connection established');
+      };
+
+      return () => {
+        eventSource.close();
+      };
+    });
+  }
 }

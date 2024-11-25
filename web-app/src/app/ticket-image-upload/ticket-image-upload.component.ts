@@ -1,9 +1,10 @@
-import { Component, ElementRef, Optional, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { TicketUploadService } from '../ticket-upload.service';
 import { CommonModule } from '@angular/common';
-import { ActiveToast, Toast, ToastRef, ToastrService } from 'ngx-toastr';
+import { ToastrService } from 'ngx-toastr';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { ProgressComponent } from './progress/progress.component';
+import { ComprasService } from '../purchases/shared/compras.service';
 
 @Component({
   selector: 'app-ticket-image-upload',
@@ -12,7 +13,7 @@ import { ProgressComponent } from './progress/progress.component';
   templateUrl: './ticket-image-upload.component.html',
   styleUrls: ['./ticket-image-upload.component.css'],
 })
-export class TicketImageUploadComponent {
+export class TicketImageUploadComponent implements OnInit {
   selectedFiles: FileList | null = null;
   hasInvalidFiles = false;
   allowedFileTypes = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -20,13 +21,47 @@ export class TicketImageUploadComponent {
   postSubscription: any;
   isUploading = false;
   @ViewChild('fileDropRef') fileDropRef: ElementRef | undefined;
+  receiptList: any;
+  selectedReceipt: any;
 
   files: any[] = [];
-  fileList: FileList | undefined
+  fileList: FileList | undefined;
 
-  /**
-   * on file drop handler
-   */
+  constructor(
+    private ticketUploadService: TicketUploadService,
+    private toastr: ToastrService,
+    private comprasService: ComprasService
+  ) {}
+
+  onSelectedReceipt(receipt: any) {
+    this.selectedReceipt = receipt;
+  }
+
+  ngOnInit(): void {
+    this.ticketUploadService.getStatusUpdates(133).subscribe({
+      next: (event) => {
+        console.log(event);
+      },
+    });
+    this.loadReceipts();
+  }
+
+  loadReceipts() {
+    if (localStorage.getItem('uploadedFiles')) {
+      this.receiptList = JSON.parse(localStorage.getItem('uploadedFiles')!);
+      for (let receipt of this.receiptList) {
+        this.comprasService.getReceiptImage(receipt.image_url).subscribe({
+          next: (blob: Blob) => {
+            receipt.image_url = URL.createObjectURL(blob);
+          },
+          error: (error) => {
+            console.error('Error al hacer la petición:', error);
+          },
+        });
+      }
+    }
+  }
+
   onFileDropped($event: any) {
     this.prepareFilesList($event);
   }
@@ -51,104 +86,36 @@ export class TicketImageUploadComponent {
   prepareFilesList(files: Array<any>) {
     for (const item of files) {
       if (!this.allowedFileTypes.includes(item.type))
-        this.toastr.warning(
-          `Tipo de archivo no valido: ${item.name}`
-        );
-      item.valid = this.allowedFileTypes.includes(item.type)
+        this.toastr.warning(`Tipo de archivo no valido: ${item.name}`);
+      item.valid = this.allowedFileTypes.includes(item.type);
       this.files.push(item);
     }
 
     for (const item of files) {
       if (!item.valid) {
-        this.hasInvalidFiles = true
+        this.hasInvalidFiles = true;
       }
     }
-    console.log(this.files)
+    console.log(this.files);
     //this.uploadFilesSimulator(0);
   }
 
-
-  /**
-   * Delete file from files list
-   * @param index (File index)
-   */
   deleteFile(index: number) {
     this.files.splice(index, 1);
-    this.hasInvalidFiles = false
+    this.hasInvalidFiles = false;
     for (const item of this.files) {
       if (!item.valid) {
-        this.hasInvalidFiles = true
+        this.hasInvalidFiles = true;
       }
     }
   }
 
   arrayToFileList(files: File[]): FileList {
     const dataTransfer = new DataTransfer();
-    files.forEach(file => dataTransfer.items.add(file));
+    files.forEach((file) => dataTransfer.items.add(file));
     return dataTransfer.files;
   }
 
-  /**
-   * Simulate the upload process
-   */
-  /*uploadFilesSimulator(index: number) {
-    setTimeout(() => {
-      if (index === this.files.length) {
-        return;
-      } else {
-        const progressInterval = setInterval(() => {
-          if (this.files[index].progress === 100) {
-            clearInterval(progressInterval);
-            this.uploadFilesSimulator(index + 1);
-          } else {
-            this.files[index].progress += 5;
-          }
-        }, 200);
-      }
-    }, 1000);*/
-
-   /* this.postSubscription = this.ticketUploadService
-      .uploadFile(this.arrayToFileList(index))
-      .subscribe({
-        next: (event: HttpEvent<any>) => {
-          if (event.type === HttpEventType.Response) {
-            this.toastr.success('Recibos cargados correctamente');
-          } else if (event.type === HttpEventType.UploadProgress) {
-            const percentDone = Math.round(
-              (100 * (event as any).loaded) / (event as any).total
-            );
-            this.files[index].progress = percentDone
-            //this.updateProgress(percentDone);
-          }
-        },
-        error: (error) => {
-          console.error('Error al hacer la petición:', error);
-        },
-        complete: () => {
-          console.log('Petición completada');
-          this.isUploading = false;
-          this.percentDone = 0;
-          this.selectedFiles = null;
-          this.files.splice(index, 1);
-          if (this.fileInput) {
-            this.fileInput.nativeElement.value = '';
-          }
-          if (index == this.files.length)
-            return;
-          else if (index < this.files.length) {
-            this.uploadFilesSimulator(index + 1)
-          }
-        },
-      });
-
-  }
-  */
-
-  /**
-   * format bytes
-   * @param bytes (File size in bytes)
-   * @param decimals (Decimals point)
-   */
   formatBytes(bytes: any, decimals = 0) {
     if (bytes === 0) {
       return '0 Bytes';
@@ -159,12 +126,6 @@ export class TicketImageUploadComponent {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
-
-
-  constructor(
-    private ticketUploadService: TicketUploadService,
-    private toastr: ToastrService
-  ) {}
 
   updateProgress(value: number) {
     this.percentDone = value;
@@ -214,6 +175,34 @@ export class TicketImageUploadComponent {
         next: (event: HttpEvent<any>) => {
           if (event.type === HttpEventType.Response) {
             this.toastr.success('Recibos cargados correctamente');
+            let localStorageData = null;
+            if (localStorage.getItem('uploadedFiles')) {
+              localStorageData = JSON.parse(
+                localStorage.getItem('uploadedFiles')!
+              );
+            } else {
+              localStorage.setItem('uploadedFiles', JSON.stringify([]));
+              localStorageData = JSON.parse(
+                localStorage.getItem('uploadedFiles')!
+              );
+            }
+            event.body.forEach((receipt: any) => {
+              localStorageData.push({
+                id: receipt.id,
+                status: receipt.status,
+                reference_name: receipt.reference_name,
+                image_url: receipt.image_url,
+              });
+            });
+            console.log(localStorageData);
+
+            localStorage.setItem(
+              'uploadedFiles',
+              JSON.stringify(localStorageData)
+            );
+            this.loadReceipts();
+
+            console.log('Respuesta del servidor: ', event.body);
           } else if (event.type === HttpEventType.UploadProgress) {
             const percentDone = Math.round(
               (100 * (event as any).loaded) / (event as any).total
