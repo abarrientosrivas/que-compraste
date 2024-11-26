@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { ProgressComponent } from './progress/progress.component';
 import { ComprasService } from '../purchases/shared/compras.service';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-ticket-image-upload',
@@ -24,13 +25,16 @@ export class TicketImageUploadComponent implements OnInit {
   receiptList: any;
   selectedReceipt: any;
 
+  storageData: any;
+
   files: any[] = [];
   fileList: FileList | undefined;
 
   constructor(
     private ticketUploadService: TicketUploadService,
     private toastr: ToastrService,
-    private comprasService: ComprasService
+    private comprasService: ComprasService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   onSelectedReceipt(receipt: any) {
@@ -38,17 +42,106 @@ export class TicketImageUploadComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.ticketUploadService.getStatusUpdates(133).subscribe({
+    this.storageData = JSON.parse(
+      localStorage.getItem('uploadedFiles') || '[]'
+    );
+    this.sseStatusChange();
+    this.loadReceipts();
+  }
+
+  sseStatusChange() {
+    for (let receipt of this.storageData) {
+      this.ticketUploadService.getStatusUpdates(receipt.id).subscribe({
+        next: (event) => {
+          console.log('Status change from id: ', event);
+
+          this.ticketUploadService.getReceipt(event).subscribe({
+            next: (receipt) => {
+              let index = this.storageData.findIndex(
+                (item: { id: any }) => item.id === receipt.id
+              );
+
+              if (index !== -1) {
+                this.storageData[index].status = receipt.status;
+                localStorage.setItem(
+                  'uploadedFiles',
+                  JSON.stringify(this.storageData)
+                );
+                console.log('Updated item', this.storageData[index]);
+              } else {
+                console.log('Item not found');
+              }
+            },
+            error: (error) => {
+              console.error('Error al hacer la petición:', error);
+            },
+            complete: () => {
+              this.loadReceipts();
+              console.log('Petición completada');
+            },
+          });
+        },
+      });
+    }
+  }
+
+  sseStatusChangeReceipt(receiptId: number) {
+    this.ticketUploadService.getStatusUpdates(receiptId).subscribe({
       next: (event) => {
-        console.log(event);
+        console.log('Status change from id: ', event);
+
+        this.ticketUploadService.getReceipt(event).subscribe({
+          next: (receipt) => {
+            let index = this.storageData.findIndex(
+              (item: { id: any }) => item.id === receipt.id
+            );
+
+            if (index !== -1) {
+              this.storageData[index].status = receipt.status;
+              localStorage.setItem(
+                'uploadedFiles',
+                JSON.stringify(this.storageData)
+              );
+              let index2 = this.receiptList.findIndex(
+                (item: { id: number }) => item.id === receipt.id
+              );
+              console.log(this.receiptList, ' ', index2);
+
+              console.log('id a actualizar: ', event, ' ', receipt.id);
+
+              // Verifica si se encontró el elemento
+              if (index2 !== -1) {
+                // Actualiza el elemento en el índice encontrado
+                this.receiptList[index2] = {
+                  ...this.receiptList[index2],
+                  status: receipt.status,
+                }; // Aquí se cambia solo el precio
+                console.log('Receipt updated:', this.receiptList);
+              }
+            } else {
+              console.log('Item not found');
+            }
+          },
+          error: (error) => {
+            console.error('Error al hacer la petición:', error);
+          },
+          complete: () => {
+            this.cdr.detectChanges();
+            console.log('Petición completada');
+          },
+        });
       },
     });
-    this.loadReceipts();
   }
 
   loadReceipts() {
     if (localStorage.getItem('uploadedFiles')) {
-      this.receiptList = JSON.parse(localStorage.getItem('uploadedFiles')!);
+      this.receiptList = JSON.parse(
+        localStorage.getItem('uploadedFiles')!
+      ).sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
       for (let receipt of this.receiptList) {
         this.comprasService.getReceiptImage(receipt.image_url).subscribe({
           next: (blob: Blob) => {
@@ -56,6 +149,10 @@ export class TicketImageUploadComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error al hacer la petición:', error);
+          },
+          complete: () => {
+            this.cdr.detectChanges();
+            console.log('Petición completada');
           },
         });
       }
@@ -175,32 +272,44 @@ export class TicketImageUploadComponent implements OnInit {
         next: (event: HttpEvent<any>) => {
           if (event.type === HttpEventType.Response) {
             this.toastr.success('Recibos cargados correctamente');
-            let localStorageData = null;
             if (localStorage.getItem('uploadedFiles')) {
-              localStorageData = JSON.parse(
+              this.storageData = JSON.parse(
                 localStorage.getItem('uploadedFiles')!
               );
             } else {
               localStorage.setItem('uploadedFiles', JSON.stringify([]));
-              localStorageData = JSON.parse(
+              this.storageData = JSON.parse(
                 localStorage.getItem('uploadedFiles')!
               );
             }
             event.body.forEach((receipt: any) => {
-              localStorageData.push({
+              this.storageData.push({
                 id: receipt.id,
                 status: receipt.status,
                 reference_name: receipt.reference_name,
                 image_url: receipt.image_url,
+                created_at: receipt.created_at,
               });
             });
-            console.log(localStorageData);
+            console.log(this.storageData);
 
             localStorage.setItem(
               'uploadedFiles',
-              JSON.stringify(localStorageData)
+              JSON.stringify(this.storageData)
             );
+            this.receiptList = JSON.parse(
+              localStorage.getItem('uploadedFiles')!
+            ).sort(
+              (a: any, b: any) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime()
+            );
+
             this.loadReceipts();
+
+            event.body.forEach((receipt: any) => {
+              this.sseStatusChangeReceipt(receipt.id);
+            });
 
             console.log('Respuesta del servidor: ', event.body);
           } else if (event.type === HttpEventType.UploadProgress) {

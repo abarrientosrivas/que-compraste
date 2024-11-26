@@ -18,12 +18,6 @@ export class TicketUploadService {
     });
   }
 
-  getReceiptsStatus(): Observable<any> {
-    return this.http.get(
-      environment.apiUrl + '/receipts/waiting_and_processing/'
-    );
-  }
-
   getReceipt(receipt_id: number): Observable<any> {
     return this.http.get(environment.apiUrl + '/receipts/' + receipt_id);
   }
@@ -42,7 +36,7 @@ export class TicketUploadService {
       };
 
       eventSource.onopen = () => {
-        console.log('Connection established');
+        console.log('Connection established: ', receiptId);
       };
 
       return () => {

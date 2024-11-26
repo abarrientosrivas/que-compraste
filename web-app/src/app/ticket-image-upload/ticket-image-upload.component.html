@@ -143,12 +143,27 @@
         </tr>
       </thead>
       <tbody>
-        <tr style="vertical-align: middle" *ngFor="let receipt of receiptList">
+        <tr
+          style="vertical-align: middle"
+          *ngFor="let receipt of receiptList; let i = index"
+        >
           <td>{{ receipt.reference_name }}</td>
           <td>
-            <span class="badge bg-secondary rounded-pill">{{
-              receipt.status
-            }}</span>
+            <span class="badge bg-secondary rounded-pill">
+              {{
+                receipt.status === "WAITING"
+                  ? "En cola"
+                  : receipt.status === "CREATED"
+                  ? "Creado"
+                  : receipt.status === "COMPLETED"
+                  ? "Completado"
+                  : receipt.status === "PROCESSING"
+                  ? "En proceso"
+                  : receipt.status === "FAILED"
+                  ? "Fallo"
+                  : "Cancelado"
+              }}
+            </span>
           </td>
           <td>
             <button
