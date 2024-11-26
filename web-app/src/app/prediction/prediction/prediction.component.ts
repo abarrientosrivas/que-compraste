@@ -37,7 +37,7 @@ export class PredictionComponent implements OnInit {
   constructor(private productsService: ProductsService) {}
 
   prediction = (ctx: any, value: any) => {
-    if (ctx.p0.$context.dataIndex + 2 > this.historicPointsCount) {
+    if (ctx.p0.$context.dataIndex + 1 >= this.historicPointsCount) {
       return value;
     }
     return undefined;
