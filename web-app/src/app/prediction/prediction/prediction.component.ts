@@ -37,7 +37,7 @@ export class PredictionComponent implements OnInit {
   constructor(private productsService: ProductsService) {}
 
   prediction = (ctx: any, value: any) => {
-    if (ctx.p0.$context.dataIndex + 1 > this.historicPointsCount) {
+    if (ctx.p0.$context.dataIndex + 2 > this.historicPointsCount) {
       return value;
     }
     return undefined;
@@ -107,7 +107,9 @@ export class PredictionComponent implements OnInit {
 
                   // Filter items to include only those with a future date
                   items = items.filter((element: any) => {
-                    return new Date(element.date).getTime() > new Date().getTime();
+                    return (
+                      new Date(element.date).getTime() > new Date().getTime()
+                    );
                   });
 
                   console.log('Items: ', items);
@@ -115,26 +117,34 @@ export class PredictionComponent implements OnInit {
                   const today = new Date().getTime();
 
                   // Find the closest future item
-                  this.mainPrediction = items.reduce((closest: any, current: any) => {
-                    const currentDiff = new Date(current.date).getTime() - today;
-                    const closestDiff = new Date(closest.date).getTime() - today;
+                  this.mainPrediction = items.reduce(
+                    (closest: any, current: any) => {
+                      const currentDiff =
+                        new Date(current.date).getTime() - today;
+                      const closestDiff =
+                        new Date(closest.date).getTime() - today;
 
-                    // Ensure we're only considering future dates, and find the smallest difference
-                    if (currentDiff >= 0 && (closestDiff < 0 || currentDiff < closestDiff)) {
+                      // Ensure we're only considering future dates, and find the smallest difference
+                      if (
+                        currentDiff >= 0 &&
+                        (closestDiff < 0 || currentDiff < closestDiff)
+                      ) {
+                        return {
+                          ...current,
+                          quantity: Math.round(current.quantity), // Round the quantity of the current item
+                        };
+                      }
+
                       return {
-                        ...current,
-                        quantity: Math.round(current.quantity), // Round the quantity of the current item
+                        ...closest,
+                        quantity: Math.round(closest.quantity), // Round the quantity of the closest item
                       };
+                    },
+                    {
+                      ...items[0],
+                      quantity: Math.round(items[0].quantity), // Initialize with a rounded first item
                     }
-
-                    return {
-                      ...closest,
-                      quantity: Math.round(closest.quantity), // Round the quantity of the closest item
-                    };
-                  }, {
-                    ...items[0],
-                    quantity: Math.round(items[0].quantity), // Initialize with a rounded first item
-                  });
+                  );
                   this.predictionExist = true;
 
                   this.data1.labels = [
