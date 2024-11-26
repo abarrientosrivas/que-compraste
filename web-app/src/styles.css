@@ -15,7 +15,7 @@ html, body {
 
 /* Apply the background globally */
 body {
-  background-image: url('/API/assets/background.jpg'); /* Use relative path */
+  background-image: url('/api/assets/background.jpg'); /* Use relative path */
   background-size: cover; /* Ensure the image covers the entire background */
   background-repeat: no-repeat; /* Prevent the background from repeating */
   background-position: center; /* Center the image */
