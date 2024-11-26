@@ -6,6 +6,7 @@ import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { ProgressComponent } from './progress/progress.component';
 import { ComprasService } from '../purchases/shared/compras.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-ticket-image-upload',
@@ -22,11 +23,10 @@ export class TicketImageUploadComponent implements OnInit {
   postSubscription: any;
   isUploading = false;
   @ViewChild('fileDropRef') fileDropRef: ElementRef | undefined;
-  receiptList: any;
+  receiptList: any[] = [];
   selectedReceipt: any;
 
-  storageData: any;
-
+  trackedReceiptIds: number[] = [];
   files: any[] = [];
   fileList: FileList | undefined;
 
@@ -34,50 +34,88 @@ export class TicketImageUploadComponent implements OnInit {
     private ticketUploadService: TicketUploadService,
     private toastr: ToastrService,
     private comprasService: ComprasService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private zone: NgZone
   ) {}
+
+  ngOnInit(): void {
+    this.trackedReceiptIds = JSON.parse(
+      localStorage.getItem('trackedReceiptIds') || '[]'
+    );
+    this.loadReceipts().then(() => {
+      // Start SSE subscriptions after receipts have been loaded
+      this.sseStatusChange();
+    });
+  }
 
   onSelectedReceipt(receipt: any) {
     this.selectedReceipt = receipt;
   }
 
-  ngOnInit(): void {
-    this.storageData = JSON.parse(
-      localStorage.getItem('uploadedFiles') || '[]'
-    );
-    this.sseStatusChange();
-    this.loadReceipts();
+  async loadReceipts() {
+    if (this.trackedReceiptIds.length > 0) {
+      this.receiptList = [];
+      const receiptPromises = this.trackedReceiptIds.map((receiptId) =>
+        this.fetchReceipt(receiptId)
+      );
+      await Promise.all(receiptPromises);
+      // Sort the receiptList after all receipts have been loaded
+      this.receiptList.sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+  }
+
+  async fetchReceipt(receiptId: number) {
+    try {
+      const receipt = await this.ticketUploadService.getReceipt(receiptId).toPromise();
+
+      try {
+        const blob = await this.comprasService.getReceiptImage(receipt.image_url).toPromise();
+    
+        if (blob) {
+          receipt.image_url = URL.createObjectURL(blob);
+        } else {
+          console.warn(`No image returned for receipt ID: ${receiptId}`);
+          receipt.image_url = ''; // Provide a fallback or placeholder if needed
+        }
+      } catch (error) {
+        console.error('Error fetching image for receipt:', error);
+      }
+  
+      this.receiptList.push(receipt);
+    } catch (error) {
+      console.error('Error fetching receipt:', error);
+    }
   }
 
   sseStatusChange() {
-    for (let receipt of this.storageData) {
-      this.ticketUploadService.getStatusUpdates(receipt.id).subscribe({
+    for (let receiptId of this.trackedReceiptIds) {
+      this.ticketUploadService.getStatusUpdates(receiptId).subscribe({
         next: (event) => {
           console.log('Status change from id: ', event);
 
           this.ticketUploadService.getReceipt(event).subscribe({
             next: (receipt) => {
-              let index = this.storageData.findIndex(
-                (item: { id: any }) => item.id === receipt.id
-              );
-
-              if (index !== -1) {
-                this.storageData[index].status = receipt.status;
-                localStorage.setItem(
-                  'uploadedFiles',
-                  JSON.stringify(this.storageData)
+              this.zone.run(() => {
+                let index = this.receiptList.findIndex(
+                  (item: { id: any }) => item.id === receipt.id
                 );
-                console.log('Updated item', this.storageData[index]);
-              } else {
-                console.log('Item not found');
-              }
+
+                if (index !== -1) {
+                  this.receiptList[index] = {
+                    ...this.receiptList[index],
+                    status: receipt.status,
+                  };
+                } else {
+                  // If the receipt is not found, add it to receiptList
+                  this.addReceiptToList(receipt);
+                }
+              });
             },
             error: (error) => {
-              console.error('Error al hacer la petición:', error);
-            },
-            complete: () => {
-              this.loadReceipts();
-              console.log('Petición completada');
+              console.error('Error fetching receipt:', error);
             },
           });
         },
@@ -92,80 +130,59 @@ export class TicketImageUploadComponent implements OnInit {
 
         this.ticketUploadService.getReceipt(event).subscribe({
           next: (receipt) => {
-            let index = this.storageData.findIndex(
-              (item: { id: any }) => item.id === receipt.id
-            );
-
-            if (index !== -1) {
-              this.storageData[index].status = receipt.status;
-              localStorage.setItem(
-                'uploadedFiles',
-                JSON.stringify(this.storageData)
-              );
-              let index2 = this.receiptList.findIndex(
+            this.zone.run(() => {
+              let index = this.receiptList.findIndex(
                 (item: { id: number }) => item.id === receipt.id
               );
-              console.log(this.receiptList, ' ', index2);
 
-              console.log('id a actualizar: ', event, ' ', receipt.id);
-
-              // Verifica si se encontró el elemento
-              if (index2 !== -1) {
-                // Actualiza el elemento en el índice encontrado
-                this.receiptList[index2] = {
-                  ...this.receiptList[index2],
+              if (index !== -1) {
+                this.receiptList[index] = {
+                  ...this.receiptList[index],
                   status: receipt.status,
-                }; // Aquí se cambia solo el precio
-                console.log('Receipt updated:', this.receiptList);
+                };
+              } else {
+                // If the receipt is not found, add it to receiptList
+                this.addReceiptToList(receipt);
               }
-            } else {
-              console.log('Item not found');
-            }
+            });
           },
           error: (error) => {
-            console.error('Error al hacer la petición:', error);
-          },
-          complete: () => {
-            this.cdr.detectChanges();
-            console.log('Petición completada');
+            console.error('Error fetching receipt:', error);
           },
         });
       },
     });
   }
 
-  loadReceipts() {
-    if (localStorage.getItem('uploadedFiles')) {
-      this.receiptList = JSON.parse(
-        localStorage.getItem('uploadedFiles')!
-      ).sort(
-        (a: any, b: any) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      for (let receipt of this.receiptList) {
-        this.comprasService.getReceiptImage(receipt.image_url).subscribe({
-          next: (blob: Blob) => {
-            receipt.image_url = URL.createObjectURL(blob);
-          },
-          error: (error) => {
-            console.error('Error al hacer la petición:', error);
-          },
-          complete: () => {
-            this.cdr.detectChanges();
-            console.log('Petición completada');
-          },
-        });
+  addReceiptToList(receipt: any) {
+  // Fetch the receipt image
+  this.comprasService.getReceiptImage(receipt.image_url).subscribe({
+    next: (blob: Blob | undefined) => {
+      if (blob) {
+        receipt.image_url = URL.createObjectURL(blob); // Only create object URL if blob is defined
+        // Add the receipt to the receiptList
+        this.receiptList.push(receipt);
+        // Sort the receiptList
+        this.receiptList.sort(
+          (a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        // Trigger change detection
+        this.cdr.detectChanges();
+      } else {
+        console.error('Blob is undefined for receipt:', receipt);
       }
-    }
-  }
+    },
+    error: (error) => {
+      console.error('Error fetching receipt image:', error);
+    },
+  });
+}
 
   onFileDropped($event: any) {
     this.prepareFilesList($event);
   }
 
-  /**
-   * handle file from browsing
-   */
   fileBrowseHandler(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files) {
@@ -176,10 +193,6 @@ export class TicketImageUploadComponent implements OnInit {
     }
   }
 
-  /**
-   * Convert Files list to normal array list
-   * @param files (Files List)
-   */
   prepareFilesList(files: Array<any>) {
     for (const item of files) {
       if (!this.allowedFileTypes.includes(item.type))
@@ -194,7 +207,6 @@ export class TicketImageUploadComponent implements OnInit {
       }
     }
     console.log(this.files);
-    //this.uploadFilesSimulator(0);
   }
 
   deleteFile(index: number) {
@@ -234,35 +246,11 @@ export class TicketImageUploadComponent implements OnInit {
     this.isUploading = false;
   }
 
-  get selectedFilesNames() {
-    if (!this.selectedFiles) return [];
-    return Array.from(this.selectedFiles).map((file) => ({
-      name: file.name,
-      isValid: this.allowedFileTypes.includes(file.type),
-    }));
-  }
-
-  onFilesSelected(event: any) {
-    this.selectedFiles = event.target.files;
-    this.hasInvalidFiles = false;
-
-    if (this.selectedFiles) {
-      for (let i = 0; i < this.selectedFiles.length; i++) {
-        if (!this.allowedFileTypes.includes(this.selectedFiles[i].type)) {
-          this.toastr.warning(
-            `Tipo de archivo no valido: ${this.selectedFiles[i].name}`
-          );
-          this.hasInvalidFiles = true;
-        }
-      }
-    }
-  }
-
   onSubmit() {
-    /*if (!this.selectedFiles || this.selectedFiles.length === 0) {
-      this.toastr.error('Archivos seleccionados invalidos');
+    if (this.files.length === 0) {
+      this.toastr.error('No files to upload');
       return;
-    }*/
+    }
 
     this.isUploading = true;
 
@@ -272,44 +260,29 @@ export class TicketImageUploadComponent implements OnInit {
         next: (event: HttpEvent<any>) => {
           if (event.type === HttpEventType.Response) {
             this.toastr.success('Recibos cargados correctamente');
-            if (localStorage.getItem('uploadedFiles')) {
-              this.storageData = JSON.parse(
-                localStorage.getItem('uploadedFiles')!
+
+            if (localStorage.getItem('trackedReceiptIds')) {
+              this.trackedReceiptIds = JSON.parse(
+                localStorage.getItem('trackedReceiptIds')!
               );
             } else {
-              localStorage.setItem('uploadedFiles', JSON.stringify([]));
-              this.storageData = JSON.parse(
-                localStorage.getItem('uploadedFiles')!
-              );
+              localStorage.setItem('trackedReceiptIds', JSON.stringify([]));
+              this.trackedReceiptIds = [];
             }
-            event.body.forEach((receipt: any) => {
-              this.storageData.push({
-                id: receipt.id,
-                status: receipt.status,
-                reference_name: receipt.reference_name,
-                image_url: receipt.image_url,
-                created_at: receipt.created_at,
-              });
-            });
-            console.log(this.storageData);
-
-            localStorage.setItem(
-              'uploadedFiles',
-              JSON.stringify(this.storageData)
-            );
-            this.receiptList = JSON.parse(
-              localStorage.getItem('uploadedFiles')!
-            ).sort(
-              (a: any, b: any) =>
-                new Date(b.created_at).getTime() -
-                new Date(a.created_at).getTime()
-            );
-
-            this.loadReceipts();
 
             event.body.forEach((receipt: any) => {
+              this.trackedReceiptIds.push(receipt.id);
+              // Immediately add the receipt to receiptList
+              this.addReceiptToList(receipt);
+              // Start SSE subscription for this receipt
               this.sseStatusChangeReceipt(receipt.id);
             });
+            console.log(this.trackedReceiptIds);
+
+            localStorage.setItem(
+              'trackedReceiptIds',
+              JSON.stringify(this.trackedReceiptIds)
+            );
 
             console.log('Respuesta del servidor: ', event.body);
           } else if (event.type === HttpEventType.UploadProgress) {
@@ -321,6 +294,7 @@ export class TicketImageUploadComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al hacer la petición:', error);
+          this.isUploading = false;
         },
         complete: () => {
           console.log('Petición completada');
@@ -333,4 +307,15 @@ export class TicketImageUploadComponent implements OnInit {
         },
       });
   }
+
+  acknowledgeReceipt(receiptId: number) {
+    // Remove the receipt ID from trackedReceiptIds
+    this.trackedReceiptIds = this.trackedReceiptIds.filter((id) => id !== receiptId);
+    localStorage.setItem('trackedReceiptIds', JSON.stringify(this.trackedReceiptIds));
+  
+    // Remove the receipt from receiptList
+    this.receiptList = this.receiptList.filter((receipt: any) => receipt.id !== receiptId);
+  
+    console.log(`Receipt with ID ${receiptId} acknowledged and removed.`);
+  }  
 }
