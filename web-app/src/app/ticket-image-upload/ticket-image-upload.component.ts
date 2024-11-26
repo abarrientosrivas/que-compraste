@@ -1,17 +1,19 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { TicketUploadService } from '../ticket-upload.service';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { ProgressComponent } from './progress/progress.component';
 import { ComprasService } from '../purchases/shared/compras.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { NgZone } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-ticket-image-upload',
   standalone: true,
-  imports: [CommonModule, ProgressComponent],
+  imports: [CommonModule, RouterModule, ProgressComponent],
   templateUrl: './ticket-image-upload.component.html',
   styleUrls: ['./ticket-image-upload.component.css'],
 })
@@ -29,6 +31,8 @@ export class TicketImageUploadComponent implements OnInit {
   trackedReceiptIds: number[] = [];
   files: any[] = [];
   fileList: FileList | undefined;
+  
+  private sseSubscriptions: Subscription[] = [];
 
   constructor(
     private ticketUploadService: TicketUploadService,
@@ -46,6 +50,13 @@ export class TicketImageUploadComponent implements OnInit {
       // Start SSE subscriptions after receipts have been loaded
       this.sseStatusChange();
     });
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from all SSE connections
+    this.sseSubscriptions.forEach((sub) => sub.unsubscribe());
+    this.sseSubscriptions = [];
+    console.log('SSE connections cleaned up');
   }
 
   onSelectedReceipt(receipt: any) {
@@ -92,7 +103,7 @@ export class TicketImageUploadComponent implements OnInit {
 
   sseStatusChange() {
     for (let receiptId of this.trackedReceiptIds) {
-      this.ticketUploadService.getStatusUpdates(receiptId).subscribe({
+      const sseSub = this.ticketUploadService.getStatusUpdates(receiptId).subscribe({
         next: (event) => {
           console.log('Status change from id: ', event);
 
@@ -120,6 +131,9 @@ export class TicketImageUploadComponent implements OnInit {
           });
         },
       });
+
+      // Add subscription to the tracking list
+      this.sseSubscriptions.push(sseSub);
     }
   }
 
@@ -155,29 +169,37 @@ export class TicketImageUploadComponent implements OnInit {
   }
 
   addReceiptToList(receipt: any) {
-  // Fetch the receipt image
-  this.comprasService.getReceiptImage(receipt.image_url).subscribe({
-    next: (blob: Blob | undefined) => {
-      if (blob) {
-        receipt.image_url = URL.createObjectURL(blob); // Only create object URL if blob is defined
-        // Add the receipt to the receiptList
-        this.receiptList.push(receipt);
-        // Sort the receiptList
-        this.receiptList.sort(
-          (a: any, b: any) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        // Trigger change detection
-        this.cdr.detectChanges();
-      } else {
-        console.error('Blob is undefined for receipt:', receipt);
-      }
-    },
-    error: (error) => {
-      console.error('Error fetching receipt image:', error);
-    },
-  });
-}
+    this.zone.run(() => {
+      this.receiptList.push(receipt);
+      this.receiptList.sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      this.cdr.detectChanges();
+    });
+  
+    this.comprasService.getReceiptImage(receipt.image_url).subscribe({
+      next: (blob: Blob | undefined) => {
+        if (blob) {
+          const imageUrl = URL.createObjectURL(blob);
+          this.zone.run(() => {
+            const index = this.receiptList.findIndex(
+              (item) => item.id === receipt.id
+            );
+            if (index !== -1) {
+              this.receiptList[index].image_url = imageUrl;
+              this.cdr.detectChanges();
+            }
+          });
+        } else {
+          console.warn('Blob not returned for receipt:', receipt);
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching receipt image:', error);
+      },
+    });
+  }  
 
   onFileDropped($event: any) {
     this.prepareFilesList($event);
@@ -251,16 +273,16 @@ export class TicketImageUploadComponent implements OnInit {
       this.toastr.error('No files to upload');
       return;
     }
-
+  
     this.isUploading = true;
-
+  
     this.postSubscription = this.ticketUploadService
       .uploadFile(this.arrayToFileList(this.files))
       .subscribe({
         next: (event: HttpEvent<any>) => {
           if (event.type === HttpEventType.Response) {
             this.toastr.success('Recibos cargados correctamente');
-
+  
             if (localStorage.getItem('trackedReceiptIds')) {
               this.trackedReceiptIds = JSON.parse(
                 localStorage.getItem('trackedReceiptIds')!
@@ -269,22 +291,21 @@ export class TicketImageUploadComponent implements OnInit {
               localStorage.setItem('trackedReceiptIds', JSON.stringify([]));
               this.trackedReceiptIds = [];
             }
-
+  
             event.body.forEach((receipt: any) => {
               this.trackedReceiptIds.push(receipt.id);
-              // Immediately add the receipt to receiptList
               this.addReceiptToList(receipt);
-              // Start SSE subscription for this receipt
               this.sseStatusChangeReceipt(receipt.id);
             });
-            console.log(this.trackedReceiptIds);
-
+  
             localStorage.setItem(
               'trackedReceiptIds',
               JSON.stringify(this.trackedReceiptIds)
             );
-
-            console.log('Respuesta del servidor: ', event.body);
+  
+            this.cdr.detectChanges();
+  
+            console.log('Updated Tracked IDs:', this.trackedReceiptIds);
           } else if (event.type === HttpEventType.UploadProgress) {
             const percentDone = Math.round(
               (100 * (event as any).loaded) / (event as any).total
@@ -306,7 +327,7 @@ export class TicketImageUploadComponent implements OnInit {
           }
         },
       });
-  }
+  }  
 
   acknowledgeReceipt(receiptId: number) {
     // Remove the receipt ID from trackedReceiptIds

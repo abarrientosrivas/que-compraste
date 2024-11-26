@@ -74,50 +74,39 @@
   </button>
 </div>
 
-<div *ngIf="receiptList" class="row align-items-center">
+<div *ngIf="receiptList && receiptList.length > 0" class="row align-items-center">
   <div class="col">
     <h5 class="text-center mt-4 mb-4">
-      <strong>Estado de recibos cargados</strong>
+      <strong>Recibos cargados</strong>
     </h5>
     <table class="table">
       <tbody>
-        <!-- Add delete button for each receipt -->
         <tr *ngFor="let receipt of receiptList; let i = index">
           <td>{{ receipt.reference_name }}</td>
           <td>
             <span class="badge bg-secondary rounded-pill">
-              {{
-              receipt.status === "WAITING"
-              ? "En cola"
-              : receipt.status === "CREATED"
-              ? "Creado"
-              : receipt.status === "COMPLETED"
-              ? "Completado"
-              : receipt.status === "PROCESSING"
-              ? "En proceso"
-              : receipt.status === "FAILED"
-              ? "Fallo"
-              : "Cancelado"
-              }}
+              {{ receipt.status }}
             </span>
           </td>
-          <td>
-            <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#exampleModal"
-              (click)="onSelectedReceipt(receipt)">
-              <img [src]="receipt.image_url" class="img-thumbnail" style="width: 100px; height: 100px"
-                [alt]="receipt.reference_name" />
-            </button>
+          <td *ngIf="receipt.status === 'COMPLETED' && receipt.purchase_id">
+            <a
+              [routerLink]="['/compras', receipt.purchase_id]"
+              class="btn btn-primary"
+              title="Ir a la compra"
+            >
+              <i class="bi bi-box-arrow-in-right"></i>
+            </a>
           </td>
           <td>
             <button
               (click)="acknowledgeReceipt(receipt.id)"
               class="btn btn-light"
-              title="Mark as acknowledged"
+              title="Descartar"
             >
               <i class="bi bi-check-circle"></i>
             </button>
           </td>
-        </tr>
+        </tr>              
       </tbody>
     </table>
   </div>
