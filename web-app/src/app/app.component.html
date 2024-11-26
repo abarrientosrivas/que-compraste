@@ -1,46 +1,27 @@
-<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+<nav class="navbar navbar-expand-lg textured-navbar">
   <div class="container-fluid">
     <!-- Navbar Brand -->
-    <a class="navbar-brand" href="#">QuéCompraste?</a>
+    <!-- <a class="navbar-brand" href="#">QuéCompraste?</a> -->
 
     <!-- Hamburger Button -->
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <!-- Collapsible Menu -->
     <div class="collapse navbar-collapse" id="navbarNav">
       <div class="navbar-nav">
-        <a
-          class="nav-link px-3 d-flex align-items-center"
-          [routerLink]="['carga']"
-        >
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['carga']">
           <i class="pi pi-upload me-2"></i>Añadir
         </a>
-        <a
-          class="nav-link px-3 d-flex align-items-center"
-          [routerLink]="['compras']"
-        >
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['compras']">
           <i class="pi pi-list me-2"></i>Histórico
         </a>
-        <a
-          class="nav-link px-3 d-flex align-items-center"
-          [routerLink]="['reportes']"
-        >
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['reportes']">
           <i class="pi pi-chart-bar me-2"></i>Reportes
         </a>
-        <a
-          class="nav-link px-3 d-flex align-items-center"
-          [routerLink]="['predicciones']"
-        >
+        <a class="nav-link px-3 d-flex align-items-center" [routerLink]="['predicciones']">
           <i class="pi pi-hourglass me-2"></i>Predicciones
         </a>
       </div>
@@ -48,6 +29,7 @@
   </div>
 </nav>
 
+<!-- Main Content -->
 <div class="container main-container mt-4">
   <router-outlet></router-outlet>
 </div>

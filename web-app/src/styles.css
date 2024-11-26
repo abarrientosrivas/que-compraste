@@ -5,3 +5,31 @@
   right: 0;
   z-index: 9999;
 }
+
+/* Ensure no margin or padding interferes */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%; /* Ensure the background covers the entire viewport */
+}
+
+/* Apply the background globally */
+body {
+  background-image: url('/API/assets/background.jpg'); /* Use relative path */
+  background-size: cover; /* Ensure the image covers the entire background */
+  background-repeat: no-repeat; /* Prevent the background from repeating */
+  background-position: center; /* Center the image */
+  background-attachment: fixed; /* Keeps the background fixed during scrolling */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Optional: global font */
+}
+
+/* Report Card Container */
+.report-card {
+  background-color: #fff; /* Solid white background for the card */
+  padding: 30px;
+  margin: 20px auto;
+  max-width: 1200px; /* Limit the width for better readability */
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2); /* Shadow for separation from the background */
+  border-radius: 10px; /* Rounded corners */
+  border: 1px solid #e0e0e0; /* Optional border for better definition */
+}

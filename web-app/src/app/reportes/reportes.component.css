@@ -31,17 +31,19 @@ h4 {
   margin-top: 10px;
 }
 
-/* Card Styling */
-.card {
+/* Report Card Styling */
+.report-card {
   padding: 20px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   border: none;
+  /* Removed overflow: hidden */
 }
 
 /* Line Chart Styling */
 .line-chart-container {
   margin-top: 20px;
+  padding-bottom: 20px; /* Added padding */
 }
 
 .line-chart-container p-chart {
@@ -68,11 +70,26 @@ h4 {
     height: 300px;
   }
 
+  .line-chart-container {
+    margin-top: 10px;
+    padding-bottom: 15px; /* Adjusted padding */
+  }
+
   .line-chart-container p-chart {
+    height: 300px;
+  }
+
+  .report-card {
+    padding: 15px;
+  }
+
+  .pie-chart-container {
+    margin-top: 10px;
     height: 300px;
   }
 }
 
+/* Pie Chart Container Styling */
 .pie-chart-container {
   padding: 15px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
@@ -81,22 +98,6 @@ h4 {
   background-color: #fff;
 }
 
-@media (max-width: 768px) {
-  .card {
-    padding: 15px;
-  }
-
-  .pie-chart-container {
-    margin-top: 10px;
-    height: 300px;
-  }
-
-  .line-chart-container {
-    margin-top: 10px;
-    height: 300px;
-  }
-
-  .list-group-item {
-    font-size: 0.9rem;
-  }
+h1 {
+  color: #fff;
 }

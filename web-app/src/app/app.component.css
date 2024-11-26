@@ -1,0 +1,59 @@
+.textured-navbar {
+    position: sticky;
+    top: 0; /* Stick to the top of the viewport */
+    z-index: 1000;
+    background: rgba(241, 162, 168, 0.788); /* Transparent pastel pink */
+    border-bottom: 1px solid rgba(255, 205, 210, 0.7); /* Subtle border */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Slight shadow for elevation */
+    color: #555555;
+    display: flex;
+    justify-content: space-between; /* Space between brand and nav items */
+    align-items: center; 
+    padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #333333;
+    margin-left: auto;
+}
+
+.navbar-nav {
+    display: flex; /* Ensure flex layout for nav links */
+    justify-content: center; /* Center links horizontally */
+    flex-grow: 1;
+}
+
+.navbar-brand:hover {
+    color: #222222;
+}
+
+.nav-link {
+    color: #3a3a3a;
+    /* Neutral gray */
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0.5rem;
+}
+
+.nav-link:hover {
+    color: #cc6166;
+    /* Subtle pink on hover */
+}
+
+.btn-custom {
+    background-color: #ffccd5;
+    /* Lighter pink for buttons */
+    border: none;
+    color: #555555;
+    font-weight: 500;
+}
+
+.btn-custom:hover {
+    background-color: #ffa6b1;
+    /* Slightly darker pink on hover */
+    color: white;
+}

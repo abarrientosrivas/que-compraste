@@ -1,7 +1,7 @@
+<div class="report-card">
 <div class="row" *ngIf="response">
   <div class="col-md-6">
-    <h4 class="text-center">Tus compras estos últimos 365 días</h4>
-    <div class="card">
+      <h4 class="text-center">Tus compras estos últimos 365 días</h4>
       <ul class="list-group">
         <li class="list-group-item">
           <i class="pi pi-shopping-cart me-2 text-primary"></i>
@@ -24,18 +24,18 @@
           <span id="averagePerPurchase">${{ response.averagePerPurchase }}</span>
         </li>
       </ul>
-    </div>
   </div>
   <div class="col-md-6 pie-chart-container mt-4">
     <p-chart type="pie" [data]="data" [options]="options"></p-chart>
   </div>
 </div>
 <div class="row mt-4 line-chart-container">
-  <div class="card">
     <h4 class="text-center">Tu gasto acumulativo durante el último año</h4>
     <p-chart type="line" [data]="data2" [options]="options2"></p-chart>
-  </div>
 </div>
+<h1 class="trick">.</h1>
+<h1 class="trick">.</h1>
 <div *ngIf="!response" class="empty-state">
   <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para mostrar.
+</div>
 </div>

@@ -4,6 +4,7 @@ from pathlib import Path as pt
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, or_, and_, distinct
 from sqlalchemy.orm import Session, noload, joinedload, selectinload
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -135,6 +136,8 @@ conn.ensure_exchange(PRODUCT_CODE_EXCHANGE)
 conn.ensure_exchange(PRODUCT_EXCHANGE)
 conn.ensure_exchange(ENTITY_EXCHANGE)
 conn.ensure_exchange(IMAGE_TO_COMPRA_EXCHANGE)
+
+app.mount("/assets", StaticFiles(directory="API/page_images"), name="assets")
 
 @app.get("/")
 async def root():
