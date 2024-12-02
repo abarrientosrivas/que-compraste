@@ -56,9 +56,9 @@ class PurchasePredictorNode:
                     quantity = float(json['quantity'])
                     historic_data.append((date, quantity))
 
-                predicted_dates = predict_next_purchase_dates(historic_data, 60)
+                predicted_dates = predict_next_purchase_dates(historic_data, 90)
                 if not predicted_dates:
-                    logging.info(f"No predicted dates for the next 60 days")
+                    logging.info(f"No predicted dates for the next 90 days")
                     return
                 raw_predictions = predict_next_purchase_quantities(historic_data, predicted_dates)
                 

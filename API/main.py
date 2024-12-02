@@ -575,18 +575,23 @@ def get_purchases(
     end_date: Optional[datetime] = Query(None),
     db: Session = Depends(get_db)
 ):
-    query = db.query(models.Purchase).options(
-        noload(models.Purchase.entity),
-        selectinload(models.Purchase.items).options(
-            noload(models.PurchaseItem.product)
-        )
-    )
+    query = db.query(models.Purchase)
     
     if start_date and end_date:
-        query = query.filter(and_(
+        query = query.options(
+            noload(models.Purchase.entity),
+            selectinload(models.Purchase.items)
+        ).filter(and_(
             models.Purchase.date >= start_date,
             models.Purchase.date <= end_date
         ))
+    else:
+        query = query.options(
+            noload(models.Purchase.entity),
+            selectinload(models.Purchase.items).options(
+                noload(models.PurchaseItem.product)
+            )
+        )
     
     purchases = query.all()
     return purchases
