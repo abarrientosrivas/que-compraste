@@ -188,28 +188,28 @@ export class ReportesComponent {
             const groupedData: { [key: string]: number } = data.reduce(
               (acc, item) => {
                 // Format the date as 'yyyy-MM-dd' for correct sorting
-                const formattedDate = formatDate(item.date, 'yyyy-MM-dd', 'en-US');
+                const formattedDate = formatDate(item.date, 'yyyy-MM', 'en-US');
                 acc[formattedDate] = (acc[formattedDate] || 0) + item.total;
                 return acc;
               },
               {}
             );
-  
+
             const sortedData = Object.entries(groupedData)
               .map(([date, total]) => ({ date, total }))
               .sort((a, b) => a.date.localeCompare(b.date)); // Lexical sorting works with 'yyyy-MM-dd'
-  
+
             // Format dates back to 'dd-MM-yyyy' for display purposes
             this.data3.labels = sortedData.map((element) =>
-              formatDate(element.date, 'dd-MM-yyyy', 'en-US')
+              formatDate(element.date, 'MM-yyyy', 'en-US')
             );
-  
+
             sortedData.reduce((acc, item) => {
               acc += item.total;
               acc_total.push(acc);
               return acc;
             }, 0);
-  
+
             this.data3.datasets[0].data = acc_total;
             this.data3.datasets[0].label = 'Acumulativo';
             this.data2 = { ...this.data3 };
@@ -224,7 +224,6 @@ export class ReportesComponent {
         });
     }
   }
-  
 
   onSubmit() {
     console.log(this.dateForm.get('startDate').value.toString());
