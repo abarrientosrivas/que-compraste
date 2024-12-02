@@ -34,13 +34,15 @@ registerLocaleData(localeEs, 'es-ES');
 export class ReportesComponent {
   dateRangeForm: any;
   purchaseSummary: any;
-  pieChartOptions: any;
   pieChartData: any;
   pieChartDataSource: any = { labels: [], datasets: [{ data: [] }] };
   pieChartConfig: any;
 
   lineChartData: any;
-  lineChartDataSource: any = { labels: [], datasets: [{ data: [] }] };
+  lineChartDataSource: any = {
+    labels: [],
+    datasets: [{ data: [] }, { data: [] }],
+  };
   lineChartConfig: any;
 
   constructor(
@@ -198,6 +200,16 @@ export class ReportesComponent {
                 return acc;
               }, {});
 
+            const monthlyTotals = purchases.reduce((acc, purchase) => {
+              const month = formatDate(purchase.date, 'yyyy-MM', 'en-US');
+              acc[month] = (acc[month] || 0) + purchase.total;
+              return acc;
+            }, {});
+
+            this.lineChartDataSource.datasets[1].data =
+              Object.values(monthlyTotals);
+            this.lineChartDataSource.datasets[1].label = 'Mensual';
+
             const sortedPurchases = Object.entries(groupedPurchases)
               .map(([date, total]) => ({ date, total }))
               .sort((a, b) => a.date.localeCompare(b.date));
@@ -213,7 +225,7 @@ export class ReportesComponent {
             }, 0);
 
             this.lineChartDataSource.datasets[0].data = accumulatedTotals;
-            this.lineChartDataSource.datasets[0].label = 'Cumulative';
+            this.lineChartDataSource.datasets[0].label = 'Acumulado';
             this.lineChartData = { ...this.lineChartDataSource };
             console.log(this.lineChartDataSource);
           },
