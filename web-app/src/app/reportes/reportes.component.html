@@ -1,41 +1,54 @@
 <div class="report-card">
-<div class="row" *ngIf="response">
-  <div class="col-md-6">
+  <div class="row" *ngIf="purchaseSummary">
+    <div class="col-md-6">
       <h4 class="text-center">Tus compras estos últimos 365 días</h4>
       <ul class="list-group">
         <li class="list-group-item">
           <i class="pi pi-shopping-cart me-2 text-primary"></i>
           <span class="fw-bold">Compras realizadas: </span>
-          <span id="purchases">{{ response.purchases }}</span>
+          <span id="purchases">{{ purchaseSummary.totalPurchases }}</span>
         </li>
         <li class="list-group-item">
           <i class="pi pi-dollar me-2 text-success"></i>
           <span class="fw-bold">Total gastado: </span>
-          <span id="total"> ${{ response.total }}</span>
+          <span id="total"> ${{ purchaseSummary.totalSpent }}</span>
         </li>
         <li class="list-group-item">
           <i class="pi pi-calendar me-2 text-warning"></i>
           <span class="fw-bold">Promedio gastado por mes: </span>
-          <span id="averagePerDay">${{ response.averagePerMonth }}</span>
+          <span id="averagePerDay"
+            >${{ purchaseSummary.averageMonthlySpending }}</span
+          >
         </li>
         <li class="list-group-item">
           <i class="pi pi-chart-line me-2 text-info"></i>
           <span class="fw-bold">Promedio gastado por compra: </span>
-          <span id="averagePerPurchase">${{ response.averagePerPurchase }}</span>
+          <span id="averagePerPurchase"
+            >${{ purchaseSummary.averageSpendingPerPurchase }}</span
+          >
         </li>
       </ul>
+    </div>
+    <div class="col-md-6 pie-chart-container mt-4">
+      <p-chart
+        type="pie"
+        [data]="pieChartData"
+        [options]="pieChartConfig"
+      ></p-chart>
+    </div>
   </div>
-  <div class="col-md-6 pie-chart-container mt-4">
-    <p-chart type="pie" [data]="data" [options]="options"></p-chart>
-  </div>
-</div>
-<div class="row mt-4 line-chart-container">
+  <div class="row mt-4 line-chart-container">
     <h4 class="text-center">Tu gasto acumulativo durante el último año</h4>
-    <p-chart type="line" [data]="data2" [options]="options2"></p-chart>
-</div>
-<h1 class="trick">.</h1>
-<h1 class="trick">.</h1>
-<div *ngIf="!response" class="empty-state">
-  <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para mostrar.
-</div>
+    <p-chart
+      type="line"
+      [data]="lineChartData"
+      [options]="lineChartConfig"
+    ></p-chart>
+  </div>
+  <h1 class="trick">.</h1>
+  <h1 class="trick">.</h1>
+  <div *ngIf="!purchaseSummary" class="empty-state">
+    <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para
+    mostrar.
+  </div>
 </div>

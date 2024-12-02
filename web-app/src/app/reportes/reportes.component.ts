@@ -32,22 +32,22 @@ registerLocaleData(localeEs, 'es-ES');
   styleUrl: './reportes.component.css',
 })
 export class ReportesComponent {
-  dateForm: any;
-  response: any;
-  chartOptions: any;
-  data: any;
-  data1: any = { labels: [], datasets: [{ data: [] }] };
-  options: any;
+  dateRangeForm: any;
+  purchaseSummary: any;
+  pieChartOptions: any;
+  pieChartData: any;
+  pieChartDataSource: any = { labels: [], datasets: [{ data: [] }] };
+  pieChartConfig: any;
 
-  data2: any;
-  data3: any = { labels: [], datasets: [{ data: [] }] };
-  options2: any;
+  lineChartData: any;
+  lineChartDataSource: any = { labels: [], datasets: [{ data: [] }] };
+  lineChartConfig: any;
 
   constructor(
     private formBuilder: FormBuilder,
     private reportesService: ReportesService
   ) {
-    this.dateForm = this.formBuilder.group(
+    this.dateRangeForm = this.formBuilder.group(
       {
         startDate: [
           formatDate(
@@ -65,22 +65,22 @@ export class ReportesComponent {
         ],
       },
       {
-        validators: this.endDateGreaterThanStartDate(),
+        validators: this.validateEndDateAfterStartDate(),
       }
     );
   }
 
-  endDateGreaterThanStartDate(): ValidatorFn {
+  validateEndDateAfterStartDate(): ValidatorFn {
     return (control: AbstractControl) => {
-      if (!this.dateForm) return null;
-      const startDate = this.dateForm.get('startDate')?.value;
-      const endDate = this.dateForm.get('endDate')?.value;
+      if (!this.dateRangeForm) return null;
+      const startDate = this.dateRangeForm.get('startDate')?.value;
+      const endDate = this.dateRangeForm.get('endDate')?.value;
       if (!startDate || !endDate) {
-        return { fechasIncompletas: true };
+        return { incompleteDates: true };
       }
 
       if (new Date(startDate) > new Date(endDate)) {
-        return { rangoInvalido: true };
+        return { invalidRange: true };
       }
 
       return null;
@@ -88,7 +88,7 @@ export class ReportesComponent {
   }
 
   ngOnInit(): void {
-    this.options = {
+    this.pieChartConfig = {
       responsive: true,
       radius: '75%',
       maintainAspectRatio: false,
@@ -102,7 +102,7 @@ export class ReportesComponent {
       },
     };
 
-    this.options2 = {
+    this.lineChartConfig = {
       maintainAspectRatio: false,
       aspectRatio: 0.6,
       plugins: {
@@ -134,136 +134,140 @@ export class ReportesComponent {
       },
     };
 
-    this.onSubmit();
-    this.fetchChartData();
-    this.fetchLineChartData();
+    this.submitForm();
+    this.loadPieChartData();
+    this.loadLineChartData();
   }
 
-  fetchChartData() {
+  loadPieChartData() {
     if (
-      this.dateForm.get('startDate').value &&
-      this.dateForm.get('endDate').value
+      this.dateRangeForm.get('startDate').value &&
+      this.dateRangeForm.get('endDate').value
     ) {
       this.reportesService
         .getTotalsByCategory(
-          this.dateForm.get('startDate').value,
-          this.dateForm.get('endDate').value
+          this.dateRangeForm.get('startDate').value,
+          this.dateRangeForm.get('endDate').value
         )
         .subscribe({
-          next: (data: any[]) => {
-            this.data1.labels = data.map((element) => {
-              return element[0].name_es_es;
+          next: (categories: any[]) => {
+            this.pieChartDataSource.labels = categories.map((category) => {
+              return category[0].name_es_es;
             });
-            this.data1.datasets[0].data = data.map((element) => {
-              return element[1];
-            });
-            this.data1.datasets[0].label = '';
-            this.data = { ...this.data1 };
-            console.log(this.data1);
-            console.log('Respuesta del servidorrr: ', data);
+            this.pieChartDataSource.datasets[0].data = categories.map(
+              (category) => {
+                return category[1];
+              }
+            );
+            this.pieChartDataSource.datasets[0].label = '';
+            this.pieChartData = { ...this.pieChartDataSource };
+            console.log(this.pieChartDataSource);
+            console.log('Server response: ', categories);
           },
           error: (error) => {
-            console.error('Error al hacer la petición: ', error);
+            console.error('Request error: ', error);
           },
           complete: () => {
-            console.log('Petición completada');
+            console.log('Request completed');
           },
         });
     }
   }
 
-  fetchLineChartData() {
+  loadLineChartData() {
     if (
-      this.dateForm.get('startDate').value &&
-      this.dateForm.get('endDate').value
+      this.dateRangeForm.get('startDate').value &&
+      this.dateRangeForm.get('endDate').value
     ) {
-      const acc_total: any[] = [];
+      const accumulatedTotals: any[] = [];
       this.reportesService
         .getPurchasesByRangeDate(
-          this.dateForm.get('startDate').value,
-          this.dateForm.get('endDate').value
+          this.dateRangeForm.get('startDate').value,
+          this.dateRangeForm.get('endDate').value
         )
         .subscribe({
-          next: (data: any[]) => {
-            const groupedData: { [key: string]: number } = data.reduce(
-              (acc, item) => {
-                // Format the date as 'yyyy-MM-dd' for correct sorting
-                const formattedDate = formatDate(item.date, 'yyyy-MM', 'en-US');
-                acc[formattedDate] = (acc[formattedDate] || 0) + item.total;
+          next: (purchases: any[]) => {
+            const groupedPurchases: { [key: string]: number } =
+              purchases.reduce((acc, purchase) => {
+                const formattedDate = formatDate(
+                  purchase.date,
+                  'yyyy-MM',
+                  'en-US'
+                );
+                acc[formattedDate] = (acc[formattedDate] || 0) + purchase.total;
                 return acc;
-              },
-              {}
-            );
+              }, {});
 
-            const sortedData = Object.entries(groupedData)
+            const sortedPurchases = Object.entries(groupedPurchases)
               .map(([date, total]) => ({ date, total }))
-              .sort((a, b) => a.date.localeCompare(b.date)); // Lexical sorting works with 'yyyy-MM-dd'
+              .sort((a, b) => a.date.localeCompare(b.date));
 
-            // Format dates back to 'dd-MM-yyyy' for display purposes
-            this.data3.labels = sortedData.map((element) =>
-              formatDate(element.date, 'MM-yyyy', 'en-US')
+            this.lineChartDataSource.labels = sortedPurchases.map((entry) =>
+              formatDate(entry.date, 'MM-yyyy', 'en-US')
             );
 
-            sortedData.reduce((acc, item) => {
-              acc += item.total;
-              acc_total.push(acc);
+            sortedPurchases.reduce((acc, entry) => {
+              acc += entry.total;
+              accumulatedTotals.push(acc);
               return acc;
             }, 0);
 
-            this.data3.datasets[0].data = acc_total;
-            this.data3.datasets[0].label = 'Acumulativo';
-            this.data2 = { ...this.data3 };
-            console.log(this.data3);
+            this.lineChartDataSource.datasets[0].data = accumulatedTotals;
+            this.lineChartDataSource.datasets[0].label = 'Cumulative';
+            this.lineChartData = { ...this.lineChartDataSource };
+            console.log(this.lineChartDataSource);
           },
           error: (error) => {
-            console.error('Error al hacer la petición: ', error);
+            console.error('Request error: ', error);
           },
           complete: () => {
-            console.log('Petición completada');
+            console.log('Request completed');
           },
         });
     }
   }
 
-  onSubmit() {
-    console.log(this.dateForm.get('startDate').value.toString());
+  submitForm() {
+    console.log(this.dateRangeForm.get('startDate').value.toString());
 
     if (
-      this.dateForm.get('startDate').value &&
-      this.dateForm.get('endDate').value
+      this.dateRangeForm.get('startDate').value &&
+      this.dateRangeForm.get('endDate').value
     ) {
-      const startDateDate = new Date(this.dateForm.get('startDate').value);
-      const endDateDate = new Date(this.dateForm.get('endDate').value);
-      const dateDiff = endDateDate.getTime() - startDateDate.getTime();
-      this.response = this.reportesService
+      const start = new Date(this.dateRangeForm.get('startDate').value);
+      const end = new Date(this.dateRangeForm.get('endDate').value);
+      const dateDifference = end.getTime() - start.getTime();
+      this.purchaseSummary = this.reportesService
         .getPurchases(
-          this.dateForm.get('startDate').value,
-          this.dateForm.get('endDate').value
+          this.dateRangeForm.get('startDate').value,
+          this.dateRangeForm.get('endDate').value
         )
         .subscribe({
-          next: (data: any[]) => {
-            const response = {
-              total: 0,
-              purchases: 0,
-              averagePerMonth: 0,
-              averagePerPurchase: 0,
+          next: (purchases: any[]) => {
+            const summary = {
+              totalSpent: 0,
+              totalPurchases: 0,
+              averageMonthlySpending: 0,
+              averageSpendingPerPurchase: 0,
             };
 
-            response.total = data
-              .reduce((acc, item) => acc + item.total, 0)
+            summary.totalSpent = purchases
+              .reduce((acc, purchase) => acc + purchase.total, 0)
               .toFixed(2);
-            response.purchases = data.length;
-            response.averagePerMonth = +(response.total / 12).toFixed(2);
-            response.averagePerPurchase = +(
-              response.total / data.length
+            summary.totalPurchases = purchases.length;
+            summary.averageMonthlySpending = +(summary.totalSpent / 12).toFixed(
+              2
+            );
+            summary.averageSpendingPerPurchase = +(
+              summary.totalSpent / purchases.length
             ).toFixed(2);
-            this.response = response;
+            this.purchaseSummary = summary;
           },
           error: (err) => {
-            console.log('Error del servidor: ', err);
+            console.log('Server error: ', err);
           },
           complete: () => {
-            console.log('Peticion completada');
+            console.log('Request completed');
           },
         });
     }
