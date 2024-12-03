@@ -243,8 +243,6 @@ export class ReportesComponent {
   }
 
   submitForm() {
-    console.log(this.dateRangeForm.get('startDate').value.toString());
-
     if (
       this.dateRangeForm.get('startDate').value &&
       this.dateRangeForm.get('endDate').value
@@ -276,6 +274,7 @@ export class ReportesComponent {
             summary.averageSpendingPerPurchase = +(
               summary.totalSpent / purchases.length
             ).toFixed(2);
+            this.loadPieChartData();
             this.purchaseSummary = summary;
           },
           error: (err) => {
