@@ -1085,6 +1085,24 @@ def get_restockables_product_ids(db: Session = Depends(get_db)):
 
     return product_ids
 
+@app.get("/restockables/categories", response_model=List[int], response_model_exclude_none=True)
+def get_restockables_product_codes(db: Session = Depends(get_db)):
+    two_years_ago = datetime.now() - timedelta(days=2 * 365)
+
+    query = (
+        db.query(models.Category.code)
+        .join(models.Product, models.Product.category_id == models.Category.id)
+        .join(models.PurchaseItem, models.PurchaseItem.product_id == models.Product.id)
+        .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+        .filter(models.Purchase.date >= two_years_ago)
+        .group_by(models.Category.code)
+        .having(func.count(distinct(func.date(models.Purchase.date))) >= 3)
+    )
+
+    category_codes = [key[0] for key in query.all()]
+
+    return category_codes
+
 @app.post("/node_tokens/authorize_crawl")
 def get_crawl_authorization(node_token: schemas.NodeToken = Depends(get_node_token), db: Session = Depends(get_db)):
     today = date.today()
