@@ -1150,6 +1150,30 @@ def get_historic_by_product_code(product_code: str, db: Session = Depends(get_db
 
     return historic
 
+@app.get("/historics/by-category-code/{category_code}", response_model=List[schemas.Historic])
+def get_historic_by_category_code(category_code: str, db: Session = Depends(get_db)):
+    purchase_items = (
+        db.query(models.PurchaseItem)
+        .options(selectinload(models.PurchaseItem.purchase))
+        .join(models.Product, models.PurchaseItem.product_id == models.Product.id)
+        .join(models.Category, models.Product.category_id == models.Category.id)
+        .filter(models.Category.code == category_code)
+        .all()
+    )
+
+    historic_dates = {}
+    for item in purchase_items:
+        if not item.purchase.date or not item.quantity:
+            continue
+        if historic_dates.get(item.purchase.date):
+            historic_dates[item.purchase.date] += item.quantity
+        else:
+            historic_dates[item.purchase.date] = item.quantity
+            
+    historic = [schemas.Historic(date=date, quantity=quantity) for date, quantity in historic_dates.items()]
+
+    return historic
+
 @app.post("/predictions/", response_model=schemas.Prediction)
 def create_prediction(prediction: schemas.PredictionCreate, db: Session = Depends(get_db)):
     if not prediction.category_code and not prediction.product_key:
