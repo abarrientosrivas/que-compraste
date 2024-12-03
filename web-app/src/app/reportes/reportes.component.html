@@ -1,12 +1,12 @@
 <div class="report-card">
-  <div class="row" *ngIf="purchaseSummary">
+  <div class="row">
     <div class="col-md-6">
-      <h4 class="text-center">Tus compras estos últimos 365 días</h4>
-      <div class="row mb-4">
-        <div class="col-md-12">
+      <h4 class="text-center">Tus compras durante este periodo</h4>
+      <div class="row">
+        <div class="col-md-12 mb-1">
           <form [formGroup]="dateRangeForm" (ngSubmit)="submitForm()">
             <div class="row justify-content-center">
-              <div class="col-md-4 form-group">
+              <div class="col-12 col-md-4 form-group">
                 <label for="startDate">Desde: </label>
                 <input
                   type="date"
@@ -16,7 +16,7 @@
                   name="startDate"
                 />
               </div>
-              <div class="col-md-4 form-group">
+              <div class="col-12 col-md-4 form-group">
                 <label for="endDate">Hasta: </label>
                 <input
                   type="date"
@@ -26,18 +26,18 @@
                   name="endDate"
                 />
               </div>
-              <div class="col-md-1">
+              <div class="col-12 col-md-3 text-center">
                 <button
                   type="submit"
                   [disabled]="!dateRangeForm.valid"
-                  class="btn btn-primary mt-4"
+                  class="btn btn-primary mt-1"
                   style="
                     background-color: rgba(241, 162, 168, 0.788);
                     color: black;
                     border-color: gray;
                   "
                 >
-                  Enviar
+                  Cambiar
                 </button>
               </div>
             </div>
@@ -45,34 +45,47 @@
         </div>
       </div>
 
-      <ul class="list-group">
-        <li class="list-group-item">
-          <i class="pi pi-shopping-cart me-2 text-primary"></i>
-          <span class="fw-bold">Compras realizadas: </span>
-          <span id="purchases">{{ purchaseSummary.totalPurchases }}</span>
-        </li>
-        <li class="list-group-item">
-          <i class="pi pi-dollar me-2 text-success"></i>
-          <span class="fw-bold">Total gastado: </span>
-          <span id="total"> ${{ purchaseSummary.totalSpent }}</span>
-        </li>
-        <li class="list-group-item">
-          <i class="pi pi-calendar me-2 text-warning"></i>
-          <span class="fw-bold">Promedio gastado por mes: </span>
-          <span id="averagePerDay"
-            >${{ purchaseSummary.averageMonthlySpending }}</span
-          >
-        </li>
-        <li class="list-group-item">
-          <i class="pi pi-chart-line me-2 text-info"></i>
-          <span class="fw-bold">Promedio gastado por compra: </span>
-          <span id="averagePerPurchase"
-            >${{ purchaseSummary.averageSpendingPerPurchase }}</span
-          >
-        </li>
-      </ul>
+      <div *ngIf="purchaseSummary" class="col-12">
+        <ul class="list-group">
+          <li class="list-group-item">
+            <i class="pi pi-shopping-cart me-2 text-primary"></i>
+            <span class="fw-bold">Compras realizadas: </span>
+            <span id="purchases">{{ purchaseSummary.totalPurchases }}</span>
+          </li>
+          <li class="list-group-item">
+            <i class="pi pi-dollar me-2 text-success"></i>
+            <span class="fw-bold">Total gastado: </span>
+            <span id="total"> ${{ purchaseSummary.totalSpent }}</span>
+          </li>
+          <li class="list-group-item">
+            <i class="pi pi-calendar me-2 text-warning"></i>
+            <span class="fw-bold">Promedio gastado por mes: </span>
+            <span id="averagePerDay"
+              >${{ purchaseSummary.averageMonthlySpending }}</span
+            >
+          </li>
+          <li class="list-group-item">
+            <i class="pi pi-chart-line me-2 text-info"></i>
+            <span class="fw-bold">Promedio gastado por compra: </span>
+            <span id="averagePerPurchase"
+              >${{ purchaseSummary.averageSpendingPerPurchase }}</span
+            >
+          </li>
+        </ul>
+      </div>
+      <div *ngIf="!purchaseSummary" class="empty-state">
+        <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para
+        mostrar.
+      </div>
     </div>
-    <div class="col-md-6 pie-chart-container mt-4">
+
+    <div class="col-md-6 pie-chart-container">
+      <h4 class="text-center">Tus gastos por categoria</h4>
+
+      <div *ngIf="!purchaseSummary" class="empty-state">
+        <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para
+        mostrar.
+      </div>
       <p-chart
         type="pie"
         [data]="pieChartData"
@@ -90,8 +103,4 @@
   </div>
   <h1 class="trick">.</h1>
   <h1 class="trick">.</h1>
-  <div *ngIf="!purchaseSummary" class="empty-state">
-    <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para
-    mostrar.
-  </div>
 </div>

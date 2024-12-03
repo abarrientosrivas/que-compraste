@@ -10,14 +10,6 @@ export class ReportesService {
   constructor(private http: HttpClient) {}
   private baseUrl = environment.apiUrl;
 
-  getPurchases(startDate: string, endDate: string) {
-    const url = `${this.baseUrl}/purchases/`;
-    const params = new HttpParams()
-      .set('start_date', startDate)
-      .set('end_date', endDate);
-    return this.http.get<any[]>(url, { params: params });
-  }
-
   getRootCategoriesWithPurchases(
     startDate: string,
     endDate: string

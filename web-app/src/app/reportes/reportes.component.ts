@@ -137,7 +137,6 @@ export class ReportesComponent {
     };
 
     this.submitForm();
-    this.loadPieChartData();
     this.loadLineChartData();
   }
 
@@ -146,13 +145,23 @@ export class ReportesComponent {
       this.dateRangeForm.get('startDate').value &&
       this.dateRangeForm.get('endDate').value
     ) {
+      const endDate = new Date(this.dateRangeForm.get('endDate').value);
+      endDate.setDate(endDate.getDate() + 1);
+
       this.reportesService
         .getTotalsByCategory(
           this.dateRangeForm.get('startDate').value,
-          this.dateRangeForm.get('endDate').value
+          endDate.toISOString().split('T')[0]
         )
         .subscribe({
           next: (categories: any[]) => {
+            console.log('categories', categories);
+
+            if (categories.length === 0) {
+              this.pieChartData = { labels: [], datasets: [{ data: [] }] };
+              return;
+            }
+
             this.pieChartDataSource.labels = categories.map((category) => {
               return category[0].name_es_es;
             });
@@ -247,16 +256,23 @@ export class ReportesComponent {
       this.dateRangeForm.get('startDate').value &&
       this.dateRangeForm.get('endDate').value
     ) {
-      const start = new Date(this.dateRangeForm.get('startDate').value);
-      const end = new Date(this.dateRangeForm.get('endDate').value);
-      const dateDifference = end.getTime() - start.getTime();
+      const startDate = new Date(this.dateRangeForm.get('startDate').value);
+      const endDate = new Date(this.dateRangeForm.get('endDate').value);
+      endDate.setDate(endDate.getDate() + 1);
+      this.purchaseSummary = null;
       this.purchaseSummary = this.reportesService
-        .getPurchases(
+        .getPurchasesByRangeDate(
           this.dateRangeForm.get('startDate').value,
-          this.dateRangeForm.get('endDate').value
+          endDate.toISOString().split('T')[0]
         )
         .subscribe({
           next: (purchases: any[]) => {
+            this.loadPieChartData();
+            if (purchases.length === 0) {
+              this.purchaseSummary = null;
+              return;
+            }
+
             const summary = {
               totalSpent: 0,
               totalPurchases: 0,
@@ -274,7 +290,6 @@ export class ReportesComponent {
             summary.averageSpendingPerPurchase = +(
               summary.totalSpent / purchases.length
             ).toFixed(2);
-            this.loadPieChartData();
             this.purchaseSummary = summary;
           },
           error: (err) => {
