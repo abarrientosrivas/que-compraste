@@ -163,7 +163,6 @@ export class ReportesComponent {
             );
             this.pieChartDataSource.datasets[0].label = '';
             this.pieChartData = { ...this.pieChartDataSource };
-            console.log(this.pieChartDataSource);
             console.log('Server response: ', categories);
           },
           error: (error) => {
@@ -206,8 +205,13 @@ export class ReportesComponent {
               return acc;
             }, {});
 
-            this.lineChartDataSource.datasets[1].data =
-              Object.values(monthlyTotals);
+            const sortedMonthlyTotals = Object.entries(monthlyTotals)
+              .map(([date, total]) => ({ date, total }))
+              .sort((a, b) => a.date.localeCompare(b.date));
+            this.lineChartDataSource.datasets[1].data = sortedMonthlyTotals.map(
+              (entry) => entry.total
+            );
+
             this.lineChartDataSource.datasets[1].label = 'Mensual';
 
             const sortedPurchases = Object.entries(groupedPurchases)
@@ -227,7 +231,6 @@ export class ReportesComponent {
             this.lineChartDataSource.datasets[0].data = accumulatedTotals;
             this.lineChartDataSource.datasets[0].label = 'Acumulado';
             this.lineChartData = { ...this.lineChartDataSource };
-            console.log(this.lineChartDataSource);
           },
           error: (error) => {
             console.error('Request error: ', error);
