@@ -1202,8 +1202,17 @@ def create_prediction(prediction: schemas.PredictionCreate, db: Session = Depend
     
     return db_entity
 
+@app.get("/predictions/by-category-code/{category_code}", response_model=schemas.Prediction, response_model_exclude_none=True)
+def get_latest_category_prediction(category_code: str, db: Session = Depends(get_db)): 
+    entity = db.query(models.Prediction).filter(models.Prediction.category_code == category_code).order_by(models.Prediction.created_at.desc()).first()
+
+    if not entity:
+        raise HTTPException(status_code=404, detail="No prediction found")
+
+    return entity
+
 @app.get("/predictions/by-product-code/{product_code}", response_model=schemas.Prediction, response_model_exclude_none=True)
-def get_latest_prediction(product_code: str, db: Session = Depends(get_db)): 
+def get_latest_product_prediction(product_code: str, db: Session = Depends(get_db)): 
     entity = db.query(models.Prediction).filter(models.Prediction.product_key == product_code).order_by(models.Prediction.created_at.desc()).first()
 
     if not entity:
