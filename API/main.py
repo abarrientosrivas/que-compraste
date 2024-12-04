@@ -1235,3 +1235,45 @@ async def get_product_codes(db: Session = Depends(get_db)):
     ).all()
 
     return [{"read_product_text": text or key, "read_product_key": key} for text, key in result]
+
+@app.get("/predictions/suggested_carts", response_model=List[schemas.Cart])
+async def get_suggested_carts(db: Session = Depends(get_db)):
+    query_product = db.query(
+        models.Prediction.product_key.label('key'),
+        func.max(models.Prediction.created_at).label('max_created_at')
+    ).filter(
+        models.Prediction.product_key.isnot(None)
+    ).group_by(
+        models.Prediction.product_key
+    )
+
+    query_category = db.query(
+        models.Prediction.category_code.label('key'),
+        func.max(models.Prediction.created_at).label('max_created_at')
+    ).filter(
+        models.Prediction.category_code.isnot(None)
+    ).group_by(
+        models.Prediction.category_code
+    )
+
+    subq = query_product.union_all(query_category).subquery()
+
+    latest_predictions = db.query(models.Prediction).join(
+        subq,
+        or_(
+            and_(
+                models.Prediction.product_key == subq.c.key,
+                models.Prediction.created_at == subq.c.max_created_at
+            ),
+            and_(
+                models.Prediction.category_code == subq.c.key,
+                models.Prediction.created_at == subq.c.max_created_at
+            )
+        )
+    ).options(
+        selectinload(models.Prediction.items)
+    ).all()
+
+    print(len(latest_predictions))
+
+    return []

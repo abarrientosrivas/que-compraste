@@ -314,6 +314,7 @@ class HistoricBase(BaseModel):
 class Historic(HistoricBase):
     pass
 
+
 # --------------------
 # PredictionItem Schemas
 # --------------------
@@ -353,3 +354,14 @@ class Prediction(PredictionBase):
     id: int
     items: List[PredictionItem] = Field(default_factory=list)
     created_at: datetime
+
+
+# --------------------
+# Cart Schemas
+# --------------------
+class CartItem(BaseModel):
+    pass
+
+class Cart(BaseModel):
+    date: datetime
+    items: List[CartItem] = Field(default_factory=list)
