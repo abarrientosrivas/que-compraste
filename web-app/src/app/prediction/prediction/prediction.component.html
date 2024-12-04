@@ -21,7 +21,7 @@
     </form>
   </div>
 </div>
-<div *ngIf="selectedProduct" class="row justify-content-center mt-4 mb-4">
+<div *ngIf="selectedProduct || selectedCategory" class="row justify-content-center mt-4 mb-4">
   <div class="col text-right">
     <div *ngIf="mainPrediction">
       <h4>Próxima compra sugerida:</h4>

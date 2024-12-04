@@ -57,7 +57,6 @@ export class PredictionComponent implements OnInit {
     this.formGroup.get('selectedProduct')?.valueChanges.subscribe((item) => {
       this.predictionExist = false;
       this.mainPrediction = null;
-      console.log(item);
       if (this.myChart) {
         this.myChart.destroy();
       }
@@ -66,7 +65,6 @@ export class PredictionComponent implements OnInit {
         .getHistoricByProductCode(item.read_product_key)
         .subscribe({
           next: (data) => {
-            console.log('Historic: ', data);
             this.historicPointsCount = data.length;
             if (data.length != 1) {
               data = data.sort(
@@ -102,7 +100,6 @@ export class PredictionComponent implements OnInit {
               .getLastPredictionByProductCode(item.read_product_key)
               .subscribe({
                 next: (data) => {
-                  console.log('Last predictions: ', data);
                   let items = data.items;
                   if (items.length != 1) {
                     items = items.sort(
@@ -111,18 +108,14 @@ export class PredictionComponent implements OnInit {
                     );
                   }
 
-                  // Filter items to include only those with a future date
                   items = items.filter((element: any) => {
                     return (
                       new Date(element.date).getTime() > new Date().getTime()
                     );
                   });
 
-                  console.log('Items: ', items);
-
                   const today = new Date().getTime();
 
-                  // Find the closest future item
                   this.mainPrediction = items.reduce(
                     (closest: any, current: any) => {
                       const currentDiff =
@@ -130,25 +123,24 @@ export class PredictionComponent implements OnInit {
                       const closestDiff =
                         new Date(closest.date).getTime() - today;
 
-                      // Ensure we're only considering future dates, and find the smallest difference
                       if (
                         currentDiff >= 0 &&
                         (closestDiff < 0 || currentDiff < closestDiff)
                       ) {
                         return {
                           ...current,
-                          quantity: Math.round(current.quantity), // Round the quantity of the current item
+                          quantity: Math.round(current.quantity),
                         };
                       }
 
                       return {
                         ...closest,
-                        quantity: Math.round(closest.quantity), // Round the quantity of the closest item
+                        quantity: Math.round(closest.quantity),
                       };
                     },
                     {
                       ...items[0],
-                      quantity: Math.round(items[0].quantity), // Initialize with a rounded first item
+                      quantity: Math.round(items[0].quantity),
                     }
                   );
                   this.predictionExist = true;
@@ -165,12 +157,124 @@ export class PredictionComponent implements OnInit {
                       return Math.round(element.quantity);
                     }),
                   ];
-                  console.log(
-                    'Labels: ',
-                    this.data1.labels,
-                    'data: ',
-                    this.data1.datasets[0].data
+                },
+                error: (error) => {
+                  console.error('Error al hacer la petición: ', error);
+                  this.renderLineChart();
+                },
+                complete: () => {
+                  console.log('Petición completada');
+                  this.data1.datasets[0].label = '';
+                  this.renderLineChart();
+                },
+              });
+          },
+        });
+    });
+    
+    this.formGroup.get('selectedCategory')?.valueChanges.subscribe((item) => {
+      this.predictionExist = false;
+      this.mainPrediction = null;
+      if (this.myChart) {
+        this.myChart.destroy();
+      }
+      this.selectedCategory = item;
+      this.categoriesService
+        .getHistoricByCategoryCode(item.code)
+        .subscribe({
+          next: (data) => {
+            this.historicPointsCount = data.length;
+            if (data.length != 1) {
+              data = data.sort(
+                (a: any, b: any) =>
+                  new Date(a.date).getTime() - new Date(b.date).getTime()
+              );
+            }
+            if (data.length == 1) {
+              this.data1.labels = [
+                formatDate(data[0].date, 'dd-MM-yyyy', 'en-US'),
+                formatDate(data[0].date, 'dd-MM-yyyy', 'en-US'),
+              ];
+              this.data1.datasets[0].data = [
+                data[0].quantity,
+                data[0].quantity,
+              ];
+            } else {
+              this.data1.labels = data.map((element) => {
+                return formatDate(element.date, 'dd-MM-yyyy', 'en-US');
+              });
+              this.data1.datasets[0].data = data.map((element) => {
+                return element.quantity;
+              });
+            }
+          },
+          error: (error) => {
+            console.error('Error al hacer la petición: ', error);
+          },
+          complete: () => {
+            console.log('Petición completada');
+
+            this.categoriesService
+              .getLastPredictionByCategoryCode(item.code)
+              .subscribe({
+                next: (data) => {
+                  let items = data.items;
+                  if (items.length != 1) {
+                    items = items.sort(
+                      (a: any, b: any) =>
+                        new Date(a.date).getTime() - new Date(b.date).getTime()
+                    );
+                  }
+
+                  items = items.filter((element: any) => {
+                    return (
+                      new Date(element.date).getTime() > new Date().getTime()
+                    );
+                  });
+
+                  const today = new Date().getTime();
+
+                  this.mainPrediction = items.reduce(
+                    (closest: any, current: any) => {
+                      const currentDiff =
+                        new Date(current.date).getTime() - today;
+                      const closestDiff =
+                        new Date(closest.date).getTime() - today;
+
+                      if (
+                        currentDiff >= 0 &&
+                        (closestDiff < 0 || currentDiff < closestDiff)
+                      ) {
+                        return {
+                          ...current,
+                          quantity: Math.round(current.quantity),
+                        };
+                      }
+
+                      return {
+                        ...closest,
+                        quantity: Math.round(closest.quantity),
+                      };
+                    },
+                    {
+                      ...items[0],
+                      quantity: Math.round(items[0].quantity),
+                    }
                   );
+                  this.predictionExist = true;
+
+                  this.data1.labels = [
+                    ...this.data1.labels,
+                    ...items.map((element: any) => {
+                      return formatDate(element.date, 'dd-MM-yyyy', 'en-US');
+                    }),
+                  ];
+                  this.data1.datasets[0].data = [
+                    ...this.data1.datasets[0].data,
+                    ...items.map((element: any) => {
+                      return Math.round(element.quantity);
+                    }),
+                  ];
                 },
                 error: (error) => {
                   console.error('Error al hacer la petición: ', error);
@@ -188,20 +292,16 @@ export class PredictionComponent implements OnInit {
 
     this.categoriesService.getCategoryCodes().pipe(
       switchMap((codes: string[]) => {
-        // Map each code to an Observable returned by getCategories
         const categoryObservables = codes.map((code) => 
           this.categoriesService.getCategories(code)
         );
-        // Use forkJoin to wait for all Observables to complete
         return forkJoin(categoryObservables);
       })
     ).subscribe({
       next: (categoriesArray) => {
-        // Flatten the array if necessary and assign to this.categories
         this.categories = categoriesArray.flat();
       },
       error: (err) => {
-        // Handle errors here
         console.error('Error fetching categories:', err);
       }
     });

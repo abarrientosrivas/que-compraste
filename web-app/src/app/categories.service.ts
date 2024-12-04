@@ -26,15 +26,15 @@ export class CategoriesService {
     return this.http.get<any[]>(url);
   }
 
-  // getHistoricByProductCode(product_code: string): Observable<any[]> {
-  //   return this.http.get<any[]>(
-  //     `${this.apiUrl}/historics/by-product-code/${product_code}`
-  //   );
-  // }
+  getHistoricByCategoryCode(category_code: string): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.apiUrl}/historics/by-category-code/${category_code}`
+    );
+  }
 
-  // getLastPredictionByProductCode(product_code: string): Observable<any> {
-  //   return this.http.get<any>(
-  //     `${this.apiUrl}/predictions/by-product-code/${product_code}`
-  //   );
-  // }
+  getLastPredictionByCategoryCode(category_code: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/predictions/by-category-code/${category_code}`
+    );
+  }
 }
