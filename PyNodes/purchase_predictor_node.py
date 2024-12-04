@@ -13,7 +13,7 @@ from datetime import datetime
 
 load_dotenv()
 
-TASK_DELAY = int(os.getenv("CRAWLERS_TASK_DELAY","10"))
+PREDICT_DAYS_AHEAD = int(os.getenv("PREDICT_DAYS_AHEAD","90"))
 
 class PurchasePredictorNode:
     def __init__(self, restockables_endpoint: str, historics_endpoint: str, predictions_endpoint: str, consumer: typed_messaging.PydanticQueueConsumer, input_queue: str):
@@ -29,24 +29,41 @@ class PurchasePredictorNode:
             logging.info(f"Ignoring purchase with no items")
             return
         
-        response = request_tools.send_request_with_retries("get", f"{self.restockables_endpoint}", stop_event=self.stop_event)
+        response = request_tools.send_request_with_retries("get", f"{self.restockables_endpoint}product-codes", stop_event=self.stop_event)
         if response is None:
             raise Exception(f"Cannot retrieve restockables. There was no response from server")
         if response.status_code != 200:
             raise Exception(f"Failed to retrieve restockables. Status code: {response.status_code}. Server response: {response.text}")
-        restockable_keys: list = response.json()
+        restockable_product_codes: list = response.json()
+        
+        response = request_tools.send_request_with_retries("get", f"{self.restockables_endpoint}categories", stop_event=self.stop_event)
+        if response is None:
+            raise Exception(f"Cannot retrieve restockables. There was no response from server")
+        if response.status_code != 200:
+            raise Exception(f"Failed to retrieve restockables. Status code: {response.status_code}. Server response: {response.text}")
+        restockable_category_codes: list = response.json()
+        
+        item_codes = list({
+            (
+                item.read_product_key if item.read_product_key is not None else None,
+                item.product.category.code if item.product and item.product.category else None
+            )
+            for item in message.items
+            if not (
+                item.read_product_key is None and 
+                (item.product is None or item.product.category is None)
+            )
+        })
 
-        purchase_product_keys = list({item.read_product_key for item in message.items})
+        for product_code, category_code in item_codes:
+            if category_code in restockable_category_codes:
+                logging.info(f"Generating predictions for category code '{category_code}'")
 
-        for product_key in purchase_product_keys:
-            if product_key in restockable_keys:
-                logging.info(f"Generating predictions for {product_key}")
-
-                response = request_tools.send_request_with_retries("get", f"{self.historics_endpoint}{product_key}", stop_event=self.stop_event)
+                response = request_tools.send_request_with_retries("get", f"{self.historics_endpoint}by-category-code/{category_code}", stop_event=self.stop_event)
                 if response is None:
-                    raise Exception(f"Failed to historic for {product_key}. There was no response from server")
+                    raise Exception(f"Failed to historic for category_code '{category_code}'. There was no response from server")
                 if response.status_code != 200:
-                    logging.error(f"Failed to historic for {product_key}. Status code: {response.status_code}. Server response: {response.text}")
+                    logging.error(f"Failed to historic for category_code '{category_code}'. Status code: {response.status_code}. Server response: {response.text}")
                     continue
                 json_response = response.json()
 
@@ -56,14 +73,15 @@ class PurchasePredictorNode:
                     quantity = float(json['quantity'])
                     historic_data.append((date, quantity))
 
-                predicted_dates = predict_next_purchase_dates(historic_data, 90)
+                print(len(historic_data))
+                predicted_dates = predict_next_purchase_dates(historic_data, PREDICT_DAYS_AHEAD)
                 if not predicted_dates:
-                    logging.info(f"No predicted dates for the next 90 days")
+                    logging.info(f"No predicted dates for the next {PREDICT_DAYS_AHEAD} days")
                     return
                 raw_predictions = predict_next_purchase_quantities(historic_data, predicted_dates)
                 
                 prediction = PredictionCreate(
-                    product_key=product_key,
+                    category_code=str(category_code),
                 )
                 for date, quantity in raw_predictions:
                     prediction.items.append(
@@ -77,9 +95,51 @@ class PurchasePredictorNode:
                 if response is None:
                     raise Exception(f"Cannot post prediction. There was no response from server")
                 if response.status_code == 200:
-                    logging.info(f"Prediction for product code '{product_key}' created successfully")
+                    logging.info(f"Prediction for category code '{category_code}' created successfully")
                 else:
-                    logging.error(f"Failed to create prediction for product code '{product_key}'. Status code: {response.status_code}. Server response: {response.text}")
+                    logging.error(f"Failed to create prediction for category code '{category_code}'. Status code: {response.status_code}. Server response: {response.text}")
+
+            if product_code in restockable_product_codes:
+                logging.info(f"Generating predictions for product code '{product_code}'")
+
+                response = request_tools.send_request_with_retries("get", f"{self.historics_endpoint}by-product-code/{product_code}", stop_event=self.stop_event)
+                if response is None:
+                    raise Exception(f"Failed to historic for {product_code}. There was no response from server")
+                if response.status_code != 200:
+                    logging.error(f"Failed to historic for {product_code}. Status code: {response.status_code}. Server response: {response.text}")
+                    continue
+                json_response = response.json()
+
+                historic_data = []
+                for json in json_response:
+                    date = datetime.fromisoformat(json['date'])
+                    quantity = float(json['quantity'])
+                    historic_data.append((date, quantity))
+
+                predicted_dates = predict_next_purchase_dates(historic_data, PREDICT_DAYS_AHEAD)
+                if not predicted_dates:
+                    logging.info(f"No predicted dates for the next {PREDICT_DAYS_AHEAD} days")
+                    return
+                raw_predictions = predict_next_purchase_quantities(historic_data, predicted_dates)
+                
+                prediction = PredictionCreate(
+                    product_key=product_code,
+                )
+                for date, quantity in raw_predictions:
+                    prediction.items.append(
+                        PredictionItemCreate(
+                            date=date,
+                            quantity=quantity
+                        )
+                    )
+
+                response = request_tools.send_request_with_retries("post", f"{self.predictions_endpoint}", prediction.model_dump(mode='json'), stop_event=self.stop_event)
+                if response is None:
+                    raise Exception(f"Cannot post prediction. There was no response from server")
+                if response.status_code == 200:
+                    logging.info(f"Prediction for product code '{product_code}' created successfully")
+                else:
+                    logging.error(f"Failed to create prediction for product code '{product_code}'. Status code: {response.status_code}. Server response: {response.text}")
         
         logging.info("Ready for next message") 
 
