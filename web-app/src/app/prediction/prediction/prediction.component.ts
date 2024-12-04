@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductsService } from '../../products.service';
+import { CategoriesService } from '../../categories.service';
 import { DropdownModule } from 'primeng/dropdown';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { formatDate } from '@angular/common';
+import { forkJoin } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import Chart from 'chart.js/auto';
 
@@ -16,7 +19,9 @@ import Chart from 'chart.js/auto';
 })
 export class PredictionComponent implements OnInit {
   products: any[] | undefined;
+  categories: any[] | undefined;
   selectedProduct: any;
+  selectedCategory: any;
   historicPointsCount: number = 0;
   formGroup: FormGroup<any> = new FormGroup({});
   myChart: any;
@@ -34,7 +39,7 @@ export class PredictionComponent implements OnInit {
     ],
   };
 
-  constructor(private productsService: ProductsService) {}
+  constructor(private productsService: ProductsService, private categoriesService: CategoriesService) {}
 
   prediction = (ctx: any, value: any) => {
     if (ctx.p0.$context.dataIndex + 1 >= this.historicPointsCount) {
@@ -46,6 +51,7 @@ export class PredictionComponent implements OnInit {
   ngOnInit(): void {
     this.formGroup = new FormGroup({
       selectedProduct: new FormControl<object | null>(null),
+      selectedCategory: new FormControl<object | null>(null),
     });
 
     this.formGroup.get('selectedProduct')?.valueChanges.subscribe((item) => {
@@ -180,10 +186,29 @@ export class PredictionComponent implements OnInit {
         });
     });
 
+    this.categoriesService.getCategoryCodes().pipe(
+      switchMap((codes: string[]) => {
+        // Map each code to an Observable returned by getCategories
+        const categoryObservables = codes.map((code) => 
+          this.categoriesService.getCategories(code)
+        );
+        // Use forkJoin to wait for all Observables to complete
+        return forkJoin(categoryObservables);
+      })
+    ).subscribe({
+      next: (categoriesArray) => {
+        // Flatten the array if necessary and assign to this.categories
+        this.categories = categoriesArray.flat();
+      },
+      error: (err) => {
+        // Handle errors here
+        console.error('Error fetching categories:', err);
+      }
+    });
+
     this.productsService.getProductCodes().subscribe({
       next: (data) => {
         this.products = data;
-        console.log(data);
       },
     });
   }

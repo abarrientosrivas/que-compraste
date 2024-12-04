@@ -10,6 +10,16 @@
       />
     </form>
   </div>
+  <div class="col">
+    <form [formGroup]="formGroup">
+      <p-dropdown
+        formControlName="selectedCategory"
+        [options]="categories"
+        optionLabel="name"
+        placeholder="Seleccione una categoría"
+      />
+    </form>
+  </div>
 </div>
 <div *ngIf="selectedProduct" class="row justify-content-center mt-4 mb-4">
   <div class="col text-right">
