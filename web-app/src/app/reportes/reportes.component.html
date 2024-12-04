@@ -71,6 +71,13 @@
               >${{ purchaseSummary.averageSpendingPerPurchase }}</span
             >
           </li>
+          <li class="list-group-item">
+            <i class="pi pi-hashtag me-2 text-info"></i>
+            <span class="fw-bold">Cantidad de productos: </span>
+            <span id="averagePerPurchase">{{
+              purchaseSummary.totalProducts
+            }}</span>
+          </li>
         </ul>
       </div>
       <div *ngIf="!purchaseSummary" class="empty-state">

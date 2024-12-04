@@ -155,8 +155,6 @@ export class ReportesComponent {
         )
         .subscribe({
           next: (categories: any[]) => {
-            console.log('categories', categories);
-
             if (categories.length === 0) {
               this.pieChartData = { labels: [], datasets: [{ data: [] }] };
               return;
@@ -278,6 +276,7 @@ export class ReportesComponent {
               totalPurchases: 0,
               averageMonthlySpending: 0,
               averageSpendingPerPurchase: 0,
+              totalProducts: 0,
             };
 
             summary.totalSpent = purchases
@@ -290,6 +289,20 @@ export class ReportesComponent {
             summary.averageSpendingPerPurchase = +(
               summary.totalSpent / purchases.length
             ).toFixed(2);
+            summary.totalProducts = purchases
+              .reduce((acc, purchase) => {
+                const quantity = purchase.items.reduce(
+                  (acc_quantity: any, item: any) => {
+                    acc_quantity += item.quantity;
+                    return acc_quantity;
+                  },
+                  0
+                );
+                return (acc += quantity);
+              }, 0)
+              .toFixed(2);
+            console.log('Total products: ', summary.totalProducts);
+
             this.purchaseSummary = summary;
           },
           error: (err) => {
