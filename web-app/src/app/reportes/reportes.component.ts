@@ -277,18 +277,24 @@ export class ReportesComponent {
               averageMonthlySpending: 0,
               averageSpendingPerPurchase: 0,
               totalProducts: 0,
+              averageTotalProductsPerPurchase: 0,
+              averageDaysBetweenPurchases: 0,
             };
 
             summary.totalSpent = purchases
               .reduce((acc, purchase) => acc + purchase.total, 0)
               .toFixed(2);
+
             summary.totalPurchases = purchases.length;
+
             summary.averageMonthlySpending = +(summary.totalSpent / 12).toFixed(
               2
             );
+
             summary.averageSpendingPerPurchase = +(
               summary.totalSpent / purchases.length
             ).toFixed(2);
+
             summary.totalProducts = purchases
               .reduce((acc, purchase) => {
                 const quantity = purchase.items.reduce(
@@ -301,7 +307,52 @@ export class ReportesComponent {
                 return (acc += quantity);
               }, 0)
               .toFixed(2);
-            console.log('Total products: ', summary.totalProducts);
+
+            summary.averageTotalProductsPerPurchase = +(
+              summary.totalProducts / purchases.length
+            ).toFixed(2);
+
+            purchases.sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            );
+
+            const timeDifferences = purchases
+              .map((_, i) =>
+                i > 0
+                  ? new Date(purchases[i].date).getTime() -
+                    new Date(purchases[i - 1].date).getTime()
+                  : 0
+              )
+              .slice(1);
+
+            const averageTimeBetweenPurchases =
+              timeDifferences.reduce((acc, time) => acc + time, 0) /
+              timeDifferences.length;
+
+            summary.averageDaysBetweenPurchases = +(
+              averageTimeBetweenPurchases /
+              (1000 * 60 * 60 * 24)
+            ).toFixed(2);
+
+            const topProducts = purchases.reduce((acc, purchase) => {
+              purchase.items.forEach((item: any) => {
+                if (!acc[item.read_product_text]) {
+                  acc[item.read_product_text] = 0;
+                }
+                acc[item.read_product_text] += item.quantity;
+              });
+              return acc;
+            }, {} as Record<string, number>);
+
+            const sortedTopProducts = Object.entries(topProducts)
+              .map(([name, quantity]) => ({
+                name,
+                quantity: quantity as number,
+              }))
+              .sort((a, b) => b.quantity - a.quantity)
+              .slice(0, 10);
+
+            console.log(sortedTopProducts);
 
             this.purchaseSummary = summary;
           },

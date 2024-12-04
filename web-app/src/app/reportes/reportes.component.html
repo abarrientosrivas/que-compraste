@@ -78,6 +78,20 @@
               purchaseSummary.totalProducts
             }}</span>
           </li>
+          <li class="list-group-item">
+            <i class="pi pi-chart-line me-2 text-info"></i>
+            <span class="fw-bold">Promedio de productos por compra: </span>
+            <span id="averagePerPurchase">{{
+              purchaseSummary.averageTotalProductsPerPurchase
+            }}</span>
+          </li>
+          <li class="list-group-item">
+            <i class="pi pi-chart-line me-2 text-info"></i>
+            <span class="fw-bold">Promedio de dias entre compras: </span>
+            <span id="averagePerPurchase">{{
+              purchaseSummary.averageDaysBetweenPurchases
+            }}</span>
+          </li>
         </ul>
       </div>
       <div *ngIf="!purchaseSummary" class="empty-state">
@@ -90,7 +104,7 @@
       <h4 class="text-center">Tus gastos por categoria</h4>
 
       <div *ngIf="!purchaseSummary" class="empty-state">
-        <i class="pi pi-info-circle me-2"></i>No hay registros disponibles para
+        <i class="pi pi-chart-pie me-2"></i>No hay registros disponibles para
         mostrar.
       </div>
       <p-chart
