@@ -1238,6 +1238,48 @@ async def get_product_codes(db: Session = Depends(get_db)):
 
 @app.get("/predictions/suggested_carts", response_model=List[schemas.Cart])
 async def get_suggested_carts(db: Session = Depends(get_db)):
+    all_predictions = [schemas.Prediction.model_validate(prediction) for prediction in get_latest_predictions(db)]
+    clean_predictions = remove_past_dates(all_predictions)
+    present_category_codes = [int(item.category_code) for item in clean_predictions if item.category_code]
+    redundant_product_codes = get_redundant_product_codes(db,present_category_codes)
+    clean_predictions = [prediction for prediction in clean_predictions if not prediction.product_key in redundant_product_codes]
+
+    carts_by_type = group_by_type([prediction for prediction in clean_predictions if prediction.category_code], db)
+    carts_by_density = group_by_density([prediction for prediction in clean_predictions if prediction.category_code])
+
+    return []
+
+def group_by_type(predictions: List[schemas.Prediction], db: Session) -> List[schemas.Cart]:
+    pass
+
+def group_by_density(predictions: List[schemas.Prediction]) -> List[schemas.Cart]:
+    pass
+
+def get_redundant_product_codes(db: Session, category_codes: List[int]):
+    product_codes = (
+        db.query(models.PurchaseItem.read_product_key)
+        .join(models.Product, models.PurchaseItem.product_id == models.Product.id)
+        .join(models.Category, models.Product.category_id == models.Category.id)
+        .filter(models.PurchaseItem.read_product_key.isnot(None))
+        .filter(models.PurchaseItem.product_id.isnot(None))
+        .filter(models.Product.category_id.isnot(None))
+        .filter(models.Category.code.in_(category_codes))
+        .distinct()
+        .all()
+    )
+    return [code[0] for code in product_codes]
+
+def remove_past_dates(predictions: List[schemas.Prediction]) -> List[schemas.Prediction]:
+    clean_predictions = []
+    start_of_today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    for prediction in predictions:
+        prediction.items = [item for item in prediction.items if item.date >= start_of_today]
+        if prediction.items:
+            clean_predictions.append(prediction)
+    return clean_predictions
+
+def get_latest_predictions(db: Session):
     query_product = db.query(
         models.Prediction.product_key.label('key'),
         func.max(models.Prediction.created_at).label('max_created_at')
@@ -1274,6 +1316,4 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
         selectinload(models.Prediction.items)
     ).all()
 
-    print(len(latest_predictions))
-
-    return []
+    return latest_predictions
