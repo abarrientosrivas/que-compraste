@@ -1249,10 +1249,52 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
 
     return []
 
-def group_by_type(predictions: List[schemas.Prediction], db: Session) -> List[schemas.Cart]:
-    pass
+def group_by_type(predictions: List[schemas.Prediction], db: Session):
+    type_periods = {
+        412: timedelta(weeks=1), # Food, Beverages & Tobacco
+        537: timedelta(weeks=2), # Baby & Toddler
+        469: timedelta(weeks=2), # Health & Beauty
+        1: timedelta(weeks=2),   # Animals & Pet Supplies
+        922: timedelta(weeks=8), # Office Supplies
+    }
+    item_periods = {}
+    for prediction in predictions:
+        category_id = db.query(models.Category.id).filter(models.Category.code == prediction.category_code).first()
+        top_parent_id = get_category_ancestors_ids(db, category_id[0])[-1]
+        top_parent_code = db.query(models.Category.code).filter(models.Category.id == top_parent_id).first()
+        for item in prediction.items:
+            item_periods[item.id] = type_periods.get(top_parent_code[0], timedelta(weeks=4))
 
-def group_by_density(predictions: List[schemas.Prediction]) -> List[schemas.Cart]:
+    prediction_items: List[Tuple[schemas.Prediction, schemas.PredictionItem]] = []
+    for prediction in predictions:
+        prediction_items.extend([(prediction, item) for item in prediction.items])
+    prediction_items = sorted(prediction_items, key=lambda p: p[1].date)
+    
+    groups: Dict[datetime,List[Tuple[schemas.Prediction, schemas.PredictionItem]]] = {}
+    starting_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    groups[starting_time] = []
+    grouped_items = []
+    while len(grouped_items) < len(prediction_items):
+        for prediction, item in prediction_items:
+            if item in grouped_items:
+                continue
+            if item.date <= starting_time + item_periods[item.id]:
+                grouped_items.append(item)
+                groups[starting_time].append((prediction, item))
+        next_item = next(
+            (item for _, item in prediction_items if item not in grouped_items), None
+        )
+        starting_time = (
+            next_item.date.replace(hour=0, minute=0, second=0, microsecond=0)
+            if next_item else starting_time + timedelta(weeks=1)
+        )
+        if starting_time not in groups:
+            groups[starting_time] = []
+
+    groups = {key: value for key, value in groups.items() if value}
+    return groups
+
+def group_by_density(predictions: List[schemas.Prediction]):
     pass
 
 def get_redundant_product_codes(db: Session, category_codes: List[int]):
