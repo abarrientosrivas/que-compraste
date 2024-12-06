@@ -113,6 +113,19 @@
         [options]="pieChartConfig"
       ></p-chart>
     </div>
+    <div class="col-md-12 mt-4 pie-chart-container">
+      <h4 class="text-center">Los 10 productos que más compraste</h4>
+      <div *ngIf="!purchaseSummary" class="empty-state">
+        <i class="pi pi-chart-bar me-2"></i>No hay registros disponibles para
+        mostrar.
+      </div>
+      <p-chart
+        *ngIf="purchaseSummary"
+        type="bar"
+        [data]="barChartData"
+        [options]="barChartConfig"
+      />
+    </div>
   </div>
   <div class="row mt-4 line-chart-container">
     <h4 class="text-center">Tu gasto durante el último año</h4>

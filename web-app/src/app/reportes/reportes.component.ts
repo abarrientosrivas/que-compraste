@@ -37,6 +37,9 @@ export class ReportesComponent {
   pieChartData: any;
   pieChartDataSource: any = { labels: [], datasets: [{ data: [] }] };
   pieChartConfig: any;
+  barChartData: any;
+  barChartDataSource: any = { labels: [], datasets: [{ data: [] }] };
+  barChartConfig: any;
 
   lineChartData: any;
   lineChartDataSource: any = {
@@ -118,6 +121,41 @@ export class ReportesComponent {
         x: {
           ticks: {
             color: 'black',
+          },
+          grid: {
+            color: '#DAD8C9',
+            drawBorder: false,
+          },
+        },
+        y: {
+          ticks: {
+            color: 'black',
+          },
+          grid: {
+            color: '#DAD8C9',
+            drawBorder: false,
+          },
+        },
+      },
+    };
+
+    this.barChartConfig = {
+      maintainAspectRatio: false,
+      aspectRatio: 0.8,
+      plugins: {
+        legend: {
+          labels: {
+            color: 'black',
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: 'black',
+            font: {
+              weight: 500,
+            },
           },
           grid: {
             color: '#DAD8C9',
@@ -249,6 +287,18 @@ export class ReportesComponent {
     }
   }
 
+  loadBarChartData(topProducts: any[]) {
+    this.barChartDataSource.labels = topProducts.map((product) => {
+      return product.name;
+    });
+    this.barChartDataSource.datasets[0].data = topProducts.map((product) => {
+      return product.quantity;
+    });
+    this.barChartDataSource.datasets[0].label = '';
+    this.barChartDataSource.datasets[0].backgroundColor = '#f4b6ba';
+    this.barChartData = { ...this.barChartDataSource };
+  }
+
   submitForm() {
     if (
       this.dateRangeForm.get('startDate').value &&
@@ -352,8 +402,7 @@ export class ReportesComponent {
               .sort((a, b) => b.quantity - a.quantity)
               .slice(0, 10);
 
-            console.log(sortedTopProducts);
-
+            this.loadBarChartData(sortedTopProducts);
             this.purchaseSummary = summary;
           },
           error: (err) => {
