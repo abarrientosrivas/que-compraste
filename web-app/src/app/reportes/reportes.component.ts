@@ -366,23 +366,27 @@ export class ReportesComponent {
               (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
             );
 
-            const timeDifferences = purchases
-              .map((_, i) =>
-                i > 0
-                  ? new Date(purchases[i].date).getTime() -
-                    new Date(purchases[i - 1].date).getTime()
-                  : 0
-              )
-              .slice(1);
+            if (purchases.length > 1) {
+              const timeDifferences = purchases
+                .map((_, i) =>
+                  i > 0
+                    ? new Date(purchases[i].date).getTime() -
+                      new Date(purchases[i - 1].date).getTime()
+                    : 0
+                )
+                .slice(1);
 
-            const averageTimeBetweenPurchases =
-              timeDifferences.reduce((acc, time) => acc + time, 0) /
-              timeDifferences.length;
+              const averageTimeBetweenPurchases =
+                timeDifferences.reduce((acc, time) => acc + time, 0) /
+                timeDifferences.length;
 
-            summary.averageDaysBetweenPurchases = +(
-              averageTimeBetweenPurchases /
-              (1000 * 60 * 60 * 24)
-            ).toFixed(2);
+              summary.averageDaysBetweenPurchases = +(
+                averageTimeBetweenPurchases /
+                (1000 * 60 * 60 * 24)
+              ).toFixed(2);
+            } else {
+              summary.averageDaysBetweenPurchases = 0;
+            }
 
             const topProducts = purchases.reduce((acc, purchase) => {
               purchase.items.forEach((item: any) => {
