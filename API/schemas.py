@@ -41,6 +41,10 @@ class PurchaseItemOut(PurchaseItemBase):
     product: Optional['Product'] = None
 
 
+class PurchaseItemCart(PurchaseItemBase):
+    product: Optional['Product'] = None
+
+
 # --------------------
 # Purchase Schemas
 # --------------------
@@ -359,9 +363,6 @@ class Prediction(PredictionBase):
 # --------------------
 # Cart Schemas
 # --------------------
-class CartItem(BaseModel):
-    pass
-
 class Cart(BaseModel):
     date: datetime
-    items: List[CartItem] = Field(default_factory=list)
+    items: List[PurchaseItemCart] = Field(default_factory=list)

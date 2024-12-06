@@ -1,5 +1,6 @@
 from . import schemas
 from . import models
+from collections import defaultdict
 from pathlib import Path as pt
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Path, status, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -1244,8 +1245,8 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
     redundant_product_codes = get_redundant_product_codes(db,present_category_codes)
     clean_predictions = [prediction for prediction in clean_predictions if not prediction.product_key in redundant_product_codes]
 
-    carts_by_type = group_by_type([prediction for prediction in clean_predictions if prediction.category_code], db)
-    carts_by_density = group_by_density([prediction for prediction in clean_predictions if prediction.category_code])
+    grouped_by_type = group_by_type([prediction for prediction in clean_predictions if prediction.category_code], db)
+    grouped_by_density = group_by_density([prediction for prediction in clean_predictions if prediction.product_key])
 
     return []
 
@@ -1291,11 +1292,73 @@ def group_by_type(predictions: List[schemas.Prediction], db: Session):
         if starting_time not in groups:
             groups[starting_time] = []
 
-    groups = {key: value for key, value in groups.items() if value}
+    groups = {key: consolidate_items(value) for key, value in groups.items() if value}
     return groups
 
+def consolidate_items(items: List[Tuple[schemas.Prediction, schemas.PredictionItem]]):
+    consolidated: Dict[str, List[Tuple[schemas.Prediction, schemas.PredictionItem]]] = {}
+    for prediction, item in items:
+        identifier = prediction.category_code or prediction.product_key
+        if identifier not in consolidated:
+            consolidated[identifier] = (prediction, item)
+        else:
+            existing_prediction, existing_item = consolidated[identifier]
+            existing_item.quantity += item.quantity
+            consolidated[identifier] = (existing_prediction, existing_item)
+    return consolidated.values()
+
+def get_timedelta_for_weight(weight):
+    weight_periods = [
+        (1, 1, timedelta(days=34)),
+        (2, 2, timedelta(days=21)),
+        (3, 3, timedelta(days=13)),
+        (4, 5, timedelta(days=8)),
+        (6, 8, timedelta(days=5)),
+        (9, 13, timedelta(days=3)),
+        (14, 21, timedelta(days=2)),
+        (22, 34, timedelta(days=1)),
+    ]
+    for start, end, period in weight_periods:
+        if start <= weight <= end:
+            return period
+    return timedelta()
+
 def group_by_density(predictions: List[schemas.Prediction]):
-    pass
+    prediction_items: List[Tuple[schemas.Prediction, schemas.PredictionItem]] = []
+    for prediction in predictions:
+        prediction_items.extend([(prediction, item) for item in prediction.items])
+    prediction_items = sorted(prediction_items, key=lambda p: p[1].date)
+
+    groups: Dict[datetime,List[Tuple[schemas.Prediction, schemas.PredictionItem]]] = {}
+    last_idx = 0
+    while last_idx + 1 < len(prediction_items):
+        middle_date = None
+        weight = 0
+        current_group: List[Tuple[schemas.Prediction, schemas.PredictionItem]] = []
+        for idx, (prediction, item) in enumerate(prediction_items[last_idx:], start=last_idx):
+            last_idx = idx
+            if item.date > (middle_date or item.date) + get_timedelta_for_weight(weight):
+                break
+            current_group.append((prediction,item))
+            middle_date = calculate_middle_date(middle_date or item.date, weight, item.date, item.quantity)
+            weight += item.quantity
+
+        if middle_date not in groups:
+            groups[middle_date] = current_group
+        else:
+            groups[middle_date].extend(current_group)
+
+    groups = {key: consolidate_items(value) for key, value in groups.items() if value}
+    return groups
+
+def calculate_middle_date(current_date: datetime, current_weight: float, incoming_date: datetime, incoming_weight: float):
+    if current_weight + incoming_weight <= 0:
+        percentage = 1
+    else:
+        percentage = current_weight / (current_weight + incoming_weight)
+    
+    offset = (incoming_date - current_date) * percentage
+    return incoming_date - offset
 
 def get_redundant_product_codes(db: Session, category_codes: List[int]):
     product_codes = (
