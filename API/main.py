@@ -1248,7 +1248,152 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
     grouped_by_type = group_by_type([prediction for prediction in clean_predictions if prediction.category_code], db)
     grouped_by_density = group_by_density([prediction for prediction in clean_predictions if prediction.product_key])
 
-    return []
+    carts = []
+    for date in grouped_by_density.keys():
+        new_cart = schemas.Cart(date=date)
+
+        for (prediction, item) in grouped_by_density[date]:
+            latest_text = (
+                db.query(models.PurchaseItem.read_product_text)
+                .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+                .filter(models.PurchaseItem.read_product_text.isnot(None))
+                .filter(models.PurchaseItem.read_product_key == prediction.product_key)
+                .order_by(models.Purchase.date.desc())
+                .limit(1)
+                .first()
+            )
+            if latest_text:
+                latest_text = latest_text[0]
+
+            latest_value = (
+                db.query(models.PurchaseItem.value)
+                .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+                .filter(models.PurchaseItem.value.isnot(None))
+                .filter(models.PurchaseItem.read_product_key == prediction.product_key)
+                .order_by(models.Purchase.date.desc())
+                .limit(1)
+                .first()
+            )
+            if latest_value:
+                latest_value = latest_value[0]
+            else:
+                latest_value = (
+                    db.query(models.PurchaseItem.quantity, models.PurchaseItem.total)
+                        .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+                        .filter(models.PurchaseItem.quantity.isnot(None))
+                        .filter(models.PurchaseItem.total.isnot(None))
+                        .filter(models.PurchaseItem.read_product_key == prediction.product_key)
+                        .order_by(models.Purchase.date.desc())
+                        .limit(1)
+                        .first()
+                )
+                if latest_value:
+                    if latest_value[0] != 0:
+                        latest_value = latest_value[1]/latest_value[0]
+                    else:
+                        latest_value = None
+
+            found_product = (
+                db.query(models.Product)
+                    .join(models.PurchaseItem, models.PurchaseItem.product_id == models.Product.id)
+                    .filter(models.PurchaseItem.read_product_key == prediction.product_key)
+                    .limit(1)
+                    .first()
+            )
+            if found_product:
+                found_product = found_product[0]
+
+            new_cart.items.append(
+                schemas.PurchaseItemCart(
+                    read_product_key=prediction.product_key,
+                    read_product_text=latest_text,
+                    quantity=item.quantity,
+                    value=latest_value,
+                    product=found_product,
+                )
+            )
+
+        carts.append(new_cart)
+        
+    for date in grouped_by_type.keys():
+        new_cart = schemas.Cart(date=date)
+
+        for (prediction, item) in grouped_by_type[date]:
+            latest_product = (
+                db.query(models.Product)
+                    .join(models.Category, models.Product.category_id == models.Category.id)
+                    .join(models.PurchaseItem, models.PurchaseItem.product_id == models.Product.id)
+                    .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+                    .filter(models.Category.code == prediction.category_code)
+                    .order_by(models.Purchase.date.desc())
+                    .limit(1)
+                    .first()
+            )
+
+            if latest_product:
+                latest_value = (
+                    db.query(models.PurchaseItem.value)
+                    .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+                    .filter(models.PurchaseItem.value.isnot(None))
+                    .filter(models.PurchaseItem.product_id == latest_product.id)
+                    .order_by(models.Purchase.date.desc())
+                    .limit(1)
+                    .first()
+                )
+                if latest_value:
+                    latest_value = latest_value[0]
+                else:
+                    latest_value = (
+                        db.query(models.PurchaseItem.quantity, models.PurchaseItem.total)
+                            .join(models.Purchase, models.PurchaseItem.purchase_id == models.Purchase.id)
+                            .filter(models.PurchaseItem.quantity.isnot(None))
+                            .filter(models.PurchaseItem.total.isnot(None))
+                            .filter(models.PurchaseItem.product_id == latest_product.id)
+                            .order_by(models.Purchase.date.desc())
+                            .limit(1)
+                            .first()
+                    )
+                    if latest_value:
+                        if latest_value[0] != 0:
+                            latest_value = latest_value[1]/latest_value[0]
+                        else:
+                            latest_value = None
+
+            new_cart.items.append(
+                schemas.PurchaseItemCart(
+                    quantity=item.quantity,
+                    value=latest_value,
+                    product=found_product,
+                )
+            )
+
+        carts.append(new_cart)
+
+    carts = merge_carts(carts)
+
+    return carts
+
+def merge_carts(carts: List[schemas.Cart]) -> List[schemas.Cart]:
+    grouped = defaultdict(list)
+    for cart in carts:
+        year, week, _ = cart.date.isocalendar()
+        grouped[(year, week)].append(cart)
+    
+    merged_carts = []
+    for (year, week), weekly_carts in grouped.items():
+        weekly_carts.sort(key=lambda c: c.date)
+        
+        merged_items = []
+        for wc in weekly_carts:
+            merged_items.extend(wc.items)
+        
+        new_cart = schemas.Cart(
+            date=weekly_carts[0].date,  
+            items=merged_items
+        )
+        merged_carts.append(new_cart)
+    
+    return merged_carts
 
 def group_by_type(predictions: List[schemas.Prediction], db: Session):
     type_periods = {
