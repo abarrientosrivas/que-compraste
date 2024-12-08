@@ -574,6 +574,7 @@ def update_purchase(
 def get_purchases(
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
+    category_code: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(models.Purchase)
@@ -587,14 +588,49 @@ def get_purchases(
             models.Purchase.date <= end_date
         ))
     else:
-        query = query.options(
-            noload(models.Purchase.entity),
-            selectinload(models.Purchase.items).options(
-                noload(models.PurchaseItem.product)
+        if not category_code:
+            query = query.options(
+                noload(models.Purchase.entity),
+                selectinload(models.Purchase.items).options(
+                    noload(models.PurchaseItem.product)
+                )
             )
+    
+    family_ids = []
+    if category_code:
+        category = db.query(models.Category).filter(models.Category.code == category_code).first()
+        
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found")
+
+        family_ids = get_category_descendants_ids(db, category)
+
+        related_ids = (
+            db.query(models.PurchaseItem.purchase_id)
+            .join(models.Product, models.PurchaseItem.product_id == models.Product.id)
+            .join(models.Category, models.Product.category_id == models.Category.id)
+            .filter(models.Category.id.in_(family_ids))
+            .distinct()
+            .all()
         )
+        related_ids = [item[0] for item in related_ids]
+
+        query = query.filter(models.Purchase.id.in_(related_ids))
     
     purchases = query.all()
+
+    if category_code:
+        for purchase in purchases:
+            to_remove = []
+            for item in purchase.items:
+                if item.product is None:
+                    to_remove.append(item)
+                    continue
+                if item.product.category_id not in family_ids:
+                    to_remove.append(item)
+                    continue
+            purchase.items = [item for item in purchase.items if item not in to_remove]
+
     return purchases
 
 @app.post("/product_codes/", response_model=schemas.ProductCode)
