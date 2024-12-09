@@ -1298,6 +1298,7 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
                 .limit(1)
                 .first()
             )
+            print("is ",latest_text)
             if latest_text:
                 latest_text = latest_text[0]
 
@@ -1399,7 +1400,7 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
                 schemas.PurchaseItemCart(
                     quantity=item.quantity,
                     value=latest_value,
-                    product=found_product,
+                    product=latest_product,
                 )
             )
 
