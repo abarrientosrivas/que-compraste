@@ -1337,8 +1337,6 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
                     .limit(1)
                     .first()
             )
-            if found_product:
-                found_product = found_product[0]
 
             new_cart.items.append(
                 schemas.PurchaseItemCart(
