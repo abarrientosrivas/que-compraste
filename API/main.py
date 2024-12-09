@@ -932,12 +932,14 @@ def get_categories(
         categories_list = list(root_categories)
         return categories_list
     else:
-        query = db.query(models.Category).options(
-            noload(models.Category.children),
-            noload(models.Category.parent)
-        )
+        query = db.query(models.Category)
         if code is not None:
-            query = query.filter(models.Category.code == code)
+            query = query.filter(models.Category.code == code).options(selectinload(models.Category.children))
+        else:
+            query = query.options(
+                noload(models.Category.children),
+                noload(models.Category.parent)
+            )
         entities = query.all()
         return entities
 
