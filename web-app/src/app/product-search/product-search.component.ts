@@ -48,7 +48,6 @@ export class ProductSearchComponent {
       });
     } else {
       this.results = []
-      console.log("hola")
       this.productSelected.emit(null);
       this.noResults.emit(false)
     }

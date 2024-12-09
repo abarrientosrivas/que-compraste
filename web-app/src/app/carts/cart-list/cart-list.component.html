@@ -1,8 +1,8 @@
 <div class="cart-list-container">
   <div class="main-cart report-card">
-    <h2>Compra sugerida</h2>
+    <h3 class="store-name">Compra sugerida</h3>
     <div *ngIf="selectedCart; else noCart">
-      <p>Para el {{ formatLongDate(selectedCart.date) }}</p>
+      <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 8px;"></i> {{ formatLongDate(selectedCart.date) }}</p>
       <h3 class="text-success">Total tentativo: {{ formatCurrency(getCartTotal(selectedCart)) }} </h3>
       <table class="table table-striped table-hover">
         <thead>
@@ -15,7 +15,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let item of selectedCart.items; let i = index" [ngbPopover]="popTemplate"
-            popoverTitle="{{ item.product?.title }}" [popoverContext]="{ index: i }" container="body" placement="top"
+            popoverTitle="{{ item.product?.title }}" [popoverContext]="{ index: i }" container="body" placement="right"
             triggers="hover:mouseleave click" style="cursor: pointer;">
             <ng-template #popTemplate>
               <div *ngIf="item.product">

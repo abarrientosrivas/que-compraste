@@ -70,7 +70,6 @@ export class CartListComponent implements OnInit {
   }
 
   formatCurrency(value: number | undefined): string {
-    console.log(value)
     if (!value) return "";
     return `$${value.toLocaleString('es-AR', {
       minimumFractionDigits: 2,

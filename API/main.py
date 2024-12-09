@@ -1298,7 +1298,7 @@ async def get_suggested_carts(db: Session = Depends(get_db)):
                 .limit(1)
                 .first()
             )
-            print("is ",latest_text)
+            
             if latest_text:
                 latest_text = latest_text[0]
 
