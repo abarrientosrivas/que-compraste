@@ -43,6 +43,17 @@
             </div>
           </form>
         </div>
+        <div class="col-12 text-center">
+          <p-dropdown
+            [options]="categories"
+            [(ngModel)]="selectedCategory"
+            (onChange)="onCategoryChange()"
+            [checkmark]="true"
+            optionLabel="name_es_es"
+            [showClear]="true"
+            placeholder="Seleccione una categoria"
+          />
+        </div>
       </div>
 
       <div *ngIf="purchaseSummary" class="col-12">

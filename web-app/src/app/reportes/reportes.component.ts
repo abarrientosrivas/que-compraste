@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
+import { DropdownModule } from 'primeng/dropdown';
 
 // Register the Spanish locale
 registerLocaleData(localeEs, 'es-ES');
@@ -27,11 +28,15 @@ registerLocaleData(localeEs, 'es-ES');
     NgxEchartsDirective,
     FormsModule,
     ChartModule,
+    DropdownModule,
   ],
   templateUrl: './reportes.component.html',
   styleUrl: './reportes.component.css',
 })
 export class ReportesComponent {
+  categories: any[] | undefined;
+  selectedCategory: any | undefined;
+
   dateRangeForm: any;
   purchaseSummary: any;
   pieChartData: any;
@@ -93,6 +98,23 @@ export class ReportesComponent {
   }
 
   ngOnInit(): void {
+    this.reportesService
+      .getRootCategoriesWithPurchases(
+        this.dateRangeForm.get('startDate').value,
+        this.dateRangeForm.get('endDate').value
+      )
+      .subscribe({
+        next: (data) => {
+          this.categories = data;
+        },
+        error: (error) => {
+          console.log(error);
+        },
+        complete: () => {
+          console.log('Request completed: categories = ', this.categories);
+        },
+      });
+
     this.pieChartConfig = {
       responsive: true,
       radius: '75%',
@@ -178,11 +200,72 @@ export class ReportesComponent {
     this.loadLineChartData();
   }
 
-  loadPieChartData() {
+  onCategoryChange() {
+    if (this.selectedCategory) {
+      this.reportesService
+        .getSubcategories(this.selectedCategory.code)
+        .subscribe({
+          next: (subcategories: any[]) => {
+            this.reportesService
+              .getTotalsBySubcategory(
+                this.dateRangeForm.get('startDate').value,
+                this.dateRangeForm.get('endDate').value,
+                subcategories
+                  .map((category) => category.children.map((c: any) => c.code))
+                  .flat()
+              )
+              .subscribe({
+                next: (data) => {
+                  this.loadPieChartData(data);
+                },
+              });
+          },
+          error: (error) => {
+            console.log(error);
+          },
+        });
+
+      this.reportesService
+        .getPurchasesByCategory(
+          this.selectedCategory.code,
+          this.dateRangeForm.get('startDate').value,
+          this.dateRangeForm.get('endDate').value
+        )
+        .subscribe({
+          next: (data) => {
+            this.makeReport(data);
+            console.log(
+              'Request completed: purchases of ',
+              this.selectedCategory,
+              ': ',
+              data
+            );
+          },
+          error: (error) => {
+            console.log(error);
+          },
+        });
+    } else {
+      this.submitForm();
+    }
+  }
+
+  loadPieChartData(data?: any) {
     if (
       this.dateRangeForm.get('startDate').value &&
       this.dateRangeForm.get('endDate').value
     ) {
+      if (data) {
+        this.pieChartDataSource.labels = data.map((category: any) => {
+          return category[0].name_es_es;
+        });
+        this.pieChartDataSource.datasets[0].data = data.map((category: any) => {
+          return category[1];
+        });
+        this.pieChartDataSource.datasets[0].label = '';
+        this.pieChartData = { ...this.pieChartDataSource };
+        return;
+      }
       const endDate = new Date(this.dateRangeForm.get('endDate').value);
       endDate.setDate(endDate.getDate() + 1);
 
@@ -299,6 +382,116 @@ export class ReportesComponent {
     this.barChartData = { ...this.barChartDataSource };
   }
 
+  makeReport(purchases: any[]) {
+    if (purchases.length === 0) {
+      this.purchaseSummary = null;
+      return;
+    }
+
+    this.purchaseSummary = null;
+
+    const summary = {
+      totalSpent: 0,
+      totalPurchases: 0,
+      averageMonthlySpending: 0,
+      averageSpendingPerPurchase: 0,
+      totalProducts: 0,
+      averageTotalProductsPerPurchase: 0,
+      averageDaysBetweenPurchases: 0,
+    };
+
+    // summary.totalSpent = purchases
+    //   .reduce((acc, purchase) => acc + purchase.total, 0)
+    //   .toFixed(2);
+
+    summary.totalSpent = purchases
+      .reduce((acc, purchase) => {
+        const totalItems = purchase.items.reduce(
+          (acc_item: number, item: any) => {
+            const itemTotal =
+              item.total ??
+              (item.value && item.quantity ? item.value * item.quantity : 0);
+            return acc_item + itemTotal;
+          },
+          0
+        );
+        return acc + totalItems;
+      }, 0)
+      .toFixed(2);
+
+    summary.totalPurchases = purchases.length;
+
+    summary.averageMonthlySpending = +(summary.totalSpent / 12).toFixed(2);
+
+    summary.averageSpendingPerPurchase = +(
+      summary.totalSpent / purchases.length
+    ).toFixed(2);
+
+    summary.totalProducts = purchases
+      .reduce((acc, purchase) => {
+        const quantity = purchase.items.reduce(
+          (acc_quantity: any, item: any) => {
+            acc_quantity += item.quantity;
+            return acc_quantity;
+          },
+          0
+        );
+        return (acc += quantity);
+      }, 0)
+      .toFixed(2);
+
+    summary.averageTotalProductsPerPurchase = +(
+      summary.totalProducts / purchases.length
+    ).toFixed(2);
+
+    purchases.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    if (purchases.length > 1) {
+      const timeDifferences = purchases
+        .map((_, i) =>
+          i > 0
+            ? new Date(purchases[i].date).getTime() -
+              new Date(purchases[i - 1].date).getTime()
+            : 0
+        )
+        .slice(1);
+
+      const averageTimeBetweenPurchases =
+        timeDifferences.reduce((acc, time) => acc + time, 0) /
+        timeDifferences.length;
+
+      summary.averageDaysBetweenPurchases = +(
+        averageTimeBetweenPurchases /
+        (1000 * 60 * 60 * 24)
+      ).toFixed(2);
+    } else {
+      summary.averageDaysBetweenPurchases = 0;
+    }
+
+    const topProducts = purchases.reduce((acc, purchase) => {
+      purchase.items.forEach((item: any) => {
+        if (!acc[item.read_product_text]) {
+          acc[item.read_product_text] = 0;
+        }
+        acc[item.read_product_text] += item.quantity;
+      });
+      return acc;
+    }, {} as Record<string, number>);
+
+    const sortedTopProducts = Object.entries(topProducts)
+      .map(([name, quantity]) => ({
+        name,
+        quantity: quantity as number,
+      }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
+
+    this.loadBarChartData(sortedTopProducts);
+    this.purchaseSummary = summary;
+  }
+
   submitForm() {
     if (
       this.dateRangeForm.get('startDate').value &&
@@ -316,98 +509,7 @@ export class ReportesComponent {
         .subscribe({
           next: (purchases: any[]) => {
             this.loadPieChartData();
-            if (purchases.length === 0) {
-              this.purchaseSummary = null;
-              return;
-            }
-
-            const summary = {
-              totalSpent: 0,
-              totalPurchases: 0,
-              averageMonthlySpending: 0,
-              averageSpendingPerPurchase: 0,
-              totalProducts: 0,
-              averageTotalProductsPerPurchase: 0,
-              averageDaysBetweenPurchases: 0,
-            };
-
-            summary.totalSpent = purchases
-              .reduce((acc, purchase) => acc + purchase.total, 0)
-              .toFixed(2);
-
-            summary.totalPurchases = purchases.length;
-
-            summary.averageMonthlySpending = +(summary.totalSpent / 12).toFixed(
-              2
-            );
-
-            summary.averageSpendingPerPurchase = +(
-              summary.totalSpent / purchases.length
-            ).toFixed(2);
-
-            summary.totalProducts = purchases
-              .reduce((acc, purchase) => {
-                const quantity = purchase.items.reduce(
-                  (acc_quantity: any, item: any) => {
-                    acc_quantity += item.quantity;
-                    return acc_quantity;
-                  },
-                  0
-                );
-                return (acc += quantity);
-              }, 0)
-              .toFixed(2);
-
-            summary.averageTotalProductsPerPurchase = +(
-              summary.totalProducts / purchases.length
-            ).toFixed(2);
-
-            purchases.sort(
-              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-            );
-
-            if (purchases.length > 1) {
-              const timeDifferences = purchases
-                .map((_, i) =>
-                  i > 0
-                    ? new Date(purchases[i].date).getTime() -
-                      new Date(purchases[i - 1].date).getTime()
-                    : 0
-                )
-                .slice(1);
-
-              const averageTimeBetweenPurchases =
-                timeDifferences.reduce((acc, time) => acc + time, 0) /
-                timeDifferences.length;
-
-              summary.averageDaysBetweenPurchases = +(
-                averageTimeBetweenPurchases /
-                (1000 * 60 * 60 * 24)
-              ).toFixed(2);
-            } else {
-              summary.averageDaysBetweenPurchases = 0;
-            }
-
-            const topProducts = purchases.reduce((acc, purchase) => {
-              purchase.items.forEach((item: any) => {
-                if (!acc[item.read_product_text]) {
-                  acc[item.read_product_text] = 0;
-                }
-                acc[item.read_product_text] += item.quantity;
-              });
-              return acc;
-            }, {} as Record<string, number>);
-
-            const sortedTopProducts = Object.entries(topProducts)
-              .map(([name, quantity]) => ({
-                name,
-                quantity: quantity as number,
-              }))
-              .sort((a, b) => b.quantity - a.quantity)
-              .slice(0, 10);
-
-            this.loadBarChartData(sortedTopProducts);
-            this.purchaseSummary = summary;
+            this.makeReport(purchases);
           },
           error: (err) => {
             console.log('Server error: ', err);

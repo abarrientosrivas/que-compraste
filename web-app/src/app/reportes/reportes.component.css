@@ -101,3 +101,7 @@ h4 {
 h1 {
   color: #fff;
 }
+
+::ng-deep p-dropdown .p-dropdown-items {
+  padding-left: 0px !important;
+}
