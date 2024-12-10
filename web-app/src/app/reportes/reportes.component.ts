@@ -216,7 +216,9 @@ export class ReportesComponent {
               )
               .subscribe({
                 next: (data) => {
-                  this.loadPieChartData(data);
+                  this.loadPieChartData(
+                    data.filter((category: any) => category[1] > 0)
+                  );
                 },
               });
           },
