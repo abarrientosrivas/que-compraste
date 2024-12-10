@@ -111,7 +111,7 @@ export class ReportesComponent {
           console.log(error);
         },
         complete: () => {
-          console.log('Request completed: categories = ', this.categories);
+          console.log('Request completed');
         },
       });
 
@@ -236,12 +236,6 @@ export class ReportesComponent {
         .subscribe({
           next: (data) => {
             this.makeReport(data);
-            console.log(
-              'Request completed: purchases of ',
-              this.selectedCategory,
-              ': ',
-              data
-            );
           },
           error: (error) => {
             console.log(error);
@@ -293,7 +287,6 @@ export class ReportesComponent {
             );
             this.pieChartDataSource.datasets[0].label = '';
             this.pieChartData = { ...this.pieChartDataSource };
-            console.log('Server response: ', categories);
           },
           error: (error) => {
             console.error('Request error: ', error);
@@ -402,10 +395,6 @@ export class ReportesComponent {
       averageDaysBetweenPurchases: 0,
     };
 
-    // summary.totalSpent = purchases
-    //   .reduce((acc, purchase) => acc + purchase.total, 0)
-    //   .toFixed(2);
-
     summary.totalSpent = purchases
       .reduce((acc, purchase) => {
         const totalItems = purchase.items.reduce(
@@ -499,6 +488,11 @@ export class ReportesComponent {
       this.dateRangeForm.get('startDate').value &&
       this.dateRangeForm.get('endDate').value
     ) {
+      if (this.selectedCategory) {
+        this.onCategoryChange();
+        return;
+      }
+
       const startDate = new Date(this.dateRangeForm.get('startDate').value);
       const endDate = new Date(this.dateRangeForm.get('endDate').value);
       endDate.setDate(endDate.getDate() + 1);
