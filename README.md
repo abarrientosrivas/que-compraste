@@ -16,53 +16,55 @@ Este proyecto utiliza el modelo `donut-receipts-extract` desarrollado por Adam C
 - web-app: Frontend de la aplicación para interacción del usuario con la plataforma. Escrito en Angular.
 
 ## Instrucciones
-*Requisitos generales:* 
+**Requisitos generales:** 
 - Tener instalado y configurado RabbitMQ para usar como message broker.
 - Configurar un archivo .env en base al .env.example
 
 ### API
-*Requisitos* Python 3.10+
+**Requisitos** Python 3.10+
 1. Instale con pip las librerias en API/requirements.txt
 2. Asigne un token con permisos de --view_receipts en el .env (utilice el script create_node_token.py)
 3. Ejecute la API con el comando ```uvicorn API.main:app```
 
 ### Frontend
-*Requisitos* Node.js y npm
+**Requisitos** Node.js y npm
 1. Ubíquese en la carpeta web-app
 2. Instale las dependencias con el comando ```npm install```
 3. Utilice los comandos ```npm start``` o ```npm run build``` para probar o compilar la aplicación
 
 ### Nodo buscador de entidades
-*Requisitos* Python 3.10+
+**Requisitos** Python 3.10+
 1. Asigne un token con --crawl_limit en el .env (utilice el script create_node_token.py)
 2. Instale con pip las librerias necesarias
 3. Asigne un token con permisos de --view_receipts en el .env (utilice el script create_node_token.py)
 4. Ejecute el nodo con el comando ```python -m PyNodes.entity_finder_node```
 
 ### Nodo buscador de productos
-*Requisitos* Python 3.10+
+**Requisitos** Python 3.10+
 1. Asigne un token con --crawl_limit en el .env (utilice el script create_node_token.py)
 2. Instale con pip las librerias necesarias
 3. Ejecute el nodo con el comando ```python -m PyNodes.product_finder_node```
 
 ### Nodo clasificador de productoos
-*Requisitos* Python 3.10
+**Requisitos** Python 3.10
 1. Instale con pip las librerias necesarias
-2. Ejecute el nodo con el comando ```python -m PyNodes.product_classifier_node```
+2. Inicialice la base de datos ChromaDB con el comando ```python -m PyNodes.product_classifier_node --init```
+*chequear comandos ```--sync``` y ```--add_es_es```*
+3. Ejecute el nodo con el comando ```python -m PyNodes.product_classifier_node```
 
 ### Nodo predictor de compras
-*Requisitos* Python 3.10+
+**Requisitos** Python 3.10+
 1. Instale con pip las librerias necesarias
 2. Ejecute el nodo con el comando ```python -m PyNodes.purchase_predictor_node```
 
 ### Nodo imagen a compra (donut)
-*Requisitos* Python 3.10+
+**Requisitos** Python 3.10+
 1. Asigne un token con permisos de --view_receipts en el .env (utilice el script create_node_token.py)
 2. Instale con pip las librerias necesarias
 3. Ejecute el nodo con el comando  ```python -m PyNodes.image_to_compra_node```
 
 ### Nodo imagen a compra (donut)
-*Requisitos* Python 3.10+, GPU dedicada con 20gb de memoria de video libres
+**Requisitos** Python 3.10+, GPU dedicada con 20gb de memoria de video libres
 1. Asigne un token con permisos de --view_receipts en el .env (utilice el script create_node_token.py)
 2. Instale con pip las librerias necesarias
 3. Ejecute el nodo con el comando ```python -m PyNodes.qwen_receipt_reader_node```
