@@ -412,7 +412,21 @@ export class ReportesComponent {
 
     summary.totalPurchases = purchases.length;
 
-    summary.averageMonthlySpending = +(summary.totalSpent / 12).toFixed(2);
+    const startDate = new Date(
+      `${this.dateRangeForm.get('startDate').value}T00:00:00`
+    );
+    const endDate = new Date(
+      `${this.dateRangeForm.get('endDate').value}T00:00:00`
+    );
+
+    const monthsDifference =
+      (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+      endDate.getMonth() -
+      startDate.getMonth() +
+      1;
+    summary.averageMonthlySpending = +(
+      summary.totalSpent / monthsDifference
+    ).toFixed(2);
 
     summary.averageSpendingPerPurchase = +(
       summary.totalSpent / purchases.length
