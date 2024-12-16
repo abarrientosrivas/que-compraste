@@ -1,92 +1,131 @@
 <div class="report-card">
-<div *ngIf="compra" class="purchase-details">
-  <!-- Header Section -->
-  <div class="header-section row align-items-center mb-4">
-    <div class="col-md-6">
-      <h3 class="store-name">{{ compra.read_entity_name }}</h3>
-      <p>
-        <i class="pi pi-id-card" style="margin-right: 8px;"></i>
-        {{ compra.read_entity_identification }}
-        <button *ngIf="compra.entity" pButton type="button" icon="pi pi-info-circle"
-          class="p-button-text p-button-rounded" [ngbPopover]="popContent"
-          container="body" placement="bottom"
-          popoverTitle="{{ compra.entity.name }}"></button>
-      </p>
-      <p class="purchase-info">
-        <i class="pi pi-calendar" style="margin-right: 8px;"></i>
-        {{ fechaFormateada }} {{ horaFormateada }} Hs.
-      </p>
-      <p class="store-address">
-        <i class="pi pi-map-marker" style="margin-right: 8px;"></i>
-        <span>{{ compra.read_entity_address }}</span>
-      </p>
+  <div *ngIf="compra" class="purchase-details">
+    <!-- Header Section -->
+    <div class="header-section row align-items-center mb-4">
+      <div class="col-md-6">
+        <h3 class="store-name">{{ compra.read_entity_name }}</h3>
+        <p>
+          <i class="pi pi-id-card" style="margin-right: 8px"></i>
+          {{ compra.read_entity_identification }}
+          <button
+            *ngIf="compra.entity"
+            pButton
+            type="button"
+            icon="pi pi-info-circle"
+            class="p-button-text p-button-rounded"
+            [ngbPopover]="popContent"
+            container="body"
+            placement="bottom"
+            popoverTitle="{{ compra.entity.name }}"
+          ></button>
+        </p>
+        <p class="purchase-info">
+          <i class="pi pi-calendar" style="margin-right: 8px"></i>
+          {{ fechaFormateada }} {{ horaFormateada }} Hs.
+        </p>
+        <p class="store-address">
+          <i class="pi pi-map-marker" style="margin-right: 8px"></i>
+          <span>{{ compra.read_entity_address }}</span>
+        </p>
+      </div>
+
+      <!-- Pie Chart Section -->
+      <div
+        *ngIf="data && data.labels?.length > 0"
+        class="col-md-6 text-md-right"
+      >
+        <p-chart type="pie" [data]="data" [options]="options"></p-chart>
+      </div>
     </div>
 
-    <!-- Pie Chart Section -->
-    <div *ngIf="data && data.labels?.length > 0" class="col-md-6 text-md-right">
-      <p-chart type="pie" [data]="data" [options]="options"></p-chart>
+    <!-- Summary Section -->
+    <div class="mt-5">
+      <p *ngIf="compra.subtotal" class="subtotal">
+        Subtotal: {{ formatCurrency(compra.subtotal) }}
+      </p>
+      <p *ngIf="compra.discount" class="discount">
+        Descuento: {{ formatCurrency(compra.discount) }}
+      </p>
+      <h3 class="text-success">Total: {{ formatCurrency(compra.total) }}</h3>
     </div>
-  </div>
 
-  <!-- Summary Section -->
-  <div class="mt-5">
-    <p *ngIf="compra.subtotal" class="subtotal">Subtotal: {{ formatCurrency(compra.subtotal) }} </p>
-    <p *ngIf="compra.discount" class="discount">Descuento: {{ formatCurrency(compra.discount) }} </p>
-    <h3 class="text-success">Total: {{ formatCurrency(compra.total) }} </h3>
-  </div>
-
-  <!-- Table Section -->
-  <div class="row pb-3">
-    <div class="col-md-8">
-      <table class="table table-striped table-hover">
-        <thead>
-          <tr>
-            <th scope="col">c/u</th>
-            <th scope="col" class="text-center">Cant.</th>
-            <th scope="col">Producto</th>
-            <th scope="col">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of compra.items; let i = index" [ngbPopover]="popTemplate"
-            popoverTitle="{{ item.product?.title }}" [popoverContext]="{ index: i }" container="body" placement="top"
-            triggers="hover:mouseleave click" style="cursor: pointer;">
-            <!-- Product Pop-up Template -->
-            <ng-template #popTemplate>
-              <div *ngIf="item.product">
-                <p>
-                  {{ item.product?.description }}
-                </p>
-                <p *ngIf="item.product?.category">
-                  <i>{{ item.product.category.name_es_es }}</i>
-                </p>
-                <div *ngIf="item.product?.img_url" class="d-flex justify-content-center flex-row">
-                  <img class="img-thumbnail" [src]="item.product.img_url" alt="Imagen del producto" width="128px"
-                    height="128px" />
+    <!-- Table Section -->
+    <div class="row pb-3">
+      <div class="col-md-8">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col" class="text-center">Cant.</th>
+              <th scope="col">c/u</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let item of compra.items; let i = index"
+              [ngbPopover]="popTemplate"
+              popoverTitle="{{ item.product?.title }}"
+              [popoverContext]="{ index: i }"
+              container="body"
+              placement="top"
+              triggers="hover:mouseleave click"
+              style="cursor: pointer"
+            >
+              <!-- Product Pop-up Template -->
+              <ng-template #popTemplate>
+                <div *ngIf="item.product">
+                  <p>
+                    {{ item.product?.description }}
+                  </p>
+                  <p *ngIf="item.product?.category">
+                    <i>{{ item.product.category.name_es_es }}</i>
+                  </p>
+                  <div
+                    *ngIf="item.product?.img_url"
+                    class="d-flex justify-content-center flex-row"
+                  >
+                    <img
+                      class="img-thumbnail"
+                      [src]="item.product.img_url"
+                      alt="Imagen del producto"
+                      width="128px"
+                      height="128px"
+                    />
+                  </div>
                 </div>
-              </div>
-            </ng-template>
+              </ng-template>
 
-            <!-- Table Data -->
-            <td><div *ngIf="item.value">{{ formatCurrency(item.value) }}</div></td>
-            <td class="text-center">
-              <p-badge *ngIf="item.quantity" [value]="item.quantity"></p-badge>
-            </td>
-            <td> {{ item.read_product_text }}</td>
-            <td><div *ngIf="item.total">{{ formatCurrency(item.total) }}</div></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <!-- Table Data -->
+              <td>{{ item.read_product_text }}</td>
+              <td>
+                <div *ngIf="item.value">{{ formatCurrency(item.value) }}</div>
+              </td>
+              <td class="text-center">
+                <p-badge
+                  *ngIf="item.quantity"
+                  [value]="item.quantity"
+                ></p-badge>
+              </td>
+              <td>
+                <div *ngIf="item.total">{{ formatCurrency(item.total) }}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Receipt Image -->
-    <div class="col-md-4" *ngIf="images && images.length > 0">
-      <ngx-image-viewer [config]="{ btnClass: 'rounded-circle opacity-75 border-0' }" [src]="images"
-        style="width: 100%; height: auto;">
-      </ngx-image-viewer>
+      <!-- Receipt Image -->
+      <div class="col-md-4" *ngIf="images && images.length > 0">
+        <ngx-image-viewer
+          [config]="{ btnClass: 'rounded-circle opacity-75 border-0' }"
+          [src]="images"
+          style="width: 100%; height: auto"
+        >
+        </ngx-image-viewer>
+      </div>
     </div>
   </div>
-</div>
 </div>
 
 <ng-template #popContent>
@@ -105,6 +144,8 @@
   <br />
   <small class="text-muted">
     Información obtenida de
-    <a href="https://argentina.gob.ar" target="_blank">https://argentina.gob.ar</a>
+    <a href="https://argentina.gob.ar" target="_blank"
+      >https://argentina.gob.ar</a
+    >
   </small>
 </ng-template>

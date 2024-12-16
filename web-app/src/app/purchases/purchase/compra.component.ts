@@ -63,6 +63,23 @@ export class CompraComponent {
         data.items.sort((a: any, b: any) => a.id - b.id);
         this.compra = data;
 
+        this.compra.items.forEach((item: any) => {
+          item.total =
+            item.total ??
+            (item.value && item.quantity ? item.value * item.quantity : 0);
+        });
+
+        if (!this.compra.total) {
+          this.compra.total = data.items
+            .reduce((acc: any, item: any) => {
+              const total =
+                item.total ??
+                (item.value && item.quantity ? item.value * item.quantity : 0);
+              return (acc += total);
+            }, 0)
+            .toFixed(2);
+        }
+
         this.images = [];
         if (this.compra.receipt && this.compra.receipt.image_url) {
           this.comprasService
