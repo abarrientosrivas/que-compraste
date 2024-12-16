@@ -98,14 +98,14 @@
 
               <!-- Table Data -->
               <td>{{ item.read_product_text }}</td>
-              <td>
-                <div *ngIf="item.value">{{ formatCurrency(item.value) }}</div>
-              </td>
               <td class="text-center">
                 <p-badge
                   *ngIf="item.quantity"
                   [value]="item.quantity"
                 ></p-badge>
+              </td>
+              <td>
+                <div *ngIf="item.value">{{ formatCurrency(item.value) }}</div>
               </td>
               <td>
                 <div *ngIf="item.total">{{ formatCurrency(item.total) }}</div>
