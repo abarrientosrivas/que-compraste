@@ -7,3 +7,10 @@ Para preguntas, comentarios o sugerencias sobre el proyecto QuéCompraste? conta
 
 ### Atribuciones y Reconocimientos
 Este proyecto utiliza el modelo `donut-receipts-extract` desarrollado por Adam Codd en Hugging Face. El uso de este modelo sigue bajo los términos de la licencia Creative Commons Attribution Non-Commercial 4.0 (CC BY-NC 4.0). Para más detalles sobre el modelo y su licencia, visite el [repositorio del modelo](https://huggingface.co/AdamCodd/donut-receipts-extract).
+
+## Contenido
+- API: Aplicación FastAPI escrita en Python. Es el backend de nuestro proyecto y el único punto de comunicación desde el frontend al servidor.
+- Docs: Documentación referente al proyecto, su desarrollo e investigación.
+- PyLib: Librerías escritas en Python, utilizadas en API y en PyNodes.
+- PyNodes: Servicios escritos en Python y comunicados por RabbitMQ. Realizan distintas tareas requeridas por el proyecto.
+- web-app: Frontend de la aplicación para interacción del usuario con la plataforma. Escrito en Angular.
