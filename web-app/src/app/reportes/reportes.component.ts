@@ -105,7 +105,9 @@ export class ReportesComponent {
       )
       .subscribe({
         next: (data) => {
-          this.categories = data;
+          this.categories = data.sort((a: any, b: any) =>
+            (a.name_es_es || '').localeCompare(b.name_es_es || '')
+          );
         },
         error: (error) => {
           console.log(error);

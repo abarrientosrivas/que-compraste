@@ -268,7 +268,11 @@ export class PredictionComponent implements OnInit {
       )
       .subscribe({
         next: (categoriesArray) => {
-          this.categories = categoriesArray.flat();
+          this.categories = categoriesArray
+            .flat()
+            .sort((a: any, b: any) =>
+              (a.name_es_es || '').localeCompare(b.name_es_es || '')
+            );
         },
         error: (err) => {
           console.error('Error fetching categories:', err);
@@ -277,7 +281,9 @@ export class PredictionComponent implements OnInit {
 
     this.productsService.getProductCodes().subscribe({
       next: (data) => {
-        this.products = data;
+        this.products = data.sort((a: any, b: any) =>
+          (a.read_product_text || '').localeCompare(b.read_product_text || '')
+        );
       },
     });
   }
