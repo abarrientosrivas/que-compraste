@@ -8,6 +8,15 @@
   width: 100%;
 }
 
+.date-container {
+  display: flex;
+  justify-content: flex-start; /* Align items to the left */
+  gap: 1em; /* Add space between the date pickers */
+  align-items: center; /* Align items vertically */
+  flex-wrap: wrap; /* Ensure responsiveness on smaller screens */
+  width: 100%;
+}
+
 .next-purchase{
   margin-right: 3em;
 }
