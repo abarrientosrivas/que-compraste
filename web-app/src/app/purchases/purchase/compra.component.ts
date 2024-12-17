@@ -120,7 +120,10 @@ export class CompraComponent {
     });
   }
 
-  formatCurrency(value: number): string {
+  formatCurrency(value: any): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
     return `$${value.toLocaleString('es-AR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -145,4 +148,12 @@ export class CompraComponent {
       minute: 'numeric',
     });
   }
+
+  getTotal(item: any): number | undefined {
+    let total = item.total
+    if (!total && item.quantity && item.value) {
+      total = item.quantity * item.value
+    }
+    return total
+  } 
 }

@@ -90,6 +90,11 @@
     color: #28a745;
   }
 
+  .text-success-small {
+    font-weight: bold;
+    color: #28a745;
+  }
+
   .purchase-info {
     font-size: 0.95rem;
     margin: 4px 0;
@@ -101,4 +106,10 @@
     font-size: 1.5rem;
     margin-bottom: 8px;
     color: #333;
+  }
+
+  .small-cart-data {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
   }

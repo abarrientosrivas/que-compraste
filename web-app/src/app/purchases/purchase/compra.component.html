@@ -108,7 +108,7 @@
                 <div *ngIf="item.value">{{ formatCurrency(item.value) }}</div>
               </td>
               <td>
-                <div *ngIf="item.total">{{ formatCurrency(item.total) }}</div>
+                <div *ngIf="getTotal(item)">{{ formatCurrency(getTotal(item)) }}</div>
               </td>
             </tr>
           </tbody>

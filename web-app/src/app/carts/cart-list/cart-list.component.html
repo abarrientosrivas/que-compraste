@@ -1,5 +1,24 @@
 <div class="cart-list-container">
-  <div class="main-cart report-card">
+  <div class="cart-list-sidebar report-card" *ngIf="carts.length > 1">
+    <h4 class="store-name">Carritos de compra generados</h4>
+    <ul class="cart-list">
+      <li
+        *ngFor="let cart of carts"
+        [class.selected]="cart === selectedCart"
+        (click)="selectCart(cart)"
+      >
+        <div class="small-cart-data">
+          <i class="pi pi-shopping-cart me-2"></i>
+          <p><i class="pi pi-calendar" style="margin-right: 8px;"></i>{{ formatDate(cart.date) }}</p>
+        </div>
+        <div class="small-cart-data">
+          <small>Items: <p-badge [value]="cart.items.length"></p-badge></small>
+          <small class="text-success-small" *ngIf="formatCurrency(getCartTotal(cart))">Total: {{ formatCurrency(getCartTotal(cart)) }}</small>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="main-cart report-card" id="cart-view-container">
     <h3 class="store-name">Compra sugerida</h3>
     <div *ngIf="selectedCart; else noCart">
       <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 8px;"></i> Para el {{ formatLongDate(selectedCart.date) }}</p>
@@ -14,9 +33,16 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of selectedCart.items; let i = index" [ngbPopover]="popTemplate"
+          <tr *ngFor="let item of selectedCart.items; let i = index">
+            <td [ngbPopover]="popTemplate"
             popoverTitle="{{ item.product?.title }}" [popoverContext]="{ index: i }" container="body" placement="right"
-            triggers="hover:mouseleave click" style="cursor: pointer;">
+            triggers="hover:mouseleave click" style="cursor: pointer;">{{ item.product?.title || item.read_product_text || item.read_product_key || 'Unknown Product' }}</td>
+            <td class="text-center">
+              <p-badge *ngIf="item.quantity" [value]="item.quantity"></p-badge>
+            </td>
+            <td><div *ngIf="item.value">{{ formatCurrency(item.value) }}</div></td>
+            <td>{{ formatCurrency(getTotal(item)) }}</td>
+            
             <ng-template #popTemplate>
               <div *ngIf="item.product">
                 <p>
@@ -31,12 +57,6 @@
                 </div>
               </div>
             </ng-template>
-            <td>{{ item.product?.title || item.read_product_text || item.read_product_key || 'Unknown Product' }}</td>
-            <td class="text-center">
-              <p-badge *ngIf="item.quantity" [value]="item.quantity"></p-badge>
-            </td>
-            <td><div *ngIf="item.value">{{ formatCurrency(item.value) }}</div></td>
-            <td>{{ formatCurrency(getTotal(item)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -44,18 +64,5 @@
     <ng-template #noCart>
       <p>Elija un carrito.</p>
     </ng-template>
-  </div>
-
-  <div class="cart-list-sidebar report-card" *ngIf="carts.length > 1">
-    <ul class="cart-list">
-      <li
-        *ngFor="let cart of carts"
-        [class.selected]="cart === selectedCart"
-        (click)="selectCart(cart)"
-      >
-        <p>{{ formatDate(cart.date) }}</p>
-        <small>Cant. productos: <p-badge [value]="getItemQuantityTotal(cart)"></p-badge></small>
-      </li>
-    </ul>
   </div>
 </div>
