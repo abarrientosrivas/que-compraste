@@ -9,7 +9,7 @@
       >
         <div class="small-cart-data">
           <i class="pi pi-shopping-cart me-2"></i>
-          <p><i class="pi pi-calendar" style="margin-right: 8px;"></i>{{ formatDate(cart.date) }}</p>
+          <p><i class="pi pi-calendar" style="margin-right: 5px;"></i>{{ formatDate(cart.date) }}</p>
         </div>
         <div class="small-cart-data">
           <small>Items: <p-badge [value]="cart.items.length"></p-badge></small>
@@ -19,9 +19,29 @@
     </ul>
   </div>
   <div class="main-cart report-card" id="cart-view-container">
-    <h3 class="store-name">Compra sugerida</h3>
+    <div class="report-card-top">
+      <h3 class="store-name">Compra sugerida</h3>
+      <div>
+        <button class="btn btn-primary mt-1" (click)="downloadCartAsTXT()"
+        style="
+          background-color: rgba(241, 162, 168, 0.788);
+          color: black;
+          border-color: gray;
+        ">
+          <i class="pi pi-download" style="margin-right: 3px;"></i> .txt
+        </button>
+        <button class="btn btn-primary mt-1" (click)="downloadCartAsCSV()" 
+        style="
+          background-color: rgba(241, 162, 168, 0.788);
+          color: black;
+          border-color: gray;
+        ">
+          <i class="pi pi-download" style="margin-right: 3px;"></i> .csv
+        </button>
+      </div>
+    </div>
     <div *ngIf="selectedCart; else noCart">
-      <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 8px;"></i> Para el {{ formatLongDate(selectedCart.date) }}</p>
+      <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 5px;"></i> Para el {{ formatLongDate(selectedCart.date) }}</p>
       <h3 class="text-success">Total tentativo: {{ formatCurrency(getCartTotal(selectedCart)) }} </h3>
       <table class="table table-striped table-hover">
         <thead>

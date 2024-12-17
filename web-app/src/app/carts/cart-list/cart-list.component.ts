@@ -81,7 +81,77 @@ export class CartListComponent implements OnInit {
     return cart.items.reduce((total, item) => total + (item.quantity || 0), 0);
   }
 
-  getCartTotal(cart: Cart): number {
+  getCartTotal(cart: Cart | null): number {
+    if (!cart) return 0;
     return cart.items.reduce((total, item) => total + (this.getTotal(item) || 0), 0);
   }
+
+  downloadCartAsTXT(): void {
+    if (!this.selectedCart) return;
+  
+    const cartLines = [];
+    cartLines.push(`Carrito de compra: ${this.formatLongDate(this.selectedCart.date)}`);
+    cartLines.push(`Total tentativo: ${this.formatCurrency(this.getCartTotal(this.selectedCart))}\n`);
+  
+    this.selectedCart.items.forEach((item, index) => {
+      cartLines.push(
+        `${index + 1}. Producto: ${item.product?.title || item.read_product_text || item.read_product_key || 'Unknown Product'}\n` +
+        `   Cantidad: ${item.quantity}\n` +
+        `   Precio Unitario: ${item.value ? this.formatCurrency(item.value) : 'N/A'}\n` +
+        `   Total: ${this.formatCurrency(this.getTotal(item))}`
+      );
+    });
+  
+    const textContent = cartLines.join('\n');
+  
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const formattedCartDate = new Date(this.selectedCart.date)
+      .toISOString()
+      .split('T')[0];
+
+    a.download = `carrito_${formattedCartDate}.txt`;
+    a.click();
+  
+    window.URL.revokeObjectURL(url);
+  }
+
+  downloadCartAsCSV(): void {
+    if (!this.selectedCart) return;
+  
+    const rows: string[] = [];
+  
+    rows.push('"Fecha";"Total tentativo";"Producto";"Cantidad";"Precio unitario";"Total de ítem"');
+  
+    this.selectedCart.items.forEach((item) => {
+      const date = this.formatLongDate(this.selectedCart?.date);
+      const totalTentativo = this.formatCurrency(this.getCartTotal(this.selectedCart));
+      const product = item.product?.title || item.read_product_text || 'Unknown Product';
+      const quantity = item.quantity || 0;
+      const priceUnit = item.value ? this.formatCurrency(item.value).replace('$', '') : '0.00';
+      const itemTotal = this.formatCurrency(this.getTotal(item)).replace('$', '');
+  
+      rows.push(
+        `"${date}";"${totalTentativo}";"${product}";${quantity};${priceUnit};${itemTotal}`
+      );
+    });
+  
+    const csvContent = rows.join('\n');
+  
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+  
+    const a = document.createElement('a');
+    a.href = url;
+    const formattedCartDate = new Date(this.selectedCart.date)
+      .toISOString()
+      .split('T')[0];
+
+    a.download = `carrito_${formattedCartDate}.csv`;
+    a.click();
+  
+    window.URL.revokeObjectURL(url);
+  }  
 }

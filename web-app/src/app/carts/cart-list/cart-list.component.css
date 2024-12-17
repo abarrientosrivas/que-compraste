@@ -113,3 +113,9 @@
     justify-content: space-between;
     width: 100%;
   }
+
+  .report-card-top{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
