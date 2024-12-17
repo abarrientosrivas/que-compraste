@@ -252,8 +252,15 @@ export class ReportesComponent {
       this.dateRangeForm.get('endDate').value
     ) {
       if (data) {
+        let total = data.reduce((acc: any, category: any) => {
+          return acc + category[1];
+        }, 0);
+
         this.pieChartDataSource.labels = data.map((category: any) => {
-          return category[0].name_es_es;
+          return (
+            category[0].name_es_es +
+            ` (${((category[1] / total) * 100).toFixed(2)}%)`
+          );
         });
         this.pieChartDataSource.datasets[0].data = data.map((category: any) => {
           return category[1];
@@ -277,9 +284,17 @@ export class ReportesComponent {
               return;
             }
 
+            let total = categories.reduce((acc: any, category: any) => {
+              return acc + category[1];
+            }, 0);
+
             this.pieChartDataSource.labels = categories.map((category) => {
-              return category[0].name_es_es;
+              return (
+                category[0].name_es_es +
+                ` (${((category[1] / total) * 100).toFixed(2)}%)`
+              );
             });
+
             this.pieChartDataSource.datasets[0].data = categories.map(
               (category) => {
                 return category[1];
