@@ -252,26 +252,36 @@ export class ReportesComponent {
       this.dateRangeForm.get('endDate').value
     ) {
       if (data) {
+        // Calculate total spending
         let total = data.reduce((acc: any, category: any) => {
           return acc + category[1];
         }, 0);
-
-        this.pieChartDataSource.labels = data.map((category: any) => {
-          return (
-            category[0].name_es_es +
-            ` (${((category[1] / total) * 100).toFixed(2)}%)`
-          );
-        });
-        this.pieChartDataSource.datasets[0].data = data.map((category: any) => {
-          return category[1];
-        });
+  
+        // Sort data by percentage (highest to lowest)
+        const sortedData = data
+          .map((category: any) => ({
+            name: category[0].name_es_es,
+            value: category[1],
+            percentage: ((category[1] / total) * 100).toFixed(2),
+          }))
+          .sort((a: any, b: any) => b.value - a.value);
+  
+        // Rebuild chart data
+        this.pieChartDataSource.labels = sortedData.map(
+          (category: any) => `${category.name} (${category.percentage}%)`
+        );
+        this.pieChartDataSource.datasets[0].data = sortedData.map(
+          (category: any) => category.value
+        );
+  
         this.pieChartDataSource.datasets[0].label = '';
         this.pieChartData = { ...this.pieChartDataSource };
         return;
       }
+  
       const endDate = new Date(this.dateRangeForm.get('endDate').value);
       endDate.setDate(endDate.getDate() + 1);
-
+  
       this.reportesService
         .getTotalsByCategory(
           this.dateRangeForm.get('startDate').value,
@@ -283,23 +293,29 @@ export class ReportesComponent {
               this.pieChartData = { labels: [], datasets: [{ data: [] }] };
               return;
             }
-
+  
+            // Calculate total spending
             let total = categories.reduce((acc: any, category: any) => {
               return acc + category[1];
             }, 0);
-
-            this.pieChartDataSource.labels = categories.map((category) => {
-              return (
-                category[0].name_es_es +
-                ` (${((category[1] / total) * 100).toFixed(2)}%)`
-              );
-            });
-
-            this.pieChartDataSource.datasets[0].data = categories.map(
-              (category) => {
-                return category[1];
-              }
+  
+            // Sort data by percentage (highest to lowest)
+            const sortedData = categories
+              .map((category) => ({
+                name: category[0].name_es_es,
+                value: category[1],
+                percentage: ((category[1] / total) * 100).toFixed(2),
+              }))
+              .sort((a: any, b: any) => b.value - a.value);
+  
+            // Rebuild chart data
+            this.pieChartDataSource.labels = sortedData.map(
+              (category) => `${category.name} (${category.percentage}%)`
             );
+            this.pieChartDataSource.datasets[0].data = sortedData.map(
+              (category) => category.value
+            );
+  
             this.pieChartDataSource.datasets[0].label = '';
             this.pieChartData = { ...this.pieChartDataSource };
           },
@@ -312,6 +328,7 @@ export class ReportesComponent {
         });
     }
   }
+  
 
   loadLineChartData() {
     if (
