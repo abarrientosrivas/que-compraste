@@ -2,14 +2,14 @@
   <div class="main-cart report-card">
     <h3 class="store-name">Compra sugerida</h3>
     <div *ngIf="selectedCart; else noCart">
-      <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 8px;"></i> {{ formatLongDate(selectedCart.date) }}</p>
+      <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 8px;"></i> Para el {{ formatLongDate(selectedCart.date) }}</p>
       <h3 class="text-success">Total tentativo: {{ formatCurrency(getCartTotal(selectedCart)) }} </h3>
       <table class="table table-striped table-hover">
         <thead>
           <tr>
-            <th scope="col">c/u</th>
-            <th scope="col" class="text-center">Cant.</th>
             <th scope="col">Producto</th>
+            <th scope="col" class="text-center">Cant.</th>
+            <th scope="col">P. Unit.</th>
             <th scope="col">Total</th>
           </tr>
         </thead>
@@ -31,11 +31,11 @@
                 </div>
               </div>
             </ng-template>
-            <td><div *ngIf="item.value">{{ formatCurrency(item.value) }}</div></td>
+            <td>{{ item.product?.title || item.read_product_text || item.read_product_key || 'Unknown Product' }}</td>
             <td class="text-center">
               <p-badge *ngIf="item.quantity" [value]="item.quantity"></p-badge>
             </td>
-            <td>{{ item.product?.title || item.read_product_text || item.read_product_key || 'Unknown Product' }}</td>
+            <td><div *ngIf="item.value">{{ formatCurrency(item.value) }}</div></td>
             <td>{{ formatCurrency(getTotal(item)) }}</td>
           </tr>
         </tbody>

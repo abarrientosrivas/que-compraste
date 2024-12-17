@@ -2,6 +2,7 @@
 <div class="row justify-content-center">
   <div class="col">
     <form [formGroup]="formGroup">
+      <h5>Por producto</h5>
       <p-dropdown
         formControlName="selectedProduct"
         [options]="products"
@@ -12,6 +13,7 @@
   </div>
   <div class="col">
     <form [formGroup]="formGroup">
+      <h5>Por categoría</h5>
       <p-dropdown
         formControlName="selectedCategory"
         [options]="categories"
@@ -23,10 +25,19 @@
 </div>
 <div *ngIf="selectedProduct || selectedCategory" class="row justify-content-center mt-4 mb-4">
   <div class="col text-right">
-    <div *ngIf="mainPrediction">
-      <h4>Próxima compra sugerida:</h4>
-      <p><strong>Fecha: </strong>{{ mainPrediction.date | date : "dd-MM-yyyy" }}</p>
-      <p><strong>Cantidad: </strong>{{ mainPrediction.quantity }}</p>
+    <div class="data-container">
+      <div>
+        <div *ngIf="selectedCategory"><h4>Categoría:</h4> <h2><b>{{ selectedCategory.name_es_es }}</b></h2></div>
+        <div *ngIf="selectedProduct"><h4>Producto:</h4> <h2><b>{{ selectedProduct.read_product_text }}</b></h2></div>
+      </div>
+      <div class="next-purchase" *ngIf="mainPrediction">
+        <h5>Compra sugerida</h5>
+        <h3 class="prediction-container">
+          <p-badge [value]="mainPrediction.quantity"></p-badge>
+          <span>unidades</span>
+        </h3>
+        <p class="purchase-info"><i class="pi pi-calendar" style="margin-right: 8px;"></i> Para el {{ formatLongDate(mainPrediction.date) }}</p>
+      </div>
     </div>
 
     <div class="d-flex align-items-center" style="display: block">

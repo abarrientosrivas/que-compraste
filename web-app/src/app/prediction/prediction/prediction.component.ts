@@ -7,13 +7,14 @@ import { CommonModule } from '@angular/common';
 import { formatDate } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { BadgeModule } from 'primeng/badge';
 
 import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-prediction',
   standalone: true,
-  imports: [DropdownModule, ReactiveFormsModule, CommonModule],
+  imports: [DropdownModule, ReactiveFormsModule, CommonModule, BadgeModule],
   templateUrl: './prediction.component.html',
   styleUrl: './prediction.component.css',
 })
@@ -60,6 +61,10 @@ export class PredictionComponent implements OnInit {
       if (this.myChart) {
         this.myChart.destroy();
       }
+      
+      this.formGroup.get('selectedCategory')?.setValue(null, { emitEvent: false });
+      this.selectedCategory = null;
+
       this.selectedProduct = item;
       this.productsService
         .getHistoricByProductCode(item.read_product_key)
@@ -178,6 +183,10 @@ export class PredictionComponent implements OnInit {
       if (this.myChart) {
         this.myChart.destroy();
       }
+
+      this.formGroup.get('selectedProduct')?.setValue(null, { emitEvent: false });
+      this.selectedProduct = null;
+
       this.selectedCategory = item;
       this.categoriesService
         .getHistoricByCategoryCode(item.code)
@@ -366,5 +375,16 @@ export class PredictionComponent implements OnInit {
         },
       },
     });
+  }
+
+  formatLongDate(date: any): string {
+    const fecha = new Date(date);
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    };
+    // Use toLocaleDateString with the options
+    return fecha.toLocaleDateString('es-ES', options);
   }
 }

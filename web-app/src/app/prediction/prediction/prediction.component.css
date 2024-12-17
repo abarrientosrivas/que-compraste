@@ -1,3 +1,32 @@
 ::ng-deep p-dropdown .p-dropdown-items {
   padding-left: 0px !important;
 }
+
+.data-container{
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.next-purchase{
+  margin-right: 3em;
+}
+
+/* Badge styling */
+:host ::ng-deep .p-badge {
+  background-color: #17a2b8;
+  color: #fff;
+}
+
+.purchase-info {
+  font-size: 0.95rem;
+  margin: 4px 0;
+  color: #6c757d;
+}
+
+.prediction-container {
+  display: flex;        
+  align-items: center;
+  gap: 8px;           
+  margin: 0;          
+}
